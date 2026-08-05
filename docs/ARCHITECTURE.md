@@ -76,7 +76,7 @@ sequenceDiagram
     C->>C: validate settings and normalize IOC
     loop Each input
         C->>I: stream records through selected adapter
-        I->>I: preserve raw value; normalize canonical fields
+        I->>I: preserve raw value and normalize canonical fields
         I->>S: store source, event, warnings, and source position
     end
     C->>M: search canonical IOC in compatible fields
@@ -93,46 +93,35 @@ sequenceDiagram
 The schema will evolve through migrations, but its concepts should remain stable:
 
 ```mermaid
-erDiagram
-    SOURCE ||--o{ EVENT : contains
-    EVENT ||--o{ OBSERVABLE : exposes
-    EVENT ||--o{ MATCH : supports
-    IOC_QUERY ||--o{ MATCH : produces
-    RUN ||--|| IOC_QUERY : executes
-    RUN ||--o{ SOURCE : processes
-    RUN ||--o{ OUTPUT_ARTIFACT : creates
+flowchart LR
+    RUN["RUN<br/>one packaging execution"]
+    QUERY["IOC_QUERY<br/>normalized search value"]
+    SOURCE["SOURCE<br/>input file and provenance"]
+    EVENT["EVENT<br/>canonical source record"]
+    OBS["OBSERVABLE<br/>IP, domain, hash, or URL"]
+    MATCH["MATCH<br/>reason an event was included"]
+    OUTPUT["OUTPUT_ARTIFACT<br/>report, evidence, or manifest"]
 
-    SOURCE {
-        string source_id PK
-        string path
-        string sha256
-        string adapter
-        int accepted_count
-        int rejected_count
-    }
-    EVENT {
-        string event_id PK
-        string source_id FK
-        string source_record
-        datetime timestamp_utc
-        string timestamp_original
-        json raw_record
-    }
-    OBSERVABLE {
-        string event_id FK
-        string kind
-        string field_path
-        string original_value
-        string normalized_value
-    }
-    MATCH {
-        string event_id FK
-        string query_id FK
-        string match_kind
-        string rule_id
-        string explanation
-    }
+    RUN -->|executes| QUERY
+    RUN -->|processes| SOURCE
+    RUN -->|creates| OUTPUT
+    SOURCE -->|contains| EVENT
+    EVENT -->|exposes| OBS
+    EVENT -->|supports| MATCH
+    QUERY -->|produces| MATCH
 ```
+
+The diagram deliberately keeps entity fields out of Mermaid. A normal Markdown table remains readable in light and dark themes:
+
+| Entity | Key fields | Purpose |
+|---|---|---|
+| `RUN` | run ID, tool/schema versions, parameters, creation time | Records one packaging execution |
+| `IOC_QUERY` | query ID, IOC type, original value, normalized value | Defines exactly what was searched |
+| `SOURCE` | source ID, path, SHA-256, adapter, accepted/rejected counts | Identifies and verifies each input |
+| `EVENT` | event ID, source/record reference, original and UTC timestamps, raw record | Preserves one canonical source record |
+| `OBSERVABLE` | event ID, kind, field path, original and normalized values | Exposes searchable values from an event |
+| `MATCH` | event/query IDs, match kind, rule ID, explanation | Explains why evidence was included |
+| `OUTPUT_ARTIFACT` | path, media type, SHA-256 | Identifies generated reports and manifests |
 
 The source hash covers bytes supplied to the tool. An event ID identifies a record within that source; it must not pretend to be a universal forensic identifier.
 
