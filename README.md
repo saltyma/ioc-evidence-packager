@@ -1,117 +1,182 @@
 # IOC Evidence Packager
 
-> Turn one suspicious indicator into a portable, reviewable evidence bundle.
+> Turn a suspicious observable and available telemetry into an explainable investigation workspace and a portable, verifiable handoff.
 
-**Status:** documentation-first scaffold; the application is not implemented yet.
+**Status:** product design complete; implementation has not started.
 
-IOC Evidence Packager is a planned local-first Python tool for SOC analysts, incident responders, and DFIR learners.
+IOC Evidence Packager is a planned local-first desktop application for SOC analysts, incident responders, and DFIR learners. An analyst opens a case, supplies one or more indicators and approved evidence exports, and receives a source-linked timeline, relationship view, coverage assessment, optional intelligence, and an exportable **Case Capsule**.
 
-## The idea
+The application does not merely answer "did this value occur?" It also answers:
 
-One IOC plus exported logs becomes a source-linked timeline, an HTML/PDF report, and a JSON manifest.
+- what was searched and which telemetry was actually available;
+- where, when, and in which structured field the observable appeared;
+- which hosts, users, processes, files, and destinations connect the observations;
+- why every event or relationship is included;
+- what could not be parsed, searched, or concluded;
+- what the analyst should examine next, with reasons rather than a hidden score.
+
+## Product concept
 
 ```mermaid
 flowchart LR
-    A["One suspicious IOC"] --> B["Search exported evidence"]
-    C1["DNS and proxy logs"] --> B
-    C2["Endpoint and Sysmon logs"] --> B
-    C3["Wazuh or SIEM alerts"] --> B
-    B --> D["Normalize and correlate"]
-    D --> E["Evidence timeline"]
-    D --> F["Hosts, users, processes, files"]
-    E --> G["Portable HTML/PDF report"]
-    F --> G
-    D --> H["JSON manifest and hashes"]
+    Lead["Alert, IOC, or analyst lead"] --> App["Local desktop investigation workspace"]
+    Logs["Approved log and tool exports"] --> App
+    Intel["Optional privacy-controlled intelligence"] --> App
+    App --> Evidence["Evidence, timeline, and relationships"]
+    App --> Coverage["Coverage gaps and limitations"]
+    App --> Actions["Explainable next actions"]
+    Evidence --> Capsule["Portable Case Capsule"]
+    Coverage --> Capsule
+    Actions --> Capsule
 ```
 
-Analysts commonly copy results between consoles, spreadsheets, tickets, and screenshots. That is slow, inconsistent, and difficult to reproduce. This project makes the packaging step repeatable without requiring an enterprise platform.
+The GUI is the primary working surface. HTML, PDF, JSONL, CSV, STIX, and ZIP are export formats—not separate applications and not the source of truth.
 
-## Where it would be used
+## Why analysts would use it
 
-- **Small SOCs:** package evidence behind an alert before escalation.
-- **Incident response:** hand a concise IOC-centered timeline to a case owner.
-- **DFIR labs:** practice correlation using safe synthetic data.
-- **Consulting/MSSPs:** standardize a portable client handoff from approved exports.
-- **Privacy-sensitive environments:** process locally without sending telemetry outside by default.
+Security evidence is normally scattered across SIEM searches, endpoint exports, DNS and proxy records, spreadsheets, and threat-intelligence tabs. Copying results into a ticket loses field mappings, source positions, search settings, rejected records, and the difference between an observed fact and an analyst inference.
 
-## Planned workflow
+This project fills the space between **searching telemetry** and **communicating a defensible investigation**:
 
-1. Import supported exported logs.
-2. Validate and normalize the IOC and event fields.
-3. Store canonical events and provenance in SQLite.
-4. Find direct matches and selected contextual events.
-5. Explain why every result was included.
-6. Render HTML and JSON; optionally render PDF.
-7. Record inputs, parameters, versions, rejected records, and SHA-256 hashes.
+1. guide the analyst through case creation and safe import;
+2. normalize heterogeneous records without erasing their originals;
+3. run IOC-specific search recipes against compatible fields;
+4. expose direct sightings and carefully labeled context;
+5. show an Evidence Coverage Matrix so "no match" is never confused with "not compromised";
+6. enrich only under an explicit privacy policy;
+7. produce a reproducible handoff for another analyst or system.
 
-Proposed interface (not available yet):
+## The differentiator: coverage-aware evidence
+
+For every source and search recipe, the application records one of these states:
+
+| State | Meaning |
+|---|---|
+| `MATCH_FOUND` | A compatible field produced at least one explained match |
+| `SEARCHED_NO_MATCH` | Compatible records were successfully searched, but no match was found |
+| `PARTIAL_COVERAGE` | Only part of the source, time range, or compatible schema was searchable |
+| `SOURCE_NOT_PROVIDED` | A useful telemetry category was not supplied |
+| `SOURCE_FAILED` | The source was supplied but could not be processed reliably |
+| `FORMAT_UNSUPPORTED` | The source format or schema has no compatible adapter |
+
+This distinction is central to the product. A clean DNS export and a missing DNS export cannot support the same conclusion.
+
+## Primary desktop workflow
+
+1. Create a case and enter the lead observable, time range, and notes.
+2. Add files or folders; preview detected formats, mappings, and warnings.
+3. Select an offline or approved enrichment policy and review what may leave the machine.
+4. Run the investigation as a cancellable background job.
+5. Review the dashboard, evidence table, timeline, relationships, coverage, and intelligence.
+6. Accept, reject, annotate, or bookmark evidence without changing the preserved source facts.
+7. Export a full, redacted, executive, or machine-readable Case Capsule.
+
+Planned workspace areas:
 
 ```text
-ioc-packager package --ioc 203.0.113.42 --input ./samples/input/ --output ./output/case-001/
+Dashboard   Evidence   Timeline   Relationships   Coverage
+Intelligence   Recommendations   Sources   Exports   Settings
 ```
 
-## Planned evidence bundle
+See the [GUI and Interaction Design](docs/GUI_UX.md) for the screen-by-screen conception.
+
+## Case Capsule
 
 ```text
 case-001/
 |-- report.html
-|-- report.pdf             # Optional
-|-- evidence.json
-|-- manifest.json
-`-- source-inventory.json
+|-- report.pdf                 # Optional shareable rendering
+|-- evidence.jsonl             # Normalized, source-linked observations
+|-- timeline.csv
+|-- graph.json
+|-- coverage.json
+|-- source-inventory.json
+|-- enrichment/
+|   `-- provider-results.json
+`-- manifest.json              # Versions, parameters, hashes, warnings
 ```
 
-A report should answer what was searched, which sources were examined, where and when the IOC appeared, which entities were involved, why each event matched, what could not be processed, and how another analyst can reproduce the result.
+Different export profiles can omit or redact sensitive fields. The original local case remains unchanged. Read the full [Case Capsule Contract](docs/CASE_CAPSULE.md).
+
+## Smart, explainable capabilities
+
+- **IOC search recipes:** different fields and pivots for IPs, domains, URLs, and hashes.
+- **Evidence Coverage Matrix:** shows searched, missing, partial, failed, and unsupported telemetry.
+- **Evidence ledger:** every row carries source hash, record position, adapter, field path, rule, and explanation.
+- **Relationship graph:** connects observables, hosts, users, processes, files, and events without converting correlation into causation.
+- **Next-action engine:** rule-based suggestions cite evidence IDs and coverage gaps.
+- **Confidence without a magic score:** facts, intelligence assertions, correlations, and analyst assessments stay separate.
+- **Privacy firewall:** enrichment profiles reveal exactly which observable is sent to which provider.
+- **Reproducible runs:** case history records policies, versions, warnings, and artifacts.
+
+The detailed behavior and guardrails are in [Core and Smart Features](docs/FEATURES.md).
+
+## Planned technical foundation
+
+| Area | Decision | Purpose |
+|---|---|---|
+| Desktop UI | PySide6 / Qt | Native cross-platform analyst workspace |
+| Core | Headless Python application/domain services | Testable logic reusable by GUI and automation |
+| Durable store | SQLite | Portable cases, provenance, notes, jobs, and cache metadata |
+| Large-file scans | DuckDB, introduced only when justified | Efficient local CSV/JSON/Parquet exploration |
+| Validation | Pydantic models and explicit schemas | Stable boundaries and versioned contracts |
+| Reports | Jinja2 plus optional PDF engine | Safe human-readable exports |
+| Automation | Thin optional CLI over the same services | Reproducible batch and CI use without a second implementation |
+| Tests | pytest, golden cases, security fixtures | Determinism and evidence-handling assurance |
+
+The GUI never owns matching, storage, enrichment, or export logic. It calls application services, receives immutable view models, and observes background jobs. See [Architecture](docs/ARCHITECTURE.md) and the [Implementation Blueprint](docs/IMPLEMENTATION_BLUEPRINT.md).
+
+## Input and integration direction
+
+The first slice uses canonical JSONL and a safe synthetic incident. Planned adapters then include generic JSON/CSV/Parquet, Wazuh, Suricata `eve.json`, Zeek, Sysmon via Hayabusa JSONL, Plaso exports, Velociraptor results, and Elastic Common Schema.
+
+Optional providers and handoffs include CIRCL hashlookup, ThreatFox, URLhaus, MalwareBazaar, GreyNoise Community, RDAP, MITRE ATT&CK, MISP, OpenCTI, TheHive, Timesketch, Wazuh/OpenSearch, and Velociraptor. Each remains isolated behind a capability contract and explicit policy. See [Integrations and Enrichment](docs/INTEGRATIONS.md).
 
 ## Boundaries
 
-The project packages evidence; it does not acquire evidence from live systems. It will not replace a SIEM, EDR, threat-intelligence platform, malware sandbox, or forensic case system. It will not declare an IOC malicious merely because it appears in a log, and it will not claim that generated reports are automatically court-admissible.
+The project is not a SIEM, EDR, collector, malware sandbox, threat-intelligence platform, or autonomous response system. The core will not:
 
-Existing tools solve adjacent, broader problems: MISP/OpenCTI manage intelligence, VirusTotal Graph/IntelOwl enrich observables, Timesketch analyzes forensic timelines, Velociraptor collects endpoint artifacts, and SIEMs search operational telemetry. This project consumes existing exports and creates one defensible handoff. See the [Problem Study](docs/PROBLEM_STUDY.md).
+- run commands on endpoints or continuously ingest telemetry;
+- upload evidence or files automatically;
+- decide that an IOC, host, or user is malicious;
+- combine unrelated providers into an unexplained "maliciousness" score;
+- let a language model select, remove, or alter evidence;
+- claim that an export is automatically court-admissible.
 
-## Planned foundation
-
-| Area | Choice | Reason |
-|---|---|---|
-| Language | Python 3.11+ | Parsing ecosystem and analyst accessibility |
-| Storage | SQLite | Portable and serverless |
-| Templates | Jinja2 | Separates presentation from evidence logic |
-| Interface | CLI first | Scriptable and testable |
-| Output | HTML, JSON, optional PDF | Human review plus integration |
-| Tests | pytest | Unit, fixture, and end-to-end tests |
+Active collection and remediation belong in specialist tools and require a separately authorized integration.
 
 ## Repository map
 
 ```text
-docs/                         Product study, scope, architecture, roadmap
-samples/input/                Safe synthetic exports
-samples/expected/             Golden expected packages
-src/ioc_evidence_packager/
-  ingestion/                  Adapters and normalization
-  matching/                   IOC validation, search, correlation
-  reporting/                  HTML/PDF/JSON output
-  storage/                    SQLite persistence and queries
-tests/unit/                   Focused behavior tests
-tests/integration/            End-to-end package tests
+docs/                         Product and implementation specification
+samples/input/                Safe synthetic source exports
+samples/expected/             Golden Case Capsule outputs
+src/ioc_evidence_packager/    Future application packages
+tests/unit/                   Domain and adapter behavior
+tests/integration/            End-to-end case workflows
+tests/ui/                     Focused offscreen desktop behavior
+tests/security/               Hostile-input and trust-boundary fixtures
 ```
 
 ## Documentation
 
-- [Project Primer](docs/PROJECT_PRIMER.md) - plain-language explanation and scenario
-- [Problem Study](docs/PROBLEM_STUDY.md) - existing solutions and relative gaps
-- [Scope](docs/SCOPE.md) - v1 contract and non-goals
-- [Architecture](docs/ARCHITECTURE.md) - components, flow, trust boundaries, evidence model
-- [Roadmap](docs/ROADMAP.md) - staged implementation plan
-- [Glossary](docs/GLOSSARY.md) - key SOC/DFIR terms
-- [References](docs/REFERENCES.md) - official sources
+- [Project Primer](docs/PROJECT_PRIMER.md) — plain-language explanation and example
+- [Product Vision](docs/PRODUCT_VISION.md) — users, value, principles, and success measures
+- [Problem Study](docs/PROBLEM_STUDY.md) — analyst pain and existing-solution positioning
+- [Scope](docs/SCOPE.md) — first-release contract, acceptance criteria, and non-goals
+- [Core and Smart Features](docs/FEATURES.md) — capabilities, reasoning rules, and feature tiers
+- [GUI and Interaction Design](docs/GUI_UX.md) — screens, flows, states, and usability rules
+- [Architecture](docs/ARCHITECTURE.md) — layers, data flow, storage, trust boundaries
+- [Case Capsule Contract](docs/CASE_CAPSULE.md) — export structure, integrity, and redaction
+- [Integrations and Enrichment](docs/INTEGRATIONS.md) — adapters, providers, privacy, and APIs
+- [Implementation Blueprint](docs/IMPLEMENTATION_BLUEPRINT.md) — modules, slices, tests, and decisions
+- [Roadmap](docs/ROADMAP.md) — delivery phases and exit conditions
+- [Glossary](docs/GLOSSARY.md) — shared SOC/DFIR and product vocabulary
+- [References](docs/REFERENCES.md) — official standards and tool documentation
 
-## Evidence-handling principles
+## Next implementation milestone
 
-Treat logs as untrusted, escape report content, prevent path traversal, preserve raw values, hash inputs/outputs, explain every match, keep processing local by default, and never use sensitive production evidence as public test data. Read [SECURITY.md](SECURITY.md) before using real organizational data.
-
-## Next milestone
-
-Build a thin vertical slice: import synthetic JSONL, search one normalized IPv4/domain/SHA-256 IOC, preserve provenance, and render deterministic HTML plus JSON.
+Build a narrow but visible desktop slice: application shell, case creation, SQLite case store, canonical JSONL import preview, IPv4/domain/SHA-256 validation, cancellable import job, evidence table with provenance, coverage state, and deterministic JSONL/HTML export from the same report model.
 
 ## License
 

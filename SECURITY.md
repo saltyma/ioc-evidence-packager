@@ -19,18 +19,32 @@ Do not publish sensitive exploit details, real evidence, credentials, or persona
 
 ## Planned defensive controls
 
-- No network access in the core packaging path.
+- Complete Offline mode: no provider calls, DNS resolution, update checks, remote UI assets, or telemetry.
+- A policy gate and disclosure preview before every optional network connector receives data.
 - Input size/depth limits and streaming ingestion.
 - Parameterized SQLite queries.
-- Jinja2 auto-escaping and safe URL/path handling.
+- Plain-text/escaped GUI evidence display, Jinja2 auto-escaping, and safe URL/path handling.
 - Output-directory confinement and overwrite protection.
 - Separation of raw evidence, normalized values, correlations, and analyst conclusions.
 - Explicit counts for skipped files and rejected records.
-- Security tests using malicious HTML, traversal strings, malformed Unicode/JSON, and oversized fields.
+- Transactional background jobs with accurate failed/cancelled/partial states.
+- Operating-system credential storage or secret references; no keys in case databases or exports.
+- Security tests using malicious HTML, CSV formulas, traversal strings, malformed Unicode/JSON, oversized fields, and secret-leak assertions.
 
 ## External enrichment
 
-Any future enrichment must be opt-in. The UI/CLI must clearly identify the provider and data leaving the workstation, avoid sending entire events, protect API keys, obey provider terms, and record the request time/provider in the manifest.
+Any future enrichment must be opt-in. The GUI must show the provider, exact observable/category leaving the workstation, purpose, cache behavior, and authentication state before execution. Safe Enrichment sends observable values only; files, raw events, usernames, hostnames, paths, notes, and case titles remain denied by default. Provider assertions retain attribution and never replace local facts.
+
+The CLI, when added, must apply the same policy service and require an explicit non-offline policy/configuration rather than bypassing GUI safeguards.
+
+## Desktop and case storage
+
+- Treat case databases, caches, logs, recovery files, and exports as sensitive evidence-derived material.
+- Make source reference-versus-copy behavior explicit and warn when referenced bytes are no longer available.
+- Never show raw evidence or credentials in notifications, crash dialogs, or ordinary logs.
+- Verify database migrations and back up a case before an incompatible migration.
+- Do not load remote images, fonts, HTML, or scripts in the GUI or exported reports.
+- Installer, update, and code-signing security must be designed before distributing production builds.
 
 ## Supported versions
 

@@ -10,11 +10,13 @@ The project is in its design/scaffold stage. Contributions should protect the na
 - Prefer small adapters over vendor-specific conditions in core logic.
 - Add synthetic fixtures for new parsing or matching behavior.
 - Disclose rejected data instead of silently dropping it.
-- Keep core packaging offline and deterministic.
+- Keep domain/application logic independent of Qt, SQL drivers, templates, and provider SDKs.
+- Keep Offline mode complete and evidence content deterministic.
+- Make coverage, network disclosure, and partial-success behavior explicit.
 
 ## Planned local setup
 
-Python packaging is scaffolded, but the application is not implemented. Once the first code slice lands:
+Python packaging is scaffolded, but the application is not implemented. Once the first desktop slice lands:
 
 ```powershell
 python -m venv .venv
@@ -42,6 +44,27 @@ python -m mypy src
 - Bound record sizes/nesting and handle malformed encodings.
 - Count accepted/rejected records and expose warnings.
 - Test timestamps, missing fields, duplicates, malformed values, and malicious strings.
+
+## GUI and background-job checklist
+
+- Do not put matching, coverage, persistence, enrichment, or export rules in widgets.
+- Keep imports and network calls outside the Qt event loop.
+- Make cancellation cooperative and leave an accurate auditable job/run state.
+- Use immutable view data and paginated/virtualized evidence lists.
+- Escape evidence in all rich-text surfaces and avoid raw evidence in notifications.
+- Add application-service tests plus a focused offscreen Qt smoke test.
+
+## Connector checklist
+
+- Declare capabilities, observable types, disclosure class, authentication, limits, cache TTL, and provider terms.
+- Pass every request through the shared policy gate.
+- Send the minimum allowed value and preserve provider attribution/time/raw-response hash.
+- Test allow/deny, timeout, rate limit, schema drift, cache expiry, and secret leakage using fixtures.
+- Keep live integration tests opt-in; normal CI must work offline.
+
+## Documentation decisions
+
+When implementation changes a frozen choice or normative state, update the relevant product document and explain the tradeoff in the pull request. Avoid letting code silently redefine the Case Capsule, coverage states, or facts-versus-assertions model.
 
 ## Commit and PR style
 
