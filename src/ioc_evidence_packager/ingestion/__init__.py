@@ -1,1 +1,5 @@
-"""Input adapters and canonical event normalization."""
+"""Input discovery, hashing, adapters, and canonical normalization."""
+
+from ioc_evidence_packager.ingestion.inspection import SourceInspectionService
+
+__all__ = ["SourceInspectionService"]

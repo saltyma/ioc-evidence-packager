@@ -16,7 +16,7 @@ The project is in its design/scaffold stage. Contributions should protect the na
 
 ## Planned local setup
 
-Python packaging is scaffolded, but the application is not implemented. Once the first desktop slice lands:
+The first desktop slice is implemented. Create a local environment and run the quality gates with:
 
 ```powershell
 python -m venv .venv

@@ -1,0 +1,4 @@
+time,host,user,action,destination_ip,destination_port,decision
+2026-08-06T09:12:08Z,FIN-WS-014,analyst-demo,connection,203.0.113.42,443,allowed
+2026-08-06T09:13:36Z,FIN-WS-014,analyst-demo,dns-answer,198.51.100.25,53,observed
+2026-08-06T09:14:02Z,FIN-WS-014,analyst-demo,connection,198.51.100.25,443,allowed

@@ -1,1 +1,1 @@
-"""SQLite schema, persistence, and parameterized evidence queries."""
+"""Persistence adapters and database migrations."""

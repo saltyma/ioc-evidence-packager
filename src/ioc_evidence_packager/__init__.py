@@ -1,6 +1,3 @@
-"""IOC Evidence Packager.
+"""Local-first, coverage-aware IOC evidence investigations."""
 
-The repository currently contains a documentation-first project scaffold.
-"""
-
-__version__ = "0.0.0"
+__version__ = "0.2.0"

@@ -1,10 +1,12 @@
 # IOC Evidence Packager
 
+![IOC Evidence Packager application icon](docs/assets/app-icon.png)
+
 > Turn a suspicious observable and available telemetry into an explainable investigation workspace and a portable, verifiable handoff.
 
-**Status:** product design complete; implementation has not started.
+**Status:** Implementation Slice 2 complete — validated leads and explainable source preview.
 
-IOC Evidence Packager is a planned local-first desktop application for SOC analysts, incident responders, and DFIR learners. An analyst opens a case, supplies one or more indicators and approved evidence exports, and receives a source-linked timeline, relationship view, coverage assessment, optional intelligence, and an exportable **Case Capsule**.
+IOC Evidence Packager is a local-first desktop application for SOC analysts, incident responders, and DFIR learners. An analyst opens a case, supplies one or more indicators and approved evidence exports, and progressively builds a source-linked timeline, relationship view, coverage assessment, optional intelligence, and an exportable **Case Capsule**.
 
 The application does not merely answer "did this value occur?" It also answers:
 
@@ -124,6 +126,44 @@ The detailed behavior and guardrails are in [Core and Smart Features](docs/FEATU
 | Automation | Thin optional CLI over the same services | Reproducible batch and CI use without a second implementation |
 | Tests | pytest, golden cases, security fixtures | Determinism and evidence-handling assurance |
 
+## Run the current desktop application
+
+```powershell
+python -m pip install -e ".[dev]"
+python -m ioc_evidence_packager
+```
+
+The current application guides an analyst through the first three setup steps:
+
+- validates and canonicalizes IPv4, domain, and SHA-256 leads while preserving the original input;
+- hashes every selected file locally with SHA-256;
+- detects the versioned canonical JSONL adapter using a bounded preview;
+- shows sampled fields, searchable capabilities, time bounds, and safe warnings before import;
+- persists the case, lead, and source interpretation atomically in SQLite schema 2;
+- reopens the investigation with the same setup state and an explicit Offline policy.
+
+No source record has been imported at this stage. The interface says so directly; preview metadata is not presented as evidence.
+
+![Implemented desktop case dashboard](docs/assets/desktop-shell.png)
+
+For a short isolated verification that does not touch the normal case store:
+
+```powershell
+python -m ioc_evidence_packager --smoke-test
+```
+
+### Try the bundled evidence demo
+
+Open **New investigation** and use these values:
+
+- Case title: `Suspicious download on FIN-WS-014`
+- Lead observable: `203.0.113.42`
+- Evidence: select the four numbered clean JSONL files in [`samples/input/demo-investigation`](samples/input/demo-investigation/README.md)
+
+The included guide explains the synthetic incident, expected Ready/Warning/Unsupported preview states, alternate domain and SHA-256 leads, and the facts planted for later evidence-ledger slices. All addresses and domains are private or documentation-only; do not replace them with personal or production infrastructure in a public repository.
+
+![Bundled evidence files in the source-preview step](docs/assets/source-preview-demo.png)
+
 The GUI never owns matching, storage, enrichment, or export logic. It calls application services, receives immutable view models, and observes background jobs. See [Architecture](docs/ARCHITECTURE.md) and the [Implementation Blueprint](docs/IMPLEMENTATION_BLUEPRINT.md).
 
 ## Input and integration direction
@@ -176,7 +216,7 @@ tests/security/               Hostile-input and trust-boundary fixtures
 
 ## Next implementation milestone
 
-Build a narrow but visible desktop slice: application shell, case creation, SQLite case store, canonical JSONL import preview, IPv4/domain/SHA-256 validation, cancellable import job, evidence table with provenance, coverage state, and deterministic JSONL/HTML export from the same report model.
+Implementation Slice 3: cancellable background import, streamed canonical JSONL batches, structured record rejections, and an Evidence ledger with source-line provenance. See the [Implementation Blueprint](docs/IMPLEMENTATION_BLUEPRINT.md).
 
 ## License
 

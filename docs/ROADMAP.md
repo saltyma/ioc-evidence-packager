@@ -13,7 +13,7 @@ The roadmap is GUI-first and vertical. Every phase ends in a demonstrable analys
 
 **Exit:** implementation can begin without deciding what the product is during coding.
 
-## Phase 1 - Desktop shell and durable cases
+## Phase 1 - Desktop shell and durable cases (implemented)
 
 - Add PySide6 application entry point and native main window.
 - Implement Home, recent cases, case shell, navigation, and visible Offline policy.
@@ -23,12 +23,13 @@ The roadmap is GUI-first and vertical. Every phase ends in a demonstrable analys
 
 **Exit demo:** create a case, close the application, reopen it, and recover the same accurate state.
 
-## Phase 2 - Guided evidence import
+## Phase 2 - Guided evidence import (in progress)
 
-- Implement IPv4, domain, and SHA-256 value objects.
-- Publish canonical JSONL schema and build the golden synthetic incident.
-- Implement wizard lead, source, mapping, privacy, and review steps.
-- Hash and preview sources, adapter capabilities, timestamps, fields, and warnings.
+- [x] Implement IPv4, domain, and SHA-256 value objects.
+- [x] Publish canonical JSONL schema and build the first safe synthetic fixture.
+- [x] Implement the lead, source-preview, and review steps of the wizard.
+- [x] Hash and preview sources, adapter capabilities, timestamps, fields, and warnings.
+- [ ] Add explicit mapping and connected-privacy steps when another adapter/provider needs them.
 - Stream imports in background batches with progress, cancellation, retry, and structured rejections.
 
 **Exit demo:** preview exactly how evidence will be interpreted, import it without freezing the UI, cancel safely, and trace accepted/rejected counts.
