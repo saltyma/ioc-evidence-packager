@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ioc-evidence-packager"
-version = "0.2.0"
+version = "0.5.0"
 description = "Build coverage-aware IOC investigations and portable, verifiable evidence handoffs."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -16,6 +16,9 @@ dependencies = [
 
 [project.gui-scripts]
 ioc-evidence-packager = "ioc_evidence_packager.presentation.desktop.app:main"
+
+[tool.setuptools]
+include-package-data = false
 
 [project.optional-dependencies]
 dev = [
@@ -30,10 +33,12 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "ioc_evidence_packager.presentation.desktop" = [
-  "assets/*.svg",
   "assets/*.png",
   "assets/*.ico",
 ]
+
+[tool.setuptools.exclude-package-data]
+"ioc_evidence_packager.presentation.desktop" = ["assets/*.svg"]
 
 [tool.pytest.ini_options]
 addopts = "-ra --strict-config --strict-markers"

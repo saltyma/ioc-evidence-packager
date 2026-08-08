@@ -10,6 +10,9 @@ from tempfile import TemporaryDirectory
 from PySide6.QtCore import QCoreApplication, QStandardPaths, Qt, QTimer
 from PySide6.QtWidgets import QApplication
 
+from ioc_evidence_packager.application.analysis_service import AnalysisService
+from ioc_evidence_packager.application.evidence_service import EvidenceService
+from ioc_evidence_packager.application.report_service import ReportService
 from ioc_evidence_packager.application.services import (
     CaseService,
     NewCaseRequest,
@@ -19,7 +22,13 @@ from ioc_evidence_packager.ingestion import SourceInspectionService
 from ioc_evidence_packager.presentation.desktop.branding import application_icon
 from ioc_evidence_packager.presentation.desktop.main_window import MainWindow
 from ioc_evidence_packager.presentation.desktop.theme import APP_STYLESHEET
-from ioc_evidence_packager.storage.sqlite import SQLiteCaseRepository, SQLiteDatabase
+from ioc_evidence_packager.storage.sqlite import (
+    SQLiteAnalysisRepository,
+    SQLiteCaseRepository,
+    SQLiteDatabase,
+    SQLiteEvidenceRepository,
+    SQLiteExportRepository,
+)
 
 APPLICATION_NAME = "IOC Evidence Packager"
 ORGANIZATION_NAME = "saltyma"
@@ -57,6 +66,9 @@ class DesktopContext:
 
     database: SQLiteDatabase
     case_service: CaseService
+    evidence_service: EvidenceService
+    analysis_service: AnalysisService
+    report_service: ReportService
     source_inspection_service: SourceInspectionService
     window: MainWindow
 
@@ -68,11 +80,23 @@ def build_desktop(database_path: Path) -> DesktopContext:
     database.initialize()
     repository = SQLiteCaseRepository(database)
     case_service = CaseService(repository)
+    evidence_service = EvidenceService(SQLiteEvidenceRepository(database))
+    analysis_service = AnalysisService(SQLiteAnalysisRepository(database))
+    report_service = ReportService(SQLiteExportRepository(database))
     source_inspection_service = SourceInspectionService()
-    window = MainWindow(case_service, source_inspection_service)
+    window = MainWindow(
+        case_service,
+        evidence_service,
+        analysis_service,
+        report_service,
+        source_inspection_service,
+    )
     return DesktopContext(
         database=database,
         case_service=case_service,
+        evidence_service=evidence_service,
+        analysis_service=analysis_service,
+        report_service=report_service,
         source_inspection_service=source_inspection_service,
         window=window,
     )
@@ -92,7 +116,7 @@ def create_qapplication(arguments: list[str] | None = None) -> QApplication:
 
     QCoreApplication.setOrganizationName(ORGANIZATION_NAME)
     QCoreApplication.setApplicationName(APPLICATION_NAME)
-    QCoreApplication.setApplicationVersion("0.2.0")
+    QCoreApplication.setApplicationVersion("0.5.0")
     existing = QApplication.instance()
     if existing is not None and not isinstance(existing, QApplication):
         raise RuntimeError("A non-GUI Qt application already exists in this process.")
@@ -121,6 +145,17 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         help="Save a screenshot during --smoke-test.",
     )
+    parser.add_argument(
+        "--smoke-page",
+        choices=("Dashboard", "Evidence", "Timeline", "Coverage", "Exports"),
+        default="Evidence",
+        help="Workspace page to show during --smoke-test.",
+    )
+    parser.add_argument(
+        "--smoke-demo",
+        action="store_true",
+        help="Use the repository's complete synthetic demo pack when available.",
+    )
     return parser
 
 
@@ -144,32 +179,72 @@ def main(argv: list[str] | None = None) -> int:
             if recent:
                 setup = context.case_service.open_investigation(recent[0].case_id)
             else:
-                smoke_source_directory = TemporaryDirectory(prefix="ioc-packager-source-")
-                source_path = Path(smoke_source_directory.name) / "synthetic-source.jsonl"
-                smoke_line = json.dumps(SMOKE_EVENT, separators=(",", ":")) + "\n"
-                source_path.write_text(smoke_line, encoding="utf-8")
-                preview = context.source_inspection_service.inspect(source_path)
+                demo_directory = (
+                    Path(__file__).resolve().parents[4] / "samples" / "input" / "demo-investigation"
+                )
+                demo_names = (
+                    "01-dns-events.jsonl",
+                    "02-endpoint-events.jsonl",
+                    "03-network-events.jsonl",
+                    "04-authentication-events.jsonl",
+                    "05-partial-with-warning.jsonl",
+                    "06-unsupported-siem-export.csv",
+                )
+                use_demo = args.smoke_demo and all(
+                    (demo_directory / name).is_file() for name in demo_names
+                )
+                if use_demo:
+                    previews = tuple(
+                        context.source_inspection_service.inspect(demo_directory / name)
+                        for name in demo_names
+                    )
+                else:
+                    smoke_source_directory = TemporaryDirectory(prefix="ioc-packager-source-")
+                    source_path = Path(smoke_source_directory.name) / "synthetic-source.jsonl"
+                    smoke_line = json.dumps(SMOKE_EVENT, separators=(",", ":")) + "\n"
+                    source_path.write_text(smoke_line, encoding="utf-8")
+                    previews = (context.source_inspection_service.inspect(source_path),)
                 setup = context.case_service.create_investigation(
                     NewInvestigationRequest(
                         case=NewCaseRequest(
-                            title="Synthetic triage demonstration",
-                            external_reference="DEMO-001",
-                            summary="Offline source-preview verification using synthetic data.",
+                            title=(
+                                "Suspicious download on FIN-WS-014"
+                                if use_demo
+                                else "Synthetic triage demonstration"
+                            ),
+                            external_reference="DEMO-IR-2026-001" if use_demo else "DEMO-001",
+                            summary=(
+                                "Synthetic triage of a suspicious download and follow-on "
+                                "connection."
+                                if use_demo
+                                else "Offline source-preview verification using synthetic data."
+                            ),
                         ),
                         lead_value="203.0.113.42",
-                        source_previews=(preview,),
+                        source_previews=previews,
                     )
                 )
+                context.evidence_service.import_sources(
+                    setup.case.case_id,
+                    setup.source_previews,
+                )
             context.window.open_investigation(setup)
+            context.window.show_page(args.smoke_page)
         context.window.show()
 
         if args.smoke_test:
-            app.processEvents()
-            if args.screenshot is not None:
-                args.screenshot.parent.mkdir(parents=True, exist_ok=True)
-                if not context.window.grab().save(str(args.screenshot)):
-                    return 1
-            QTimer.singleShot(120, app.quit)
+            screenshot_status = [0]
+
+            def finish_smoke() -> None:
+                if args.screenshot is not None:
+                    args.screenshot.parent.mkdir(parents=True, exist_ok=True)
+                    if not context.window.grab().save(str(args.screenshot)):
+                        screenshot_status[0] = 1
+                app.quit()
+
+            QTimer.singleShot(220, finish_smoke)
+            event_status = app.exec()
+            return screenshot_status[0] or event_status
         return app.exec()
     finally:
         if temporary_directory is not None:

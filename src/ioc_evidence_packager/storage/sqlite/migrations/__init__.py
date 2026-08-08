@@ -111,6 +111,179 @@ MIGRATIONS = (
             """,
         ),
     ),
+    Migration(
+        version=3,
+        name="add_evidence_import_ledger",
+        statements=(
+            """
+            CREATE TABLE import_run (
+                run_id TEXT PRIMARY KEY,
+                case_id TEXT NOT NULL REFERENCES case_record(case_id) ON DELETE CASCADE,
+                status TEXT NOT NULL CHECK (
+                    status IN ('running', 'completed', 'cancelled', 'failed')
+                ),
+                started_at TEXT NOT NULL,
+                finished_at TEXT,
+                processed_sources INTEGER NOT NULL DEFAULT 0 CHECK (processed_sources >= 0),
+                accepted_records INTEGER NOT NULL DEFAULT 0 CHECK (accepted_records >= 0),
+                rejected_records INTEGER NOT NULL DEFAULT 0 CHECK (rejected_records >= 0),
+                error_message TEXT
+            )
+            """,
+            """
+            CREATE INDEX idx_import_run_case_started
+                ON import_run(case_id, started_at DESC)
+            """,
+            """
+            CREATE TABLE evidence_record (
+                evidence_id TEXT PRIMARY KEY,
+                case_id TEXT NOT NULL REFERENCES case_record(case_id) ON DELETE CASCADE,
+                source_preview_id TEXT NOT NULL
+                    REFERENCES source_preview(preview_id) ON DELETE CASCADE,
+                import_run_id TEXT NOT NULL REFERENCES import_run(run_id),
+                line_number INTEGER NOT NULL CHECK (line_number > 0),
+                event_id TEXT NOT NULL,
+                occurred_at TEXT,
+                category TEXT NOT NULL,
+                action TEXT NOT NULL,
+                host_name TEXT,
+                user_name TEXT,
+                observables_json TEXT NOT NULL,
+                declared_source_id TEXT NOT NULL,
+                declared_position_kind TEXT NOT NULL,
+                declared_position_value TEXT NOT NULL,
+                warnings_json TEXT NOT NULL,
+                raw_json TEXT NOT NULL,
+                imported_at TEXT NOT NULL,
+                UNIQUE(case_id, source_preview_id, line_number)
+            )
+            """,
+            """
+            CREATE INDEX idx_evidence_case_time
+                ON evidence_record(case_id, occurred_at, evidence_id)
+            """,
+            """
+            CREATE INDEX idx_evidence_case_event
+                ON evidence_record(case_id, event_id)
+            """,
+            """
+            CREATE TABLE import_rejection (
+                rejection_id TEXT PRIMARY KEY,
+                case_id TEXT NOT NULL REFERENCES case_record(case_id) ON DELETE CASCADE,
+                source_preview_id TEXT NOT NULL
+                    REFERENCES source_preview(preview_id) ON DELETE CASCADE,
+                import_run_id TEXT NOT NULL REFERENCES import_run(run_id),
+                line_number INTEGER NOT NULL CHECK (line_number >= 0),
+                code TEXT NOT NULL,
+                message TEXT NOT NULL,
+                raw_excerpt TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                UNIQUE(case_id, source_preview_id, line_number, code)
+            )
+            """,
+            """
+            CREATE INDEX idx_rejection_case_source
+                ON import_rejection(case_id, source_preview_id, line_number)
+            """,
+        ),
+    ),
+    Migration(
+        version=4,
+        name="add_ioc_analysis_and_coverage",
+        statements=(
+            """
+            CREATE TABLE analysis_run (
+                analysis_run_id TEXT PRIMARY KEY,
+                case_id TEXT NOT NULL REFERENCES case_record(case_id) ON DELETE CASCADE,
+                recipe_id TEXT NOT NULL,
+                recipe_version TEXT NOT NULL,
+                input_fingerprint TEXT NOT NULL,
+                completed_at TEXT NOT NULL
+            )
+            """,
+            """
+            CREATE INDEX idx_analysis_run_case_completed
+                ON analysis_run(case_id, completed_at DESC, analysis_run_id DESC)
+            """,
+            """
+            CREATE TABLE sighting (
+                sighting_id TEXT PRIMARY KEY,
+                analysis_run_id TEXT NOT NULL
+                    REFERENCES analysis_run(analysis_run_id) ON DELETE CASCADE,
+                case_id TEXT NOT NULL REFERENCES case_record(case_id) ON DELETE CASCADE,
+                evidence_id TEXT NOT NULL
+                    REFERENCES evidence_record(evidence_id) ON DELETE CASCADE,
+                observable_id TEXT NOT NULL
+                    REFERENCES case_observable(observable_id) ON DELETE CASCADE,
+                observable_type TEXT NOT NULL,
+                recipe_id TEXT NOT NULL,
+                recipe_version TEXT NOT NULL,
+                step_id TEXT NOT NULL,
+                rule_id TEXT NOT NULL,
+                field_path TEXT NOT NULL,
+                original_value TEXT NOT NULL,
+                normalized_value TEXT NOT NULL,
+                explanation_json TEXT NOT NULL,
+                UNIQUE(analysis_run_id, evidence_id, observable_id, field_path, rule_id)
+            )
+            """,
+            """
+            CREATE INDEX idx_sighting_case_evidence
+                ON sighting(case_id, evidence_id, analysis_run_id)
+            """,
+            """
+            CREATE TABLE coverage_cell (
+                coverage_cell_id TEXT PRIMARY KEY,
+                analysis_run_id TEXT NOT NULL
+                    REFERENCES analysis_run(analysis_run_id) ON DELETE CASCADE,
+                case_id TEXT NOT NULL REFERENCES case_record(case_id) ON DELETE CASCADE,
+                recipe_id TEXT NOT NULL,
+                recipe_version TEXT NOT NULL,
+                step_id TEXT NOT NULL,
+                step_label TEXT NOT NULL,
+                telemetry TEXT NOT NULL,
+                state TEXT NOT NULL CHECK (
+                    state IN (
+                        'MATCH_FOUND', 'SEARCHED_NO_MATCH', 'PARTIAL_COVERAGE',
+                        'SOURCE_NOT_PROVIDED', 'SOURCE_FAILED', 'FORMAT_UNSUPPORTED'
+                    )
+                ),
+                reason_json TEXT NOT NULL,
+                source_preview_ids_json TEXT NOT NULL,
+                evidence_ids_json TEXT NOT NULL,
+                match_count INTEGER NOT NULL CHECK (match_count >= 0),
+                UNIQUE(analysis_run_id, step_id)
+            )
+            """,
+            """
+            CREATE INDEX idx_coverage_case_state
+                ON coverage_cell(case_id, state, analysis_run_id)
+            """,
+        ),
+    ),
+    Migration(
+        version=5,
+        name="add_case_capsule_history",
+        statements=(
+            """
+            CREATE TABLE export_record (
+                export_id TEXT PRIMARY KEY,
+                case_id TEXT NOT NULL REFERENCES case_record(case_id) ON DELETE CASCADE,
+                profile TEXT NOT NULL CHECK (
+                    profile IN ('full-internal', 'redacted-shareable')
+                ),
+                destination TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                manifest_sha256 TEXT NOT NULL,
+                artifact_count INTEGER NOT NULL CHECK (artifact_count >= 0)
+            )
+            """,
+            """
+            CREATE INDEX idx_export_record_case_created
+                ON export_record(case_id, created_at DESC, export_id DESC)
+            """,
+        ),
+    ),
 )
 
 LATEST_SCHEMA_VERSION = MIGRATIONS[-1].version

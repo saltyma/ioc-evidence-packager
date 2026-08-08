@@ -1,0 +1,90 @@
+{
+  "cells": [
+    {
+      "coverage_cell_id": "coverage-084221e489e7f403edc68cf6c85ab64bf5c7c87ffbd1ec2891ca14ed43f59b8c",
+      "evidence_ids": [
+        "evidence-191205c9b6573d76b12e45dedc31b15b",
+        "evidence-9c4cbfafddcc967719e8e1a1ca87c260",
+        "evidence-6268d67b66fbd15f591c3b3010ca972a"
+      ],
+      "match_count": 1,
+      "reason": {
+        "code": "exact_match_found",
+        "message": "1 exact normalized match(es) were found for DNS resolution.",
+        "recovery": null
+      },
+      "recipe": "ipv4/1.0.0",
+      "source_preview_ids": [
+        "preview-b4a81c5b-0788-4b47-bbef-a12c665493ef"
+      ],
+      "state": "MATCH_FOUND",
+      "step_id": "dns_resolution",
+      "step_label": "DNS resolution",
+      "telemetry": "DNS"
+    },
+    {
+      "coverage_cell_id": "coverage-93d948518e0215135926e4fe4cb0e80e9cfc2e2bb8b56aec606c0d7e629a527d",
+      "evidence_ids": [
+        "evidence-c65ec6ca3f5c2ca17d662f9b70633dcc",
+        "evidence-19b9d5f76ad434fa25fbae7e67c97b1e",
+        "evidence-fae32a11d55a67744023077e2b8bb9da",
+        "evidence-737e2aa52a42e8380971002f7906a41c"
+      ],
+      "match_count": 3,
+      "reason": {
+        "code": "compatible_search_partial",
+        "message": "Network endpoint has incomplete coverage: 4 accepted record(s), 1 rejected line(s), or a source warning.",
+        "recovery": "Review source warnings and rejected lines before drawing a no-match conclusion."
+      },
+      "recipe": "ipv4/1.0.0",
+      "source_preview_ids": [
+        "preview-ca765945-47ad-4be9-b725-e1c91f54145e",
+        "preview-a58f2348-d043-47a9-b6ee-a4dac4b52618"
+      ],
+      "state": "PARTIAL_COVERAGE",
+      "step_id": "network_endpoint",
+      "step_label": "Network endpoint",
+      "telemetry": "Network"
+    },
+    {
+      "coverage_cell_id": "coverage-292a04b59736ed173182c6ae3ae48f699a026d7f5118da9d1ede83ae9d721dad",
+      "evidence_ids": [
+        "evidence-e807cff81872cf1c769f36b58c36a75c",
+        "evidence-5e1da9df8bb84d2c6d79c54456053232"
+      ],
+      "match_count": 0,
+      "reason": {
+        "code": "complete_search_no_match",
+        "message": "Compatible authentication evidence was searched completely and produced no exact match; this is not a safety conclusion.",
+        "recovery": null
+      },
+      "recipe": "ipv4/1.0.0",
+      "source_preview_ids": [
+        "preview-b916acc9-2c3f-4c01-b115-72d893bbd557"
+      ],
+      "state": "SEARCHED_NO_MATCH",
+      "step_id": "authentication_origin",
+      "step_label": "Authentication origin",
+      "telemetry": "Authentication"
+    },
+    {
+      "coverage_cell_id": "coverage-a01b118329400bae9c8191466123543e59effe7682c5683fdcc701e2afcc3efa",
+      "evidence_ids": [],
+      "match_count": 0,
+      "reason": {
+        "code": "supplied_format_unsupported",
+        "message": "No installed adapter recognizes this source.",
+        "recovery": "Add a mapping-capable adapter or convert this source to canonical JSONL."
+      },
+      "recipe": "ipv4/1.0.0",
+      "source_preview_ids": [
+        "preview-8d52e509-3f22-4918-9d48-7c11cc8c78b2"
+      ],
+      "state": "FORMAT_UNSUPPORTED",
+      "step_id": "source_diagnostic:preview-8d52e509-3f22-4918-9d48-7c11cc8c78b2",
+      "step_label": "06-unsupported-siem-export.csv",
+      "telemetry": "Supplied source"
+    }
+  ],
+  "schema": "coverage/1.0.0"
+}

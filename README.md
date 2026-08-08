@@ -4,7 +4,7 @@
 
 > Turn a suspicious observable and available telemetry into an explainable investigation workspace and a portable, verifiable handoff.
 
-**Status:** Implementation Slice 2 complete — validated leads and explainable source preview.
+**Status:** All five core implementation slices complete — import, exact IOC matching, coverage, timeline, and verifiable Case Capsules.
 
 IOC Evidence Packager is a local-first desktop application for SOC analysts, incident responders, and DFIR learners. An analyst opens a case, supplies one or more indicators and approved evidence exports, and progressively builds a source-linked timeline, relationship view, coverage assessment, optional intelligence, and an exportable **Case Capsule**.
 
@@ -68,12 +68,12 @@ This distinction is central to the product. A clean DNS export and a missing DNS
 1. Create a case and enter the lead observable, time range, and notes.
 2. Add files or folders; preview detected formats, mappings, and warnings.
 3. Select an offline or approved enrichment policy and review what may leave the machine.
-4. Run the investigation as a cancellable background job.
-5. Review the dashboard, evidence table, timeline, relationships, coverage, and intelligence.
-6. Accept, reject, annotate, or bookmark evidence without changing the preserved source facts.
-7. Export a full, redacted, executive, or machine-readable Case Capsule.
+4. Import evidence as a cancellable background job; matching and coverage update from the durable result.
+5. Review the Dashboard, filterable Evidence ledger, deterministic Timeline, and Evidence Coverage Matrix.
+6. Trace every direct sighting and coverage statement back to source bytes and physical lines.
+7. Export and verify a Full Internal or Redacted Shareable Case Capsule.
 
-Planned workspace areas:
+Workspace areas are stable; later roadmap phases attach relationships, intelligence, and recommendations without restructuring the shell:
 
 ```text
 Dashboard   Evidence   Timeline   Relationships   Coverage
@@ -87,33 +87,30 @@ See the [GUI and Interaction Design](docs/GUI_UX.md) for the screen-by-screen co
 ```text
 case-001/
 |-- report.html
-|-- report.pdf                 # Optional shareable rendering
-|-- evidence.jsonl             # Normalized, source-linked observations
-|-- timeline.csv
-|-- graph.json
-|-- coverage.json
-|-- source-inventory.json
-|-- enrichment/
-|   `-- provider-results.json
-`-- manifest.json              # Versions, parameters, hashes, warnings
+|-- evidence.jsonl             # Facts, matches, explanations, provenance
+|-- timeline.csv               # Deterministic, spreadsheet-safe chronology
+|-- coverage.json              # States, reasons, recovery, supporting IDs
+|-- source-inventory.json      # Digests, adapters, counts, warnings
+`-- manifest.json              # Versions, policies, hashes, limitations
 ```
 
 Different export profiles can omit or redact sensitive fields. The original local case remains unchanged. Read the full [Case Capsule Contract](docs/CASE_CAPSULE.md).
 
 ## Smart, explainable capabilities
 
-- **IOC search recipes:** different fields and pivots for IPs, domains, URLs, and hashes.
-- **Evidence Coverage Matrix:** shows searched, missing, partial, failed, and unsupported telemetry.
-- **Evidence ledger:** every row carries source hash, record position, adapter, field path, rule, and explanation.
-- **Relationship graph:** connects observables, hosts, users, processes, files, and events without converting correlation into causation.
-- **Next-action engine:** rule-based suggestions cite evidence IDs and coverage gaps.
+- **Versioned IOC search recipes:** exact normalized matching for IPv4, domain, and SHA-256 values across declared compatible fields.
+- **Evidence Coverage Matrix:** all six states show searched, missing, partial, failed, and unsupported telemetry with calculation reasons.
+- **Filterable Evidence ledger:** every direct/context row carries source digest, record position, field path, rule, explanation, and raw JSON.
+- **Deterministic Timeline:** UTC chronology with direct/context classification and an honest Undated lane.
+- **Verifiable Case Capsules:** Full Internal and Redacted Shareable profiles, deterministic artifacts, manifest hashing, tamper detection, and export history.
 - **Confidence without a magic score:** facts, intelligence assertions, correlations, and analyst assessments stay separate.
-- **Privacy firewall:** enrichment profiles reveal exactly which observable is sent to which provider.
 - **Reproducible runs:** case history records policies, versions, warnings, and artifacts.
+
+Typed relationships, deterministic recommendations, and privacy-gated intelligence providers remain later roadmap phases; the current UI labels those areas honestly rather than simulating results.
 
 The detailed behavior and guardrails are in [Core and Smart Features](docs/FEATURES.md).
 
-## Planned technical foundation
+## Technical foundation
 
 | Area | Decision | Purpose |
 |---|---|---|
@@ -121,7 +118,7 @@ The detailed behavior and guardrails are in [Core and Smart Features](docs/FEATU
 | Core | Headless Python application/domain services | Testable logic reusable by GUI and automation |
 | Durable store | SQLite | Portable cases, provenance, notes, jobs, and cache metadata |
 | Large-file scans | DuckDB, introduced only when justified | Efficient local CSV/JSON/Parquet exploration |
-| Validation | Pydantic models and explicit schemas | Stable boundaries and versioned contracts |
+| Validation | Immutable dataclasses, explicit parsers, and versioned JSON envelopes | Stable boundaries and contracts |
 | Reports | Jinja2 plus optional PDF engine | Safe human-readable exports |
 | Automation | Thin optional CLI over the same services | Reproducible batch and CI use without a second implementation |
 | Tests | pytest, golden cases, security fixtures | Determinism and evidence-handling assurance |
@@ -133,18 +130,34 @@ python -m pip install -e ".[dev]"
 python -m ioc_evidence_packager
 ```
 
-The current application guides an analyst through the first three setup steps:
+The current application guides an analyst from case setup through durable evidence review:
 
 - validates and canonicalizes IPv4, domain, and SHA-256 leads while preserving the original input;
 - hashes every selected file locally with SHA-256;
 - detects the versioned canonical JSONL adapter using a bounded preview;
 - shows sampled fields, searchable capabilities, time bounds, and safe warnings before import;
-- persists the case, lead, and source interpretation atomically in SQLite schema 2;
+- persists cases, imports, sightings, coverage, and export history in SQLite schema 5;
+- verifies each source SHA-256 again immediately before import so changed evidence is rejected;
+- streams canonical JSONL in bounded background batches without freezing the desktop;
+- exposes monotonic progress, cooperative cancellation, safe retry, and structured per-line rejections;
+- keeps accepted evidence separate from rejected input and prevents duplicate durable records on retry;
+- shows source path, digest, physical line, declared provenance, observables, warnings, and preserved raw JSON in the Evidence ledger;
+- runs the matching recipe automatically, records structured explanations, and labels non-matches as context;
+- evaluates all six coverage states from capabilities, results, warnings, rejections, and source diagnostics;
+- presents deterministic UTC ordering in Timeline and case-level findings/limitations on Dashboard;
+- builds capsules on a worker thread, writes the manifest last, verifies every artifact, publishes atomically, and records successful history;
+- applies capsule-local host/user pseudonyms and omits raw JSON/source paths in Redacted Shareable exports;
 - reopens the investigation with the same setup state and an explicit Offline policy.
 
-No source record has been imported at this stage. The interface says so directly; preview metadata is not presented as evidence.
+![Implemented source-linked Evidence ledger](docs/assets/desktop-shell.png)
 
-![Implemented desktop case dashboard](docs/assets/desktop-shell.png)
+### Finished core workspaces
+
+| Dashboard | Evidence Coverage Matrix |
+|---|---|
+| ![Coverage-aware case Dashboard](docs/assets/dashboard-workspace.png) | ![Implemented six-state Coverage workspace](docs/assets/coverage-workspace.png) |
+| Deterministic Timeline | Verified Case Capsule export |
+| ![Implemented deterministic Timeline](docs/assets/timeline-workspace.png) | ![Implemented Case Capsule export workspace](docs/assets/exports-workspace.png) |
 
 For a short isolated verification that does not touch the normal case store:
 
@@ -160,7 +173,11 @@ Open **New investigation** and use these values:
 - Lead observable: `203.0.113.42`
 - Evidence: select the four numbered clean JSONL files in [`samples/input/demo-investigation`](samples/input/demo-investigation/README.md)
 
-The included guide explains the synthetic incident, expected Ready/Warning/Unsupported preview states, alternate domain and SHA-256 leads, and the facts planted for later evidence-ledger slices. All addresses and domains are private or documentation-only; do not replace them with personal or production infrastructure in a public repository.
+Create the investigation, open **Evidence**, and select **Import previewed sources**. The four clean files produce 12 durable records and no rejection. Add `05-partial-with-warning.jsonl` to demonstrate 13 accepted records plus one `invalid_json` rejection; the unsupported CSV remains visible in setup but is not imported. Retrying is idempotent, so the durable totals stay unchanged.
+
+With all six files selected, the IPv4 recipe produces four exact sightings: one DNS answer, two network connections, and the valid line from the partial file. Coverage shows DNS `MATCH_FOUND`, network `PARTIAL_COVERAGE`, authentication `SEARCHED_NO_MATCH`, and the CSV `FORMAT_UNSUPPORTED`. Open **Exports** to create a new capsule directory; the app will not publish it unless all five artifacts pass manifest verification.
+
+The included guide explains the synthetic incident, expected Ready/Warning/Unsupported states, alternate domain and SHA-256 leads, and the exact evidence/rejection totals. All addresses and domains are private or documentation-only; do not replace them with personal or production infrastructure in a public repository.
 
 ![Bundled evidence files in the source-preview step](docs/assets/source-preview-demo.png)
 
@@ -190,8 +207,8 @@ Active collection and remediation belong in specialist tools and require a separ
 ```text
 docs/                         Product and implementation specification
 samples/input/                Safe synthetic source exports
-samples/expected/             Golden Case Capsule outputs
-src/ioc_evidence_packager/    Future application packages
+samples/expected/             Checked redacted Case Capsule and golden outputs
+src/ioc_evidence_packager/    Implemented domain, services, adapters, storage, reporting, and GUI
 tests/unit/                   Domain and adapter behavior
 tests/integration/            End-to-end case workflows
 tests/ui/                     Focused offscreen desktop behavior
@@ -216,7 +233,7 @@ tests/security/               Hostile-input and trust-boundary fixtures
 
 ## Next implementation milestone
 
-Implementation Slice 3: cancellable background import, streamed canonical JSONL batches, structured record rejections, and an Evidence ledger with source-line provenance. See the [Implementation Blueprint](docs/IMPLEMENTATION_BLUEPRINT.md).
+The five core slices are complete. The next roadmap milestone is **Phase 5: Practical adapters**—generic JSON/CSV mapping followed by selected Wazuh, Hayabusa, and Suricata exports, with schema-drift and time-zone fixtures. See the [Roadmap](docs/ROADMAP.md).
 
 ## License
 

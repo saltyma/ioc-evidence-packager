@@ -2,7 +2,7 @@
 
 The roadmap is GUI-first and vertical. Every phase ends in a demonstrable analyst outcome while the evidence core stays headless and testable. Dates remain absent until the first two slices establish real velocity.
 
-## Phase 0 - Product conception (current)
+## Phase 0 - Product conception (complete)
 
 - Define the product vision, users, workflow, positioning, and guardrails.
 - Specify GUI information architecture and interaction rules.
@@ -23,34 +23,40 @@ The roadmap is GUI-first and vertical. Every phase ends in a demonstrable analys
 
 **Exit demo:** create a case, close the application, reopen it, and recover the same accurate state.
 
-## Phase 2 - Guided evidence import (in progress)
+## Phase 2 - Guided evidence import (core implemented)
 
 - [x] Implement IPv4, domain, and SHA-256 value objects.
 - [x] Publish canonical JSONL schema and build the first safe synthetic fixture.
 - [x] Implement the lead, source-preview, and review steps of the wizard.
 - [x] Hash and preview sources, adapter capabilities, timestamps, fields, and warnings.
 - [ ] Add explicit mapping and connected-privacy steps when another adapter/provider needs them.
-- Stream imports in background batches with progress, cancellation, retry, and structured rejections.
+- [x] Stream imports in background batches with progress, cancellation, retry, and structured rejections.
 
 **Exit demo:** preview exactly how evidence will be interpreted, import it without freezing the UI, cancel safely, and trace accepted/rejected counts.
 
-## Phase 3 - Evidence and coverage core
+## Phase 3 - Evidence and coverage core (core implemented)
 
-- Implement versioned IOC search recipes and structured direct-match explanations.
-- Build the Evidence ledger, filters, raw/provenance drawer, bookmarks, and annotations.
-- Implement the six Evidence Coverage Matrix states and calculation reasons.
-- Add Dashboard summaries and a basic deterministic Timeline.
-- Test planted matches, lookalikes, duplicates, missing sources, partial intervals, and invalid timestamps.
+- [x] Implement versioned IOC search recipes and structured direct-match explanations.
+- [x] Build the source-linked Evidence ledger and raw/provenance detail view.
+- [x] Add Evidence text/classification filters.
+- [ ] Add bookmarks and analyst annotations as reviewed workflow refinements.
+- [x] Implement the six Evidence Coverage Matrix states and calculation reasons.
+- [x] Add coverage-aware Dashboard summaries.
+- [x] Add a basic deterministic Timeline with an Undated lane.
+- [x] Test planted matches, lookalikes, missing sources, partial processing, and failed sources.
+- [ ] Expand mixed-time-zone and ambiguous-timestamp fixtures with practical adapters.
+- [x] Test import duplicates, malformed records, changed source bytes, and cancellation boundaries.
 
 **Exit demo:** find all planted sightings, explain every inclusion, and show why missing or partial telemetry limits the conclusion.
 
-## Phase 4 - Portable Case Capsule
+## Phase 4 - Portable Case Capsule (implemented)
 
-- Build the shared immutable report model.
-- Render self-contained HTML, evidence JSONL, coverage JSON, inventory JSON, and final manifest.
-- Add safe destination validation, artifact hashes, verification, and export history.
-- Add a checked-in example capsule and screenshots from synthetic data.
-- Establish semantic determinism and security fixtures.
+- [x] Build the shared immutable report model.
+- [x] Render self-contained HTML, evidence JSONL, timeline CSV, coverage JSON, inventory JSON, and final manifest.
+- [x] Add safe destination validation, artifact hashes, verification, atomic publication, and export history.
+- [x] Add Full Internal and Redacted Shareable profiles.
+- [x] Add a checked-in example capsule and screenshots from synthetic data.
+- [x] Establish semantic determinism, redaction, and tamper-detection fixtures.
 
 **Exit demo:** another analyst can open and verify the exported investigation without installing the application or accessing original consoles.
 

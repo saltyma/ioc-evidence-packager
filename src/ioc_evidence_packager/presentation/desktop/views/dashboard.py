@@ -1,4 +1,6 @@
-"""First-slice case dashboard."""
+"""Coverage-aware case orientation dashboard."""
+
+from datetime import UTC
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -11,6 +13,8 @@ from PySide6.QtWidgets import (
 )
 
 from ioc_evidence_packager.application.services import InvestigationSetup
+from ioc_evidence_packager.domain.analysis import AnalysisSnapshot, CoverageState
+from ioc_evidence_packager.domain.evidence import EvidenceRecord, ImportRejection
 from ioc_evidence_packager.domain.models import Case
 
 
@@ -40,7 +44,7 @@ class MetricCard(QFrame):
 
 
 class DashboardView(QWidget):
-    """Case-level orientation before ingestion features land."""
+    """Case-level findings, evidence volume, coverage limits, and time bounds."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -72,10 +76,12 @@ class DashboardView(QWidget):
         metrics.setHorizontalSpacing(14)
         self._lead_metric = MetricCard("Lead observables", "0", "No lead stored")
         self._evidence_metric = MetricCard("Evidence records", "0", "No evidence imported yet")
+        self._sighting_metric = MetricCard("Direct sightings", "0", "Recipe not run")
         self._coverage_metric = MetricCard("Coverage", "Pending", "Evaluated after ingestion")
         metrics.addWidget(self._lead_metric, 0, 0)
         metrics.addWidget(self._evidence_metric, 0, 1)
-        metrics.addWidget(self._coverage_metric, 0, 2)
+        metrics.addWidget(self._sighting_metric, 0, 2)
+        metrics.addWidget(self._coverage_metric, 0, 3)
         root.addLayout(metrics)
 
         next_step = QFrame()
@@ -84,18 +90,21 @@ class DashboardView(QWidget):
         next_layout.setContentsMargins(22, 20, 22, 20)
         next_eyebrow = QLabel("NEXT INVESTIGATION STEP")
         next_eyebrow.setObjectName("SectionEyebrow")
-        next_title = QLabel("Import previewed records into the evidence ledger")
-        next_title.setStyleSheet("font-size: 18px; font-weight: 700;")
-        next_copy = QLabel(
-            "The lead and source inventory are now durable. Slice 3 will stream canonical "
-            "records into SQLite, expose rejection diagnostics, and open every fact back to "
-            "its original source position."
+        self._next_title = QLabel("Import previewed records into the evidence ledger")
+        self._next_title.setStyleSheet("font-size: 18px; font-weight: 700;")
+        self._next_copy = QLabel(
+            "Open Evidence to stream canonical records into SQLite, review rejection "
+            "diagnostics, and trace every accepted fact to its original source line."
         )
-        next_copy.setObjectName("Muted")
-        next_copy.setWordWrap(True)
+        self._next_copy.setObjectName("Muted")
+        self._next_copy.setWordWrap(True)
+        self._timeline_summary = QLabel("Timeline bounds are available after import.")
+        self._timeline_summary.setObjectName("Muted")
+        self._timeline_summary.setWordWrap(True)
         next_layout.addWidget(next_eyebrow)
-        next_layout.addWidget(next_title)
-        next_layout.addWidget(next_copy)
+        next_layout.addWidget(self._next_title)
+        next_layout.addWidget(self._next_copy)
+        next_layout.addWidget(self._timeline_summary)
         root.addWidget(next_step)
 
         details = QFrame()
@@ -152,8 +161,73 @@ class DashboardView(QWidget):
         source_count = len(setup.source_previews)
         self._evidence_metric.set_content(
             "0",
-            f"{source_count} source(s) previewed; import begins in Slice 3",
+            f"{source_count} source(s) previewed; ready for import",
         )
+        self._sighting_metric.set_content("0", "Recipe not run")
+        self._coverage_metric.set_content("Pending", "Evaluated after ingestion")
+        self._timeline_summary.setText("Timeline bounds are available after import.")
+
+    def set_evidence_counts(self, evidence: int, rejections: int) -> None:
+        """Refresh import state without rebuilding the case orientation."""
+
+        if evidence:
+            note = f"{rejections} structured rejection(s)" if rejections else "No rejected lines"
+            self._evidence_metric.set_content(str(evidence), note)
+            self._next_title.setText("Review provenance and rejected source lines")
+            self._next_copy.setText(
+                "Open Evidence to inspect physical source lines, declared positions, "
+                "observables, untouched canonical JSON, and bounded rejection diagnostics."
+            )
+        else:
+            self._evidence_metric.set_content("0", "No evidence imported yet")
+
+    def set_analysis(
+        self,
+        analysis: AnalysisSnapshot | None,
+        records: tuple[EvidenceRecord, ...],
+        rejections: tuple[ImportRejection, ...],
+    ) -> None:
+        """Refresh findings and limitations from the shared analysis projection."""
+
+        if analysis is None:
+            self._sighting_metric.set_content("0", "Import evidence to run the recipe")
+            self._coverage_metric.set_content("Pending", "No completed recipe run")
+            return
+        self._sighting_metric.set_content(
+            str(len(analysis.sightings)),
+            f"Exact {analysis.recipe_id.upper()} matches",
+        )
+        limited = analysis.warning_count
+        matched = sum(cell.state is CoverageState.MATCH_FOUND for cell in analysis.coverage)
+        self._coverage_metric.set_content(
+            f"{matched} matched",
+            f"{limited} limitation(s) require review",
+        )
+        timestamps = [record.occurred_at for record in records if record.occurred_at is not None]
+        hosts = {record.host_name for record in records if record.host_name}
+        users = {record.user_name for record in records if record.user_name}
+        if timestamps:
+            first = min(timestamps).astimezone(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+            last = max(timestamps).astimezone(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+            bounds = f"Timeline {first} → {last}"
+        else:
+            bounds = "All imported records are undated"
+        self._timeline_summary.setText(
+            f"{bounds} · {len(hosts)} host(s) · {len(users)} user(s) · "
+            f"{len(rejections)} rejected line(s)."
+        )
+        if analysis.sightings:
+            self._next_title.setText("Review direct sightings beside coverage limitations")
+            self._next_copy.setText(
+                "Use Evidence for match explanations and raw provenance, Coverage for the "
+                "meaning of missing or partial telemetry, then export a verified capsule."
+            )
+        else:
+            self._next_title.setText("No exact lead match—review coverage before concluding")
+            self._next_copy.setText(
+                "The implemented recipe found no direct sighting. Coverage shows whether each "
+                "expected telemetry step was actually searched, partial, missing, or failed."
+            )
 
 
 def _muted_label(text: str) -> QLabel:

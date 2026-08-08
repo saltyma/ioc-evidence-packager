@@ -349,6 +349,8 @@ Exceptions may retain a technical cause for local diagnostics, but user messages
 
 ### Slice 2: lead validation and source preview
 
+**Status: implemented in v0.2.0.**
+
 - implement IPv4/domain/SHA-256 value objects;
 - define canonical JSONL schema and reference fixture;
 - hash/preview a source with adapter capabilities and safe warnings;
@@ -357,6 +359,8 @@ Exceptions may retain a technical cause for local diagnostics, but user messages
 **Demo:** enter a lead and see exactly how one file will be interpreted before import.
 
 ### Slice 3: background import and evidence ledger
+
+**Status: implemented in v0.3.0.**
 
 - implement job coordinator/cancellation;
 - stream canonical JSONL in batches into SQLite;
@@ -367,6 +371,8 @@ Exceptions may retain a technical cause for local diagnostics, but user messages
 
 ### Slice 4: matching and coverage
 
+**Status: implemented in v0.4.0.**
+
 - implement three recipes and structured direct-match explanations;
 - implement all six coverage states and Coverage view;
 - add planted matches/lookalikes/missing/partial/failed sources.
@@ -374,6 +380,8 @@ Exceptions may retain a technical cause for local diagnostics, but user messages
 **Demo:** show why a match exists and why a no-match does not imply safety.
 
 ### Slice 5: dashboard, timeline, and capsule
+
+**Status: implemented in v0.5.0.**
 
 - build the shared report model;
 - add Dashboard and basic Timeline;
@@ -474,4 +482,3 @@ Before Slice 1 begins:
 - add a CI-compatible offscreen Qt smoke command.
 
 The remaining details should be decided inside the slice that proves them, recorded in the architecture documentation, and protected by tests.
-

@@ -1,0 +1,14 @@
+occurred_at,classification,category,action,host,user,source,line,evidence_id
+2026-08-06T09:11:31+00:00,context,authentication,logon-success,HOST-4CEB49ADCE,USER-27AC0D93E9,04-authentication-events.jsonl,1,evidence-e807cff81872cf1c769f36b58c36a75c
+2026-08-06T09:11:44+00:00,context,network,dns-answer,HOST-4CEB49ADCE,USER-27AC0D93E9,01-dns-events.jsonl,1,evidence-191205c9b6573d76b12e45dedc31b15b
+2026-08-06T09:12:03+00:00,direct_match,network,dns-answer,HOST-4CEB49ADCE,USER-27AC0D93E9,01-dns-events.jsonl,2,evidence-9c4cbfafddcc967719e8e1a1ca87c260
+2026-08-06T09:12:04+00:00,context,process,start,HOST-4CEB49ADCE,USER-27AC0D93E9,02-endpoint-events.jsonl,1,evidence-094503cafa6d0d675cc72256cbf2c815
+2026-08-06T09:12:06+00:00,context,file,create,HOST-4CEB49ADCE,USER-27AC0D93E9,02-endpoint-events.jsonl,2,evidence-a701f68d0758ff26988ac77c7b1cc16a
+2026-08-06T09:12:07+00:00,context,process,start,HOST-4CEB49ADCE,USER-27AC0D93E9,02-endpoint-events.jsonl,3,evidence-9e8b093592ccf82ebc3d4e9ba739e856
+2026-08-06T09:12:08+00:00,direct_match,network,connection-allowed,HOST-4CEB49ADCE,,03-network-events.jsonl,1,evidence-c65ec6ca3f5c2ca17d662f9b70633dcc
+2026-08-06T09:12:17+00:00,direct_match,network,connection-allowed,HOST-4CEB49ADCE,,03-network-events.jsonl,2,evidence-19b9d5f76ad434fa25fbae7e67c97b1e
+2026-08-06T09:13:02+00:00,context,authentication,logon-failure,HOST-4CEB49ADCE,USER-AB484510E8,04-authentication-events.jsonl,2,evidence-5e1da9df8bb84d2c6d79c54456053232
+2026-08-06T09:13:36+00:00,context,network,dns-answer,HOST-4CEB49ADCE,USER-27AC0D93E9,01-dns-events.jsonl,3,evidence-6268d67b66fbd15f591c3b3010ca972a
+2026-08-06T09:13:41+00:00,context,process,start,HOST-4CEB49ADCE,USER-27AC0D93E9,02-endpoint-events.jsonl,4,evidence-459c68462a10ed7c200f912567bb08db
+2026-08-06T09:14:02+00:00,context,network,connection-allowed,HOST-4CEB49ADCE,,03-network-events.jsonl,3,evidence-fae32a11d55a67744023077e2b8bb9da
+2026-08-06T09:15:00+00:00,direct_match,network,connection-allowed,HOST-4CEB49ADCE,,05-partial-with-warning.jsonl,1,evidence-737e2aa52a42e8380971002f7906a41c

@@ -178,7 +178,7 @@ QPushButton#NavButton:checked {
     border-color: #5D498E;
 }
 
-QLineEdit, QTextEdit, QComboBox {
+QLineEdit, QTextEdit, QPlainTextEdit, QComboBox {
     color: #EFEAF6;
     background: #110E17;
     border: 1px solid #443A56;
@@ -187,7 +187,7 @@ QLineEdit, QTextEdit, QComboBox {
     selection-background-color: #584187;
 }
 
-QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, QComboBox:focus {
     border-color: #A78BFA;
 }
 
@@ -209,6 +209,40 @@ QHeaderView::section {
     border-bottom: 1px solid #352E44;
     padding: 8px;
     font-weight: 650;
+}
+
+QTabWidget::pane {
+    border: 1px solid #352E44;
+    border-radius: 8px;
+    background: #100D16;
+}
+
+QTabBar::tab {
+    color: #AFA6BF;
+    background: #17131E;
+    border: 1px solid #352E44;
+    padding: 8px 14px;
+    margin-right: 3px;
+}
+
+QTabBar::tab:selected {
+    color: #F5F0FC;
+    background: #2A2145;
+    border-color: #604B91;
+}
+
+QProgressBar {
+    color: #EEEAF6;
+    background: #110E17;
+    border: 1px solid #443A56;
+    border-radius: 6px;
+    text-align: center;
+    min-height: 18px;
+}
+
+QProgressBar::chunk {
+    background: #8B6BE8;
+    border-radius: 5px;
 }
 
 QScrollBar:vertical {

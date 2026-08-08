@@ -222,8 +222,10 @@ The six normative states are `MATCH_FOUND`, `SEARCHED_NO_MATCH`, `PARTIAL_COVERA
 
 SQLite stores:
 
-- cases, observables, sources, jobs, runs, and policies;
-- normalized events, sightings, relationships, and coverage cells;
+- cases, lead observables, source previews, policies, and setup state;
+- import runs, normalized evidence records, source-line provenance, and structured rejections;
+- immutable analysis runs, exact sightings, six-state coverage cells, and export history;
+- relationships, recommendations, assessments, and provider assertions in later phases;
 - provider assertions and cache metadata;
 - annotations, assessments, recommendation state, and export history;
 - schema and adapter versions.

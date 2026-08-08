@@ -1,5 +1,14 @@
 # Expected Case Capsules
 
-Golden Case Capsule artifacts for synthetic cases will live here once the schemas stabilize. Required first artifacts are HTML, evidence JSONL, coverage JSON, source inventory, and the integrity manifest. Volatile fields such as generation time/export ID must be isolated so deterministic evidence content can be compared semantically.
+[`demo-capsule-redacted`](demo-capsule-redacted) is the verified v1.0.0 capsule generated from all six safe demo inputs. It contains self-contained HTML, evidence JSONL, timeline CSV, coverage JSON, source inventory, and the integrity manifest. The shareable profile pseudonymizes host/user identifiers and omits raw JSON and local source paths while retaining evidence IDs and source digests.
+
+Regenerate it from an editable development install with:
+
+```powershell
+$env:PYTHONPATH = (Resolve-Path src).Path
+python tools/build_demo_capsule.py <new-output-directory>
+```
+
+The command requires a new destination and refuses to overwrite an existing capsule. Volatile fields such as generation time/export IDs differ, while deterministic non-manifest artifact content is covered by integration tests.
 
 Do not hand-edit generated golden files. Regenerate them through the documented application service or automation command, review every diff, and record tool, schema, adapter, recipe, privacy-policy, and redaction-policy versions.

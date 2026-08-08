@@ -8,8 +8,8 @@ Never add production logs, personal data, credentials, active malware, real vict
 
 ## Current reference fixture
 
-`canonical-demo.jsonl` implements `schemas/canonical-event-v1.schema.json` and contains three safe synthetic DNS, process, and network events. It exists to exercise source hashing, adapter detection, observable capabilities, and time-bound preview before Slice 3 begins full ingestion.
+`canonical-demo.jsonl` implements the canonical event v1 envelope and contains three safe synthetic DNS, process, and network events. It exercises source hashing, adapter detection, ingestion, observable recipes, coverage, Timeline, and capsule export.
 
 ## Runnable demo investigation
 
-`demo-investigation/` is the recommended hands-on pack. Its README provides exact case values, four coherent canonical JSONL exports, planted sightings and benign lookalikes, expected preview results, an intentionally malformed JSONL file, and an intentionally unsupported CSV export.
+`demo-investigation/` is the recommended hands-on pack. Its README provides exact case values, four coherent canonical JSONL exports, planted sightings and benign lookalikes, expected preview/import/match/coverage results, an intentionally malformed JSONL file, and an intentionally unsupported CSV export.

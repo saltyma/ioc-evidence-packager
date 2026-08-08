@@ -53,7 +53,13 @@ class CanonicalJsonlAdapter:
         if not recognized_records:
             return ProbeResult(recognized=False, warnings=tuple(warnings))
 
-        fields = sorted({field for record in recognized_records for field in _field_paths(record)})
+        fields = sorted(
+            {
+                field
+                for record in recognized_records
+                for field in _field_paths(record) | _declared_observable_fields(record)
+            }
+        )
         capabilities = sorted(
             {
                 capability
@@ -111,6 +117,21 @@ def _record_capabilities(record: dict[str, Any]) -> set[str]:
         if kind in {"ipv4", "domain", "sha256"}:
             capabilities.add(f"observable.{kind}")
     return capabilities
+
+
+def _declared_observable_fields(record: dict[str, Any]) -> set[str]:
+    """Expose adapter-declared searchable paths even when the envelope omits a copy."""
+
+    observables = record.get("observables")
+    if not isinstance(observables, list):
+        return set()
+    return {
+        value
+        for observable in observables
+        if isinstance(observable, dict)
+        and isinstance((value := observable.get("field_path")), str)
+        and bool(value)
+    }
 
 
 def _utc_timestamp(record: dict[str, Any]) -> datetime | None:

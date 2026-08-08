@@ -1,0 +1,99 @@
+{
+  "schema": "source-inventory/1.0.0",
+  "sources": [
+    {
+      "accepted_records": 3,
+      "adapter": "canonical-jsonl",
+      "adapter_version": "1.0.0",
+      "byte_size": 2256,
+      "earliest_time": "2026-08-06T09:11:44+00:00",
+      "latest_time": "2026-08-06T09:13:36+00:00",
+      "name": "01-dns-events.jsonl",
+      "path": null,
+      "preview_id": "preview-b4a81c5b-0788-4b47-bbef-a12c665493ef",
+      "rejected_records": 0,
+      "sha256": "e20a70beb42d5b009e2707aa728a12e61ecd7e6ef0c3ae0fb98f9d006f231661",
+      "status": "ready",
+      "warnings": []
+    },
+    {
+      "accepted_records": 4,
+      "adapter": "canonical-jsonl",
+      "adapter_version": "1.0.0",
+      "byte_size": 3572,
+      "earliest_time": "2026-08-06T09:12:04+00:00",
+      "latest_time": "2026-08-06T09:13:41+00:00",
+      "name": "02-endpoint-events.jsonl",
+      "path": null,
+      "preview_id": "preview-d01f613b-9666-460b-b94c-1e1c20db9e7c",
+      "rejected_records": 0,
+      "sha256": "af71027aa8e1af38a27242a2e968c83eefa3c7cd1314b7e040ead6078bc64c00",
+      "status": "ready",
+      "warnings": []
+    },
+    {
+      "accepted_records": 3,
+      "adapter": "canonical-jsonl",
+      "adapter_version": "1.0.0",
+      "byte_size": 2630,
+      "earliest_time": "2026-08-06T09:12:08+00:00",
+      "latest_time": "2026-08-06T09:14:02+00:00",
+      "name": "03-network-events.jsonl",
+      "path": null,
+      "preview_id": "preview-ca765945-47ad-4be9-b725-e1c91f54145e",
+      "rejected_records": 0,
+      "sha256": "82a0dfdbe4c5a18ae155c0aa3647fbc9d8fa518f51f155a631e60c219699fa44",
+      "status": "ready",
+      "warnings": []
+    },
+    {
+      "accepted_records": 2,
+      "adapter": "canonical-jsonl",
+      "adapter_version": "1.0.0",
+      "byte_size": 1387,
+      "earliest_time": "2026-08-06T09:11:31+00:00",
+      "latest_time": "2026-08-06T09:13:02+00:00",
+      "name": "04-authentication-events.jsonl",
+      "path": null,
+      "preview_id": "preview-b916acc9-2c3f-4c01-b115-72d893bbd557",
+      "rejected_records": 0,
+      "sha256": "978ebc4d3a396c2018c21178917718ddcacaf8390c96dd8f1108c5ad67b3f74e",
+      "status": "ready",
+      "warnings": []
+    },
+    {
+      "accepted_records": 1,
+      "adapter": "canonical-jsonl",
+      "adapter_version": "1.0.0",
+      "byte_size": 706,
+      "earliest_time": "2026-08-06T09:15:00+00:00",
+      "latest_time": "2026-08-06T09:15:00+00:00",
+      "name": "05-partial-with-warning.jsonl",
+      "path": null,
+      "preview_id": "preview-a58f2348-d043-47a9-b6ee-a4dac4b52618",
+      "rejected_records": 1,
+      "sha256": "8fce4bfbb3167ba323260c878825e63154506ac4e0e2243c5b90c2e11c270229",
+      "status": "warning",
+      "warnings": [
+        "Line 2 is not valid UTF-8 JSON."
+      ]
+    },
+    {
+      "accepted_records": 0,
+      "adapter": null,
+      "adapter_version": null,
+      "byte_size": 308,
+      "earliest_time": null,
+      "latest_time": null,
+      "name": "06-unsupported-siem-export.csv",
+      "path": null,
+      "preview_id": "preview-8d52e509-3f22-4918-9d48-7c11cc8c78b2",
+      "rejected_records": 0,
+      "sha256": "ebd7c3fe81e5653e078082b29435fa27a3b37f08f9ead7fbbf94241a457144ce",
+      "status": "unsupported",
+      "warnings": [
+        "No installed adapter recognizes this source."
+      ]
+    }
+  ]
+}

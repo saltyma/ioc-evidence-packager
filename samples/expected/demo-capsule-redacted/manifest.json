@@ -1,0 +1,102 @@
+{
+  "artifacts": [
+    {
+      "byte_size": 8233,
+      "media_type": "text/html",
+      "path": "report.html",
+      "role": "human-readable report",
+      "sha256": "7c4161c86200b3ce2741d76ecdfa5e1ef7ae93e393935dc2c3c0adf53011fc9f"
+    },
+    {
+      "byte_size": 11385,
+      "media_type": "application/x-ndjson",
+      "path": "evidence.jsonl",
+      "role": "source-linked evidence",
+      "sha256": "f7b094fd80a4206e0b0f5c54a5bf47c252d6bb865e26bf4e67ff30848179482a"
+    },
+    {
+      "byte_size": 2068,
+      "media_type": "text/csv",
+      "path": "timeline.csv",
+      "role": "deterministic timeline",
+      "sha256": "5f6254032fada2c31442b9b934fe42ab8fbae5e8b1a7836c94fd3902c22ce812"
+    },
+    {
+      "byte_size": 3347,
+      "media_type": "application/json",
+      "path": "coverage.json",
+      "role": "coverage matrix",
+      "sha256": "3ac638fb26607b8a570d9dd6fd7191f98cfa9c8d6014d1b6d7c1fa9784819c48"
+    },
+    {
+      "byte_size": 3294,
+      "media_type": "application/json",
+      "path": "source-inventory.json",
+      "role": "source inventory",
+      "sha256": "3960fe2b7b9240be110dcc590981aa924faf81cc97c29b22db8e9ac94996c40b"
+    }
+  ],
+  "capsule_id": "export-5abda260-2e4b-42b3-8b41-ff1ee5f55aae",
+  "capsule_schema": "1.0.0",
+  "case_id": "case-6d43c1dc-2d3d-4fef-bfa5-7045a79fa865",
+  "created_at": "2026-08-08T22:33:09.303895+00:00",
+  "export_profile": "redacted-shareable",
+  "limitations": [
+    "Network endpoint has incomplete coverage: 4 accepted record(s), 1 rejected line(s), or a source warning.",
+    "No installed adapter recognizes this source."
+  ],
+  "policy_versions": {
+    "privacy": "offline/1.0.0",
+    "redaction": "shareable/1.0.0",
+    "search_recipe": "ipv4/1.0.0"
+  },
+  "run_ids": [
+    "analysis-3bc8a4fe-0eb9-4b4d-b607-08733e7b24b3"
+  ],
+  "sources": [
+    {
+      "name": "01-dns-events.jsonl",
+      "preview_id": "preview-b4a81c5b-0788-4b47-bbef-a12c665493ef",
+      "sha256": "e20a70beb42d5b009e2707aa728a12e61ecd7e6ef0c3ae0fb98f9d006f231661",
+      "status": "ready"
+    },
+    {
+      "name": "02-endpoint-events.jsonl",
+      "preview_id": "preview-d01f613b-9666-460b-b94c-1e1c20db9e7c",
+      "sha256": "af71027aa8e1af38a27242a2e968c83eefa3c7cd1314b7e040ead6078bc64c00",
+      "status": "ready"
+    },
+    {
+      "name": "03-network-events.jsonl",
+      "preview_id": "preview-ca765945-47ad-4be9-b725-e1c91f54145e",
+      "sha256": "82a0dfdbe4c5a18ae155c0aa3647fbc9d8fa518f51f155a631e60c219699fa44",
+      "status": "ready"
+    },
+    {
+      "name": "04-authentication-events.jsonl",
+      "preview_id": "preview-b916acc9-2c3f-4c01-b115-72d893bbd557",
+      "sha256": "978ebc4d3a396c2018c21178917718ddcacaf8390c96dd8f1108c5ad67b3f74e",
+      "status": "ready"
+    },
+    {
+      "name": "05-partial-with-warning.jsonl",
+      "preview_id": "preview-a58f2348-d043-47a9-b6ee-a4dac4b52618",
+      "sha256": "8fce4bfbb3167ba323260c878825e63154506ac4e0e2243c5b90c2e11c270229",
+      "status": "warning"
+    },
+    {
+      "name": "06-unsupported-siem-export.csv",
+      "preview_id": "preview-8d52e509-3f22-4918-9d48-7c11cc8c78b2",
+      "sha256": "ebd7c3fe81e5653e078082b29435fa27a3b37f08f9ead7fbbf94241a457144ce",
+      "status": "unsupported"
+    }
+  ],
+  "tool": {
+    "name": "ioc-evidence-packager",
+    "version": "0.5.0"
+  },
+  "warning_summary": {
+    "coverage_warnings": 2,
+    "rejected_records": 1
+  }
+}

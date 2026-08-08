@@ -1,6 +1,8 @@
 """Native desktop shell and navigation coordination."""
 
-from PySide6.QtCore import QSize, Qt
+from pathlib import Path
+
+from PySide6.QtCore import QSize, Qt, QThreadPool
 from PySide6.QtWidgets import (
     QButtonGroup,
     QFrame,
@@ -14,20 +16,43 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ioc_evidence_packager.application.analysis_service import AnalysisService
+from ioc_evidence_packager.application.evidence_service import EvidenceService
+from ioc_evidence_packager.application.report_service import ReportService
 from ioc_evidence_packager.application.services import CaseService, InvestigationSetup
+from ioc_evidence_packager.domain.analysis import AnalysisSnapshot
 from ioc_evidence_packager.domain.errors import IOCEvidencePackagerError
+from ioc_evidence_packager.domain.evidence import (
+    EvidenceRecord,
+    ImportProgress,
+    ImportRejection,
+    ImportSummary,
+)
 from ioc_evidence_packager.domain.models import Case, CaseId
+from ioc_evidence_packager.domain.sources import SourcePreview
 from ioc_evidence_packager.ingestion import SourceInspectionService
 from ioc_evidence_packager.presentation.desktop.branding import application_icon
+from ioc_evidence_packager.presentation.desktop.jobs import (
+    CapsuleExportWorker,
+    EvidenceImportWorker,
+)
+from ioc_evidence_packager.presentation.desktop.views.coverage import CoverageView
 from ioc_evidence_packager.presentation.desktop.views.dashboard import DashboardView
+from ioc_evidence_packager.presentation.desktop.views.evidence import EvidenceView
+from ioc_evidence_packager.presentation.desktop.views.exports import ExportsView
 from ioc_evidence_packager.presentation.desktop.views.home import HomeView
 from ioc_evidence_packager.presentation.desktop.views.new_case import NewCaseDialog
 from ioc_evidence_packager.presentation.desktop.views.placeholder import PlaceholderView
+from ioc_evidence_packager.presentation.desktop.views.timeline import TimelineView
+from ioc_evidence_packager.reporting.models import (
+    CapsuleResult,
+    ExportProfile,
+)
 
 NAVIGATION = (
     ("Dashboard", "Case summary, findings, limitations, and next actions.", "Slice 1"),
-    ("Evidence", "Source-linked facts, provenance, review state, and raw records.", "Slice 3"),
-    ("Timeline", "A deterministic chronology with direct, context, and undated lanes.", "Slice 4"),
+    ("Evidence", "Source-linked facts, exact matches, provenance, and raw records.", "Slice 4"),
+    ("Timeline", "A deterministic chronology with direct, context, and undated lanes.", "Slice 5"),
     ("Relationships", "Bounded typed relationships with evidence-backed edges.", "Phase 6"),
     (
         "Coverage",
@@ -48,12 +73,26 @@ class MainWindow(QMainWindow):
     def __init__(
         self,
         case_service: CaseService,
+        evidence_service: EvidenceService,
+        analysis_service: AnalysisService,
+        report_service: ReportService,
         source_inspection_service: SourceInspectionService,
     ) -> None:
         super().__init__()
         self._case_service = case_service
+        self._evidence_service = evidence_service
+        self._analysis_service = analysis_service
+        self._report_service = report_service
         self._source_inspection_service = source_inspection_service
         self._current_case: Case | None = None
+        self._current_setup: InvestigationSetup | None = None
+        self._import_worker: EvidenceImportWorker | None = None
+        self._import_case_id: CaseId | None = None
+        self._export_worker: CapsuleExportWorker | None = None
+        self._records: tuple[EvidenceRecord, ...] = ()
+        self._rejections: tuple[ImportRejection, ...] = ()
+        self._analysis: AnalysisSnapshot | None = None
+        self._thread_pool = QThreadPool.globalInstance()
         self._page_indices: dict[str, int] = {}
         self._nav_buttons: dict[str, QPushButton] = {}
         self.setWindowTitle("IOC Evidence Packager")
@@ -161,7 +200,7 @@ class MainWindow(QMainWindow):
             layout.addWidget(button)
 
         layout.addStretch(1)
-        version = QLabel("v0.2.0  ·  Source preview")
+        version = QLabel("v0.5.0  ·  Complete core")
         version.setObjectName("Muted")
         version.setContentsMargins(10, 0, 0, 2)
         layout.addWidget(version)
@@ -183,10 +222,28 @@ class MainWindow(QMainWindow):
 
         self.dashboard_view = DashboardView()
         self._page_indices["Dashboard"] = self._pages.addWidget(self.dashboard_view)
-        for name, description, milestone in NAVIGATION[1:]:
-            self._page_indices[name] = self._pages.addWidget(
-                PlaceholderView(name, description, milestone)
-            )
+        self.evidence_view = EvidenceView()
+        self.evidence_view.import_requested.connect(self._start_import)
+        self.evidence_view.cancel_requested.connect(self._cancel_import)
+        self._page_indices["Evidence"] = self._pages.addWidget(self.evidence_view)
+        self.timeline_view = TimelineView()
+        self._page_indices["Timeline"] = self._pages.addWidget(self.timeline_view)
+        self._add_placeholder("Relationships")
+        self.coverage_view = CoverageView()
+        self.coverage_view.analysis_requested.connect(self._rerun_analysis)
+        self._page_indices["Coverage"] = self._pages.addWidget(self.coverage_view)
+        self._add_placeholder("Intelligence")
+        self._add_placeholder("Recommendations")
+        self._add_placeholder("Sources")
+        self.exports_view = ExportsView()
+        self.exports_view.export_requested.connect(self._start_export)
+        self.exports_view.verify_requested.connect(self._verify_capsule)
+        self._page_indices["Exports"] = self._pages.addWidget(self.exports_view)
+        self._add_placeholder("Settings")
+
+    def _add_placeholder(self, name: str) -> None:
+        entry = next(item for item in NAVIGATION if item[0] == name)
+        self._page_indices[name] = self._pages.addWidget(PlaceholderView(*entry))
 
     def _build_status_bar(self) -> QFrame:
         bar = QFrame()
@@ -198,7 +255,7 @@ class MainWindow(QMainWindow):
         self._status_text.setObjectName("Muted")
         layout.addWidget(self._status_text)
         layout.addStretch(1)
-        schema = QLabel("Schema 2")
+        schema = QLabel("Schema 5")
         schema.setObjectName("Muted")
         layout.addWidget(schema)
         return bar
@@ -231,9 +288,11 @@ class MainWindow(QMainWindow):
     def open_investigation(self, setup: InvestigationSetup) -> None:
         case = setup.case
         self._current_case = case
+        self._current_setup = setup
         self.dashboard_view.set_investigation(setup)
+        self._reload_evidence(setup)
         self._case_context.setText(case.title)
-        self._export_button.setEnabled(True)
+        self._export_button.setEnabled(self._analysis is not None)
         for name, button in self._nav_buttons.items():
             button.setEnabled(name == "Cases" or self._current_case is not None)
         self._status_text.setText("Ready · Case saved locally · Offline policy active")
@@ -250,6 +309,184 @@ class MainWindow(QMainWindow):
             return
         self.refresh_cases()
         self.open_investigation(setup)
+
+    def _reload_evidence(self, setup: InvestigationSetup | None = None) -> None:
+        active = setup or self._current_setup
+        if active is None:
+            return
+        records = tuple(self._evidence_service.list_evidence(active.case.case_id))
+        rejections = tuple(self._evidence_service.list_rejections(active.case.case_id))
+        analysis: AnalysisSnapshot | None = None
+        if active.lead is not None and (records or rejections):
+            analysis = self._analysis_service.ensure_analysis(
+                active.case.case_id,
+                active.lead,
+                active.source_previews,
+                records,
+                rejections,
+            )
+        self._records = records
+        self._rejections = rejections
+        self._analysis = analysis
+        self.evidence_view.set_investigation(active, list(records), list(rejections))
+        self.evidence_view.set_analysis(analysis)
+        self.coverage_view.set_analysis(analysis)
+        self.timeline_view.set_records(records, analysis)
+        self.dashboard_view.set_evidence_counts(len(records), len(rejections))
+        self.dashboard_view.set_analysis(analysis, records, rejections)
+        history = self._report_service.list_exports(active.case.case_id)
+        self.exports_view.set_investigation(active, analysis, history)
+        self._export_button.setEnabled(analysis is not None)
+
+    def _start_import(self, case_value: object, previews_value: object) -> None:
+        if self._import_worker is not None or not isinstance(case_value, str):
+            return
+        if not isinstance(previews_value, tuple) or not all(
+            isinstance(preview, SourcePreview) for preview in previews_value
+        ):
+            return
+        case_id = CaseId(case_value)
+        worker = EvidenceImportWorker(self._evidence_service, case_id, previews_value)
+        worker.signals.progress.connect(self._import_progress)
+        worker.signals.completed.connect(self._import_completed)
+        worker.signals.failed.connect(self._import_failed)
+        self._import_worker = worker
+        self._import_case_id = case_id
+        self.evidence_view.set_import_running()
+        self._jobs_button.setText("Jobs  1")
+        self._jobs_button.setEnabled(True)
+        self._status_text.setText("Import running · Source integrity verification active")
+        self._thread_pool.start(worker)
+
+    def _cancel_import(self) -> None:
+        if self._import_worker is not None:
+            self._import_worker.cancel()
+            self._status_text.setText("Cancelling import after the current safe boundary…")
+
+    def _import_progress(self, value: object) -> None:
+        if isinstance(value, ImportProgress):
+            self.evidence_view.set_import_progress(value)
+
+    def _import_completed(self, value: object) -> None:
+        if not isinstance(value, ImportSummary):
+            self._import_failed("Import worker returned an invalid result.")
+            return
+        imported_case = self._import_case_id
+        self._import_worker = None
+        self._import_case_id = None
+        self._jobs_button.setText("Jobs  0")
+        self._jobs_button.setEnabled(False)
+        self.evidence_view.set_import_finished(value)
+        if (
+            imported_case is not None
+            and self._current_setup is not None
+            and imported_case == self._current_setup.case.case_id
+        ):
+            self._reload_evidence()
+            self.show_page("Evidence")
+        self._status_text.setText(
+            f"Import {value.status.value} · {value.stored_evidence_records} durable record(s)"
+        )
+
+    def _import_failed(self, message: str) -> None:
+        self._import_worker = None
+        self._import_case_id = None
+        self._jobs_button.setText("Jobs  0")
+        self._jobs_button.setEnabled(False)
+        self.evidence_view.set_import_finished()
+        self._status_text.setText("Import failed · Review diagnostics and retry")
+        self._show_error("Evidence import failed", message)
+
+    def _rerun_analysis(self) -> None:
+        setup = self._current_setup
+        if setup is None or setup.lead is None or not (self._records or self._rejections):
+            return
+        try:
+            self._analysis = self._analysis_service.ensure_analysis(
+                setup.case.case_id,
+                setup.lead,
+                setup.source_previews,
+                self._records,
+                self._rejections,
+                force=True,
+            )
+        except Exception as error:  # noqa: BLE001 - keep analysis failure inside the GUI
+            self._show_error("IOC analysis failed", str(error))
+            return
+        self.evidence_view.set_analysis(self._analysis)
+        self.coverage_view.set_analysis(self._analysis)
+        self.timeline_view.set_records(self._records, self._analysis)
+        self.dashboard_view.set_analysis(self._analysis, self._records, self._rejections)
+        self.exports_view.set_investigation(
+            setup,
+            self._analysis,
+            self._report_service.list_exports(setup.case.case_id),
+        )
+        self._export_button.setEnabled(True)
+        self._status_text.setText(
+            f"Analysis complete · {len(self._analysis.sightings)} direct sighting(s)"
+        )
+
+    def _start_export(self, profile_value: str, destination_value: str) -> None:
+        if self._export_worker is not None or self._import_worker is not None:
+            return
+        setup = self._current_setup
+        if setup is None:
+            return
+        try:
+            profile = ExportProfile(profile_value)
+        except ValueError:
+            self._show_error("Could not export capsule", "Unknown export profile.")
+            return
+        worker = CapsuleExportWorker(
+            self._report_service,
+            setup,
+            self._records,
+            self._rejections,
+            self._analysis,
+            Path(destination_value),
+            profile,
+        )
+        worker.signals.completed.connect(self._export_completed)
+        worker.signals.failed.connect(self._export_failed)
+        self._export_worker = worker
+        self.exports_view.set_export_running()
+        self._jobs_button.setText("Jobs  1")
+        self._jobs_button.setEnabled(True)
+        self._status_text.setText("Building Case Capsule · Offline verification active")
+        self._thread_pool.start(worker)
+
+    def _export_completed(self, value: object) -> None:
+        self._export_worker = None
+        self._jobs_button.setText("Jobs  0")
+        self._jobs_button.setEnabled(False)
+        if not isinstance(value, CapsuleResult):
+            self._export_failed("Export worker returned an invalid result.")
+            return
+        self.exports_view.set_export_result(value)
+        if self._current_setup is not None:
+            self.exports_view.set_history(
+                self._report_service.list_exports(self._current_setup.case.case_id)
+            )
+        self._status_text.setText(
+            f"Capsule verified · {len(value.artifacts)} artifact(s) · {value.destination}"
+        )
+
+    def _export_failed(self, message: str) -> None:
+        self._export_worker = None
+        self._jobs_button.setText("Jobs  0")
+        self._jobs_button.setEnabled(False)
+        self.exports_view.set_export_failed(message)
+        self._status_text.setText("Capsule export failed safely · No completed handoff published")
+        self._show_error("Case Capsule export failed", message)
+
+    def _verify_capsule(self, path_value: str) -> None:
+        result = self._report_service.verify(Path(path_value))
+        self.exports_view.set_verification(result)
+        self._status_text.setText(
+            f"Capsule {'verified' if result.valid else 'failed verification'} · "
+            f"{result.checked_artifacts} artifact(s) checked"
+        )
 
     def _show_error(self, title: str, message: str) -> None:
         box = QMessageBox(self)

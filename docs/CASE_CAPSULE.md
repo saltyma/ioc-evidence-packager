@@ -6,6 +6,8 @@ A Case Capsule is a portable projection of a local investigation. It lets anothe
 
 The capsule is an export, not the live case database and not a complete legal chain-of-custody record.
 
+**Implementation status:** the v0.5.0 desktop ships the first filesystem capsule with Full Internal and Redacted Shareable profiles, background rendering, atomic publication, manifest verification, export history, and a checked synthetic example.
+
 ## Logical structure
 
 ```text
@@ -26,7 +28,7 @@ case-001/
 `-- manifest.json
 ```
 
-The first implementation requires `report.html`, `evidence.jsonl`, `coverage.json`, `source-inventory.json`, and `manifest.json`. Other artifacts are introduced by roadmap phase and declared in the manifest.
+The implemented v1 capsule requires `report.html`, `evidence.jsonl`, `timeline.csv`, `coverage.json`, `source-inventory.json`, and `manifest.json`. Other artifacts are introduced by roadmap phase and declared in the manifest.
 
 ## Artifact roles
 
@@ -79,7 +81,7 @@ Uses a destination-specific connector such as STIX, MISP, OpenCTI, TheHive, or T
   "created_at": "2026-08-06T14:00:00Z",
   "tool": {
     "name": "ioc-evidence-packager",
-    "version": "0.1.0"
+    "version": "0.5.0"
   },
   "run_ids": ["run-0001"],
   "policy_versions": {
@@ -170,4 +172,3 @@ Attachments are disabled by default. Allowed attachments must be explicitly sele
 ## Definition of done
 
 A Case Capsule implementation is complete when a golden synthetic case can be exported twice, semantically compared, hash-verified, safely opened offline, redacted consistently across artifacts, and reviewed back to each included source position.
-
