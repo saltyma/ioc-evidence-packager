@@ -261,6 +261,8 @@ The analyst can Accept, Mark Completed, or Dismiss with a reason. Accepted actio
 
 Displays source location/reference mode, digest, adapter/version, byte and record counts, time bounds, entity bounds, warnings, mapping profile, and raw availability. Re-import creates a new source/run relationship when bytes or mapping versions change.
 
+Implemented in v0.6.0 as a filterable full-height inventory. Ready, Warning, Unsupported, and Failed states remain visually distinct; accepted/rejected counts are calculated per source; and a single row click opens the common non-modal detail window with the complete digest, adapter/version, mapped fields, capabilities, time bounds, preview limitations, and import diagnostics.
+
 ### Jobs
 
 Displays stage, progress, throughput when meaningful, current source, warning count, elapsed time, and Cancel. History includes succeeded, partial, failed, and cancelled jobs with concise recovery actions and expandable technical logs.
@@ -326,7 +328,7 @@ Prefer:
 
 1. Application shell and recent-cases Home.
 2. New Investigation wizard with offline policy.
-3. Background canonical JSONL import with progress/cancel.
+3. Background supported-source import with progress/cancel.
 4. Evidence table and non-modal provenance/raw detail window.
 5. Coverage matrix with all six states.
 6. Dashboard and basic timeline.

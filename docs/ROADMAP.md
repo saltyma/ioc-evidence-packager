@@ -60,14 +60,15 @@ The roadmap is GUI-first and vertical. Every phase ends in a demonstrable analys
 
 **Exit demo:** another analyst can open and verify the exported investigation without installing the application or accessing original consoles.
 
-## Phase 5 - Practical adapters
+## Phase 5 - Practical adapters (implemented in v0.6.0)
 
-- Add generic JSON arrays and CSV mapping profiles.
-- Add selected Wazuh JSON, Hayabusa JSONL, and Suricata `eve.json` adapters.
-- Add source capability coverage, schema-drift diagnostics, and time-zone fixtures.
-- Measure performance and introduce improved batching/indexes; evaluate DuckDB only from evidence.
+- [x] Add bounded generic JSON arrays and explicit versioned CSV mapping profiles.
+- [x] Add selected Wazuh JSONL, Hayabusa JSONL, and Suricata `eve.json` adapters.
+- [x] Add a filterable Sources workspace with digests, adapters, capabilities, counts, limitations, and diagnostics.
+- [x] Add source-capability coverage, schema-drift diagnostics, and mixed-time-zone fixtures.
+- [x] Measure [safe-fixture preview/import behavior](PERFORMANCE.md) and retain the streaming/SQLite design; current evidence does not justify DuckDB.
 
-**Exit:** at least four meaningfully different safe sources produce one coherent, source-linked timeline and coverage matrix.
+**Exit achieved:** six adapter families produce one coherent, source-linked Evidence ledger, Timeline, Coverage Matrix, Sources inventory, and Case Capsule.
 
 ## Phase 6 - Relationships and next actions
 

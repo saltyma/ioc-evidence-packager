@@ -261,7 +261,11 @@ def test_full_capsule_is_deterministic_verified_and_tamper_evident(tmp_path: Pat
     demo = Path(__file__).parents[2] / "samples" / "input" / "demo-investigation"
     previews = tuple(
         SourceInspectionService().inspect(demo / name)
-        for name in ("01-dns-events.jsonl", "03-network-events.jsonl")
+        for name in (
+            "01-dns-events.jsonl",
+            "03-network-events.jsonl",
+            "11-mapped-proxy.csv",
+        )
     )
     setup = case_service.create_investigation(
         NewInvestigationRequest(
@@ -309,6 +313,20 @@ def test_full_capsule_is_deterministic_verified_and_tamper_evident(tmp_path: Pat
     assert {item.path: item.sha256 for item in first.artifacts} == {
         item.path: item.sha256 for item in second.artifacts
     }
+    source_inventory = json.loads(
+        (first.destination / "source-inventory.json").read_text(encoding="utf-8")
+    )
+    assert source_inventory["schema"] == "source-inventory/1.1.0"
+    mapped_source = next(
+        item for item in source_inventory["sources"] if item["adapter"] == "mapped-csv"
+    )
+    assert "mapping-sha256:" in mapped_source["format"]
+    assert mapped_source["capabilities"] == [
+        "observable.domain",
+        "observable.ipv4",
+        "timestamp.utc",
+    ]
+    assert "network.destination_ip" in mapped_source["mapped_fields"]
     assert len(report_service.list_exports(setup.case.case_id)) == 2
     with (first.destination / "evidence.jsonl").open("a", encoding="utf-8") as stream:
         stream.write("tampered\n")

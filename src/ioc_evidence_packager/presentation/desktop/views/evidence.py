@@ -71,7 +71,7 @@ class EvidenceView(QWidget):
         title.setObjectName("PageTitle")
         subtitle = QLabel(
             "Accepted events retain the selected-file digest, physical line, declared "
-            "source position, observables, warnings, and untouched canonical JSON."
+            "source position, observables, warnings, and the preserved source record."
         )
         subtitle.setObjectName("PageSubtitle")
         subtitle.setWordWrap(True)
@@ -155,7 +155,7 @@ class EvidenceView(QWidget):
                 "Observables",
                 "Match explanation",
                 "Source",
-                "Line",
+                "Position",
             ]
         )
         _configure_table(table)
@@ -165,7 +165,7 @@ class EvidenceView(QWidget):
 
     def _build_rejection_table(self) -> QTableWidget:
         table = QTableWidget(0, 5)
-        table.setHorizontalHeaderLabels(["Source", "Line", "Code", "Message", "Excerpt"])
+        table.setHorizontalHeaderLabels(["Source", "Position", "Code", "Message", "Excerpt"])
         _configure_table(table)
         table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
@@ -196,12 +196,12 @@ class EvidenceView(QWidget):
         self._populate_rejections()
         recognized = sum(
             preview.status in {PreviewStatus.READY, PreviewStatus.WARNING}
-            and preview.adapter_id == "canonical-jsonl"
+            and preview.adapter_id is not None
             for preview in self._previews
         )
         self._summary.setText(
             f"{len(records)} durable evidence record(s) · {len(rejections)} rejection(s) · "
-            f"{recognized} canonical source(s) available for idempotent import/retry."
+            f"{recognized} supported source(s) available for idempotent import/retry."
         )
         self._import_button.setEnabled(self._case_id is not None and recognized > 0)
         self._tabs.setTabText(0, f"Evidence · {len(records)}")
@@ -300,7 +300,7 @@ class EvidenceView(QWidget):
                 observable_text,
                 sightings.get(record.evidence_id, "—"),
                 record.source_name,
-                str(record.line_number),
+                f"{record.declared_position_kind} {record.declared_position_value}",
             )
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
@@ -350,13 +350,13 @@ class EvidenceView(QWidget):
                 f"Event ID: {record.event_id}\n"
                 f"Selected source: {record.source_path}\n"
                 f"Selected source SHA-256: {record.source_sha256 or 'Unavailable'}\n"
-                f"Physical position: line {record.line_number}\n"
+                f"Adapter record index: {record.line_number}\n"
                 f"Declared source: {record.declared_source_id}\n"
                 f"Declared position: {record.declared_position_kind} "
                 f"{record.declared_position_value}\n"
                 f"Observables:\n{observable_lines}\n"
                 f"Match explanation:\n{match_lines}\n\n"
-                f"Raw canonical JSON (preserved):\n{record.raw_json}"
+                f"Preserved source record:\n{record.raw_json}"
             ),
         )
 

@@ -4,7 +4,7 @@
 
 > Turn a suspicious observable and available telemetry into an explainable investigation workspace and a portable, verifiable handoff.
 
-**Status:** All five core implementation slices complete — import, exact IOC matching, coverage, timeline, and verifiable Case Capsules.
+**Status:** v0.6.0 completes the five core slices plus the practical-adapter slice: heterogeneous source preview/import, exact IOC matching, coverage, timeline, source inventory, and verifiable Case Capsules.
 
 IOC Evidence Packager is a local-first desktop application for SOC analysts, incident responders, and DFIR learners. An analyst opens a case, supplies one or more indicators and approved evidence exports, and progressively builds a source-linked timeline, relationship view, coverage assessment, optional intelligence, and an exportable **Case Capsule**.
 
@@ -100,8 +100,10 @@ Different export profiles can omit or redact sensitive fields. The original loca
 
 - **Versioned IOC search recipes:** exact normalized matching for IPv4, domain, and SHA-256 values across declared compatible fields.
 - **Evidence Coverage Matrix:** all six states show searched, missing, partial, failed, and unsupported telemetry with calculation reasons.
-- **Filterable Evidence ledger:** every direct/context row carries source digest, record position, field path, rule, explanation, and raw JSON.
+- **Filterable Evidence ledger:** every direct/context row carries source digest, record position, field path, rule, explanation, and preserved source record.
 - **Deterministic Timeline:** UTC chronology with direct/context classification and an honest Undated lane.
+- **Practical adapters:** canonical JSONL, Suricata eve.json, Wazuh alerts, Hayabusa JSONL, bounded generic JSON arrays, and explicitly mapped CSV all enter one provenance-preserving ledger.
+- **Inspectable source inventory:** every supplied source exposes its digest, adapter/version, mapped capabilities, time range, evidence/rejection counts, and limitations.
 - **Verifiable Case Capsules:** Full Internal and Redacted Shareable profiles, deterministic artifacts, manifest hashing, tamper detection, and export history.
 - **Confidence without a magic score:** facts, intelligence assertions, correlations, and analyst assessments stay separate.
 - **Reproducible runs:** case history records policies, versions, warnings, and artifacts.
@@ -134,19 +136,19 @@ The current application guides an analyst from case setup through durable eviden
 
 - validates and canonicalizes IPv4, domain, and SHA-256 leads while preserving the original input;
 - hashes every selected file locally with SHA-256;
-- detects the versioned canonical JSONL adapter using a bounded preview;
+- detects canonical JSONL, selected Suricata/Wazuh/Hayabusa schemas, bounded generic JSON arrays, and sidecar-mapped CSV using bounded previews;
 - shows sampled fields, searchable capabilities, time bounds, and safe warnings before import;
 - persists cases, imports, sightings, coverage, and export history in SQLite schema 5;
 - verifies each source SHA-256 again immediately before import so changed evidence is rejected;
-- streams canonical JSONL in bounded background batches without freezing the desktop;
+- streams JSONL/CSV adapters and bounded JSON-array mappings in background batches without freezing the desktop;
 - exposes monotonic progress, cooperative cancellation, safe retry, and structured per-line rejections;
 - keeps accepted evidence separate from rejected input and prevents duplicate durable records on retry;
-- opens source path, digest, physical line, declared provenance, observables, warnings, and preserved raw JSON in a non-modal Evidence detail window without shrinking the ledger;
+- opens source path, digest, source position, declared provenance, observables, warnings, and the preserved source record in a non-modal Evidence detail window without shrinking the ledger;
 - runs the matching recipe automatically, records structured explanations, and labels non-matches as context;
 - evaluates all six coverage states from capabilities, results, warnings, rejections, and source diagnostics;
 - presents deterministic UTC ordering in Timeline and case-level findings/limitations on Dashboard;
 - builds capsules on a worker thread, writes the manifest last, verifies every artifact, publishes atomically, and records successful history;
-- applies capsule-local host/user pseudonyms and omits raw JSON/source paths in Redacted Shareable exports;
+- applies capsule-local host/user pseudonyms and omits raw source records/paths in Redacted Shareable exports;
 - reopens the investigation with the same setup state and an explicit Offline policy.
 
 ![Implemented source-linked Evidence ledger](docs/assets/desktop-shell.png)
@@ -158,6 +160,8 @@ The current application guides an analyst from case setup through durable eviden
 | ![Coverage-aware case Dashboard](docs/assets/dashboard-workspace.png) | ![Implemented six-state Coverage workspace](docs/assets/coverage-workspace.png) |
 | Deterministic Timeline | Verified Case Capsule export |
 | ![Implemented deterministic Timeline](docs/assets/timeline-workspace.png) | ![Implemented Case Capsule export workspace](docs/assets/exports-workspace.png) |
+
+![Implemented multi-adapter Sources workspace](docs/assets/sources-workspace.png)
 
 For a short isolated verification that does not touch the normal case store:
 
@@ -171,11 +175,11 @@ Open **New investigation** and use these values:
 
 - Case title: `Suspicious download on FIN-WS-014`
 - Lead observable: `203.0.113.42`
-- Evidence: select the four numbered clean JSONL files in [`samples/input/demo-investigation`](samples/input/demo-investigation/README.md)
+- Evidence: select the numbered evidence files in [`samples/input/demo-investigation`](samples/input/demo-investigation/README.md); do not select the `.ioc-map.json` sidecar separately
 
-Create the investigation, open **Evidence**, and select **Import previewed sources**. The four clean files produce 12 durable records and no rejection. Add `05-partial-with-warning.jsonl` to demonstrate 13 accepted records plus one `invalid_json` rejection; the unsupported CSV remains visible in setup but is not imported. Retrying is idempotent, so the durable totals stay unchanged.
+Create the investigation, open **Evidence**, and select **Import previewed sources**. The original four canonical files produce 12 durable records and no rejection. Selecting all eleven evidence files produces 23 durable records plus one `invalid_json` rejection across six adapter families; `06-unsupported-siem-export.csv` remains visible but ineligible because it has no mapping sidecar. Retrying is idempotent, so durable totals stay unchanged.
 
-With all six files selected, the IPv4 recipe produces four exact sightings: one DNS answer, two network connections, and the valid line from the partial file. Coverage shows DNS `MATCH_FOUND`, network `PARTIAL_COVERAGE`, authentication `SEARCHED_NO_MATCH`, and the CSV `FORMAT_UNSUPPORTED`. Open **Exports** to create a new capsule directory; the app will not publish it unless all five artifacts pass manifest verification.
+With all eleven evidence files selected, the IPv4 recipe produces eight exact sightings across canonical, Suricata, Wazuh, generic JSON, and mapped CSV records. Coverage still shows DNS `MATCH_FOUND`, network `PARTIAL_COVERAGE`, authentication `SEARCHED_NO_MATCH`, and the unmapped CSV as `FORMAT_UNSUPPORTED`. Open **Sources** to audit every adapter and limitation, then **Exports** to create a capsule that is published only after every artifact passes manifest verification.
 
 The included guide explains the synthetic incident, expected Ready/Warning/Unsupported states, alternate domain and SHA-256 leads, and the exact evidence/rejection totals. All addresses and domains are private or documentation-only; do not replace them with personal or production infrastructure in a public repository.
 
@@ -183,9 +187,11 @@ The included guide explains the synthetic incident, expected Ready/Warning/Unsup
 
 The GUI never owns matching, storage, enrichment, or export logic. It calls application services, receives immutable view models, and observes background jobs. See [Architecture](docs/ARCHITECTURE.md) and the [Implementation Blueprint](docs/IMPLEMENTATION_BLUEPRINT.md).
 
+Reference-fixture measurements and the current decision to retain streaming plus SQLite are documented in [Performance notes](docs/PERFORMANCE.md).
+
 ## Input and integration direction
 
-The first slice uses canonical JSONL and a safe synthetic incident. Planned adapters then include generic JSON/CSV/Parquet, Wazuh, Suricata `eve.json`, Zeek, Sysmon via Hayabusa JSONL, Plaso exports, Velociraptor results, and Elastic Common Schema.
+Implemented local adapters cover canonical JSONL, bounded generic JSON arrays, explicit CSV mapping profiles, selected Wazuh alerts JSONL, Suricata `eve.json`, and Hayabusa JSONL. Planned formats include Zeek, Plaso exports, Velociraptor results, Elastic Common Schema, Parquet, and OCSF.
 
 Optional providers and handoffs include CIRCL hashlookup, ThreatFox, URLhaus, MalwareBazaar, GreyNoise Community, RDAP, MITRE ATT&CK, MISP, OpenCTI, TheHive, Timesketch, Wazuh/OpenSearch, and Velociraptor. Each remains isolated behind a capability contract and explicit policy. See [Integrations and Enrichment](docs/INTEGRATIONS.md).
 
@@ -233,7 +239,7 @@ tests/security/               Hostile-input and trust-boundary fixtures
 
 ## Next implementation milestone
 
-The five core slices are complete. The next roadmap milestone is **Phase 5: Practical adapters**—generic JSON/CSV mapping followed by selected Wazuh, Hayabusa, and Suricata exports, with schema-drift and time-zone fixtures. See the [Roadmap](docs/ROADMAP.md).
+The five core slices and Phase 5 practical adapters are complete. The next roadmap milestone is **Phase 6: Relationships and next actions**—bounded typed relationships, evidence-preserving pivots, and deterministic recommendations that cite the exact evidence and coverage conditions that triggered them. See the [Roadmap](docs/ROADMAP.md).
 
 ## License
 

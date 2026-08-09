@@ -1,21 +1,30 @@
 {
   "cells": [
     {
-      "coverage_cell_id": "coverage-084221e489e7f403edc68cf6c85ab64bf5c7c87ffbd1ec2891ca14ed43f59b8c",
+      "coverage_cell_id": "coverage-1acfa9ae24b20500b17a9bd91b3433a3a05abea7512eb175662ca557022dd29b",
       "evidence_ids": [
-        "evidence-191205c9b6573d76b12e45dedc31b15b",
-        "evidence-9c4cbfafddcc967719e8e1a1ca87c260",
-        "evidence-6268d67b66fbd15f591c3b3010ca972a"
+        "evidence-8cc9d83467b3e80f62d562eb97a5dadd",
+        "evidence-b8c6205f6ed475f412afe7404cdfa1f4",
+        "evidence-69d427d7f7bd7bccfc0e2fd06844c729",
+        "evidence-65f7549ed626fa75261d3419bf08241f",
+        "evidence-320a7b4d63f779c551a968a002ad3f02",
+        "evidence-0ca38bcd027425036a17bab442ac126a",
+        "evidence-7cb6e3a3cc32ee1f30cc5a16c89105bc",
+        "evidence-edf40e22641883b84fedacfbddee2d13",
+        "evidence-3bb32dfb11441836fc6e25a01371a1d1"
       ],
-      "match_count": 1,
+      "match_count": 2,
       "reason": {
         "code": "exact_match_found",
-        "message": "1 exact normalized match(es) were found for DNS resolution.",
+        "message": "2 exact normalized match(es) were found for DNS resolution.",
         "recovery": null
       },
       "recipe": "ipv4/1.0.0",
       "source_preview_ids": [
-        "preview-b4a81c5b-0788-4b47-bbef-a12c665493ef"
+        "preview-d979b045-5704-460f-bfc6-2b801dec0a19",
+        "preview-d332047b-83d8-459e-8ebe-5cb32264b940",
+        "preview-b7b9473e-6c37-415a-94c3-7064569d8833",
+        "preview-f46a14dd-3e6a-4c70-b535-d0053537e575"
       ],
       "state": "MATCH_FOUND",
       "step_id": "dns_resolution",
@@ -23,23 +32,35 @@
       "telemetry": "DNS"
     },
     {
-      "coverage_cell_id": "coverage-93d948518e0215135926e4fe4cb0e80e9cfc2e2bb8b56aec606c0d7e629a527d",
+      "coverage_cell_id": "coverage-cfc5c91dc8db84121ccdb4892fb384a4e6e7398bba2761c732aa6c6bc7ce6a40",
       "evidence_ids": [
-        "evidence-c65ec6ca3f5c2ca17d662f9b70633dcc",
-        "evidence-19b9d5f76ad434fa25fbae7e67c97b1e",
-        "evidence-fae32a11d55a67744023077e2b8bb9da",
-        "evidence-737e2aa52a42e8380971002f7906a41c"
+        "evidence-ad0566b542ad1736db78472d1a04cd7b",
+        "evidence-e52a9e329f60cdade85c28fb5cd66c54",
+        "evidence-320a7b4d63f779c551a968a002ad3f02",
+        "evidence-aeb5a2ed18a823008e615284dd6add99",
+        "evidence-0ca38bcd027425036a17bab442ac126a",
+        "evidence-d06cdaffdd021a07991350bffd622a03",
+        "evidence-7cb6e3a3cc32ee1f30cc5a16c89105bc",
+        "evidence-77da7e198315374ff3c09364e9f264fc",
+        "evidence-edf40e22641883b84fedacfbddee2d13",
+        "evidence-584b5eb526de20299a153c01d6836398",
+        "evidence-8734c165840b4f9b2d55613d66ef94eb",
+        "evidence-da18211ff5a0b2c3efba3cfb4cb8f4a9"
       ],
-      "match_count": 3,
+      "match_count": 6,
       "reason": {
         "code": "compatible_search_partial",
-        "message": "Network endpoint has incomplete coverage: 4 accepted record(s), 1 rejected line(s), or a source warning.",
+        "message": "Network endpoint has incomplete coverage: 12 accepted record(s), 1 rejected line(s), or a source warning.",
         "recovery": "Review source warnings and rejected lines before drawing a no-match conclusion."
       },
       "recipe": "ipv4/1.0.0",
       "source_preview_ids": [
-        "preview-ca765945-47ad-4be9-b725-e1c91f54145e",
-        "preview-a58f2348-d043-47a9-b6ee-a4dac4b52618"
+        "preview-cc7a094b-c503-42cd-9f46-d5af9818d04c",
+        "preview-4a17a074-5e67-4ee4-a6a1-4dd33610ae54",
+        "preview-d332047b-83d8-459e-8ebe-5cb32264b940",
+        "preview-86ef5a41-a4e3-424c-8f9a-168d97e8ccb8",
+        "preview-f46a14dd-3e6a-4c70-b535-d0053537e575",
+        "preview-b623bb09-bfb2-44e4-b180-4a5e35275f86"
       ],
       "state": "PARTIAL_COVERAGE",
       "step_id": "network_endpoint",
@@ -47,10 +68,12 @@
       "telemetry": "Network"
     },
     {
-      "coverage_cell_id": "coverage-292a04b59736ed173182c6ae3ae48f699a026d7f5118da9d1ede83ae9d721dad",
+      "coverage_cell_id": "coverage-88cf136e06c244e89e94656bcecebea9861ac09e596607f98da71dc02e0a094e",
       "evidence_ids": [
-        "evidence-e807cff81872cf1c769f36b58c36a75c",
-        "evidence-5e1da9df8bb84d2c6d79c54456053232"
+        "evidence-5d5b70bf770a413d7a8ae175a06e3183",
+        "evidence-ad0566b542ad1736db78472d1a04cd7b",
+        "evidence-d06cdaffdd021a07991350bffd622a03",
+        "evidence-4022f0567aaa0a186ca9b7bed1520923"
       ],
       "match_count": 0,
       "reason": {
@@ -60,7 +83,8 @@
       },
       "recipe": "ipv4/1.0.0",
       "source_preview_ids": [
-        "preview-b916acc9-2c3f-4c01-b115-72d893bbd557"
+        "preview-8647ffe0-43af-4e22-aec3-ffb0cc7e64db",
+        "preview-86ef5a41-a4e3-424c-8f9a-168d97e8ccb8"
       ],
       "state": "SEARCHED_NO_MATCH",
       "step_id": "authentication_origin",
@@ -68,7 +92,7 @@
       "telemetry": "Authentication"
     },
     {
-      "coverage_cell_id": "coverage-a01b118329400bae9c8191466123543e59effe7682c5683fdcc701e2afcc3efa",
+      "coverage_cell_id": "coverage-4fc870157839c0cd956a18ce8b40e1195acf0e23cc125fae33b82737af537b73",
       "evidence_ids": [],
       "match_count": 0,
       "reason": {
@@ -78,10 +102,10 @@
       },
       "recipe": "ipv4/1.0.0",
       "source_preview_ids": [
-        "preview-8d52e509-3f22-4918-9d48-7c11cc8c78b2"
+        "preview-127a9452-cbfc-45c6-9127-cece4fd331d9"
       ],
       "state": "FORMAT_UNSUPPORTED",
-      "step_id": "source_diagnostic:preview-8d52e509-3f22-4918-9d48-7c11cc8c78b2",
+      "step_id": "source_diagnostic:preview-127a9452-cbfc-45c6-9127-cece4fd331d9",
       "step_label": "06-unsupported-siem-export.csv",
       "telemetry": "Supplied source"
     }

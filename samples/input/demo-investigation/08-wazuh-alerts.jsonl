@@ -1,0 +1,2 @@
+{"timestamp":"2026-08-06T09:11:40Z","rule":{"id":"5501","description":"Synthetic successful login","groups":["authentication_success"]},"agent":{"id":"014","name":"FIN-WS-014"},"data":{"srcip":"192.0.2.55","srcuser":"analyst-demo"}}
+{"timestamp":"2026-08-06T09:12:22Z","rule":{"id":"8801","description":"Synthetic outbound connection","groups":["network"]},"agent":{"id":"014","name":"FIN-WS-014"},"data":{"dstip":"203.0.113.42","dstport":"443","user":"analyst-demo"}}

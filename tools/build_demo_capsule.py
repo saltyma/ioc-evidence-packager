@@ -29,6 +29,11 @@ DEMO_NAMES = (
     "04-authentication-events.jsonl",
     "05-partial-with-warning.jsonl",
     "06-unsupported-siem-export.csv",
+    "07-suricata-eve.jsonl",
+    "08-wazuh-alerts.jsonl",
+    "09-hayabusa-results.jsonl",
+    "10-generic-array.json",
+    "11-mapped-proxy.csv",
 )
 
 

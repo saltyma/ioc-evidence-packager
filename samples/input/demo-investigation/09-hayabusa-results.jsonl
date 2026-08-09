@@ -1,0 +1,2 @@
+{"Timestamp":"2026-08-06T09:12:04+00:00","Computer":"FIN-WS-014","Channel":"Microsoft-Windows-DNS-Client/Operational","EventID":3008,"RecordID":901,"RuleTitle":"Synthetic DNS query","User":"analyst-demo","QueryName":"cdn-update.example.test"}
+{"Timestamp":"2026-08-06T09:12:07+00:00","Computer":"FIN-WS-014","Channel":"Microsoft-Windows-Sysmon/Operational","EventID":11,"RecordID":902,"RuleTitle":"Synthetic file create","User":"analyst-demo","SHA256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}

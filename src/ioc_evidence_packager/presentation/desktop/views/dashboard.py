@@ -176,7 +176,7 @@ class DashboardView(QWidget):
             self._next_title.setText("Review provenance and rejected source lines")
             self._next_copy.setText(
                 "Open Evidence to inspect physical source lines, declared positions, "
-                "observables, untouched canonical JSON, and bounded rejection diagnostics."
+                "observables, preserved source records, and bounded rejection diagnostics."
             )
         else:
             self._evidence_metric.set_content("0", "No evidence imported yet")

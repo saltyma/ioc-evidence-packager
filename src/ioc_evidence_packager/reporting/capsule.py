@@ -30,7 +30,7 @@ from ioc_evidence_packager.reporting.models import (
 CAPSULE_SCHEMA = "1.0.0"
 EVIDENCE_SCHEMA = "evidence-record/1.0.0"
 COVERAGE_SCHEMA = "coverage/1.0.0"
-SOURCE_SCHEMA = "source-inventory/1.0.0"
+SOURCE_SCHEMA = "source-inventory/1.1.0"
 
 ARTIFACTS = (
     ("report.html", "text/html", "human-readable report"),
@@ -274,6 +274,10 @@ def _source_projection(preview: Any, report: CaseReport, profile: ExportProfile)
         "status": preview.status.value,
         "adapter": preview.adapter_id,
         "adapter_version": preview.adapter_version,
+        "format": preview.format_name,
+        "sample_records": preview.sample_records,
+        "mapped_fields": list(preview.fields),
+        "capabilities": list(preview.capabilities),
         "accepted_records": accepted,
         "rejected_records": rejected,
         "warnings": list(preview.warnings),

@@ -12,4 +12,4 @@ Never add production logs, personal data, credentials, active malware, real vict
 
 ## Runnable demo investigation
 
-`demo-investigation/` is the recommended hands-on pack. Its README provides exact case values, four coherent canonical JSONL exports, planted sightings and benign lookalikes, expected preview/import/match/coverage results, an intentionally malformed JSONL file, and an intentionally unsupported CSV export.
+`demo-investigation/` is the recommended hands-on pack. Its README provides exact case values, canonical JSONL plus Suricata, Wazuh, Hayabusa, bounded generic JSON-array, and mapped-CSV exports, planted sightings and benign lookalikes, expected preview/import/match/coverage results, an intentionally malformed JSONL file, and an intentionally unmapped CSV export.

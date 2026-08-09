@@ -1,19 +1,26 @@
-"""Bounded probe for the versioned canonical JSONL reference format."""
+"""Bounded probe and import adapter for canonical event JSONL."""
 
 import json
+from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from ioc_evidence_packager.ingestion.base import ProbeResult
+from ioc_evidence_packager.domain.models import CaseId
+from ioc_evidence_packager.domain.sources import SourcePreview
+from ioc_evidence_packager.ingestion.adapters.common import (
+    CANONICAL_SCHEMA_ID,
+    MAX_LINE_BYTES,
+    MAX_SAMPLE_RECORDS,
+    preview_profile,
+)
+from ioc_evidence_packager.ingestion.base import ImportItem, ProbeResult
 
-SCHEMA_ID = "canonical-event/1.0.0"
-MAX_SAMPLE_RECORDS = 20
-MAX_LINE_BYTES = 1_048_576
+SCHEMA_ID = CANONICAL_SCHEMA_ID
 
 
 class CanonicalJsonlAdapter:
-    """Recognizes canonical event envelopes without performing ingestion."""
+    """Recognizes and imports the versioned reference envelope."""
 
     adapter_id = "canonical-jsonl"
     version = "1.0.0"
@@ -53,93 +60,24 @@ class CanonicalJsonlAdapter:
         if not recognized_records:
             return ProbeResult(recognized=False, warnings=tuple(warnings))
 
-        fields = sorted(
-            {
-                field
-                for record in recognized_records
-                for field in _field_paths(record) | _declared_observable_fields(record)
-            }
-        )
-        capabilities = sorted(
-            {
-                capability
-                for record in recognized_records
-                for capability in _record_capabilities(record)
-            }
-        )
-        timestamps = [
-            timestamp
-            for record in recognized_records
-            if (timestamp := _utc_timestamp(record)) is not None
-        ]
+        fields, capabilities, earliest, latest = preview_profile(recognized_records)
         return ProbeResult(
             recognized=True,
             format_name="Canonical event JSONL v1",
             sample_records=len(recognized_records),
-            fields=tuple(fields),
-            capabilities=tuple(capabilities),
+            fields=fields,
+            capabilities=capabilities,
             warnings=tuple(warnings),
-            earliest_time=min(timestamps) if timestamps else None,
-            latest_time=max(timestamps) if timestamps else None,
+            earliest_time=earliest,
+            latest_time=latest,
         )
 
+    def iter_items(
+        self,
+        case_id: CaseId,
+        preview: SourcePreview,
+        imported_at: datetime,
+    ) -> Iterator[ImportItem]:
+        from ioc_evidence_packager.ingestion.canonical_import import iter_canonical_items
 
-def _field_paths(value: Any, prefix: str = "", depth: int = 0) -> set[str]:
-    if depth > 4:
-        return set()
-    if isinstance(value, dict):
-        paths: set[str] = set()
-        for key, child in value.items():
-            path = f"{prefix}.{key}" if prefix else str(key)
-            paths.add(path)
-            paths.update(_field_paths(child, path, depth + 1))
-        return paths
-    if isinstance(value, list):
-        paths = set()
-        for child in value[:10]:
-            paths.update(_field_paths(child, f"{prefix}[]", depth + 1))
-        return paths
-    return set()
-
-
-def _record_capabilities(record: dict[str, Any]) -> set[str]:
-    capabilities: set[str] = set()
-    time_value = record.get("time")
-    if isinstance(time_value, dict) and time_value.get("utc"):
-        capabilities.add("timestamp.utc")
-    observables = record.get("observables")
-    if not isinstance(observables, list):
-        return capabilities
-    for observable in observables:
-        if not isinstance(observable, dict):
-            continue
-        kind = observable.get("kind")
-        if kind in {"ipv4", "domain", "sha256"}:
-            capabilities.add(f"observable.{kind}")
-    return capabilities
-
-
-def _declared_observable_fields(record: dict[str, Any]) -> set[str]:
-    """Expose adapter-declared searchable paths even when the envelope omits a copy."""
-
-    observables = record.get("observables")
-    if not isinstance(observables, list):
-        return set()
-    return {
-        value
-        for observable in observables
-        if isinstance(observable, dict)
-        and isinstance((value := observable.get("field_path")), str)
-        and bool(value)
-    }
-
-
-def _utc_timestamp(record: dict[str, Any]) -> datetime | None:
-    time_value = record.get("time")
-    if not isinstance(time_value, dict) or not isinstance(time_value.get("utc"), str):
-        return None
-    try:
-        parsed = datetime.fromisoformat(time_value["utc"].replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    return parsed if parsed.tzinfo is not None else None
+        yield from iter_canonical_items(case_id, preview, imported_at)

@@ -18,11 +18,8 @@ from ioc_evidence_packager.domain.evidence import (
 )
 from ioc_evidence_packager.domain.models import CaseId
 from ioc_evidence_packager.domain.sources import PreviewStatus, SourcePreview
-from ioc_evidence_packager.ingestion.canonical_import import (
-    iter_canonical_items,
-    source_rejection,
-    source_sha256,
-)
+from ioc_evidence_packager.ingestion.canonical_import import source_rejection, source_sha256
+from ioc_evidence_packager.ingestion.registry import AdapterRegistry
 
 BATCH_SIZE = 250
 ProgressCallback = Callable[[ImportProgress], None]
@@ -30,10 +27,15 @@ CancellationCheck = Callable[[], bool]
 
 
 class EvidenceService:
-    """Imports previewed canonical sources and queries their durable ledger."""
+    """Imports previewed supported sources and queries their durable ledger."""
 
-    def __init__(self, repository: EvidenceRepository) -> None:
+    def __init__(
+        self,
+        repository: EvidenceRepository,
+        registry: AdapterRegistry | None = None,
+    ) -> None:
         self._repository = repository
+        self._registry = registry or AdapterRegistry()
 
     def import_sources(
         self,
@@ -46,11 +48,11 @@ class EvidenceService:
         eligible = tuple(
             preview
             for preview in previews
-            if preview.adapter_id == "canonical-jsonl"
+            if self._registry.adapter_for(preview.adapter_id) is not None
             and preview.status in {PreviewStatus.READY, PreviewStatus.WARNING}
         )
         if not eligible:
-            raise ValidationError("No previewed canonical JSONL source is available to import.")
+            raise ValidationError("No previewed source has an installed import adapter.")
         cancel = is_cancelled or (lambda: False)
         notify = on_progress or (lambda _progress: None)
         started_at = datetime.now(UTC)
@@ -78,7 +80,20 @@ class EvidenceService:
                     rejections.append(integrity_rejection)
                     rejected += 1
                 else:
-                    for item in iter_canonical_items(case_id, preview, started_at):
+                    adapter = self._registry.adapter_for(preview.adapter_id)
+                    if adapter is None:
+                        rejections.append(
+                            source_rejection(
+                                case_id,
+                                preview,
+                                "adapter_unavailable",
+                                "The adapter used during preview is no longer installed.",
+                                started_at,
+                            )
+                        )
+                        rejected += 1
+                        continue
+                    for item in adapter.iter_items(case_id, preview, started_at):
                         if cancel():
                             self._flush(run.run_id, records, rejections)
                             return self._finish(

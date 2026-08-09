@@ -125,6 +125,7 @@ def test_background_import_populates_evidence_and_rejections(tmp_path: Path) -> 
     assert context.window.evidence_view.rejection_row_count == 1
     assert context.window.timeline_view.row_count == 1
     assert context.window.coverage_view.row_count >= 3
+    assert context.window.sources_view.row_count == 1
     assert not context.window.evidence_view.findChildren(QPlainTextEdit)
     assert not context.window.timeline_view.findChildren(QPlainTextEdit)
     assert not context.window.coverage_view.findChildren(QPlainTextEdit)
@@ -143,9 +144,16 @@ def test_background_import_populates_evidence_and_rejections(tmp_path: Path) -> 
     coverage_dialog = context.window.coverage_view._detail_dialog  # noqa: SLF001
     assert "Bounded source excerpt:" in evidence_dialog.detail_text
     assert timeline_dialog is not None and timeline_dialog.isVisible()
-    assert "Raw canonical JSON:" in timeline_dialog.detail_text
+    assert "Preserved source record:" in timeline_dialog.detail_text
     assert coverage_dialog is not None and coverage_dialog.isVisible()
     assert "Reason code:" in coverage_dialog.detail_text
+
+    context.window.sources_view._open_detail(0, 0)  # noqa: SLF001
+    app.processEvents()
+    source_dialog = context.window.sources_view._detail_dialog  # noqa: SLF001
+    assert source_dialog is not None and source_dialog.isVisible()
+    assert "SHA-256:" in source_dialog.detail_text
+    assert "Mapped/searchable fields:" in source_dialog.detail_text
 
     context.window.close()
     app.processEvents()

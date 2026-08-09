@@ -43,6 +43,7 @@ from ioc_evidence_packager.presentation.desktop.views.exports import ExportsView
 from ioc_evidence_packager.presentation.desktop.views.home import HomeView
 from ioc_evidence_packager.presentation.desktop.views.new_case import NewCaseDialog
 from ioc_evidence_packager.presentation.desktop.views.placeholder import PlaceholderView
+from ioc_evidence_packager.presentation.desktop.views.sources import SourcesView
 from ioc_evidence_packager.presentation.desktop.views.timeline import TimelineView
 from ioc_evidence_packager.reporting.models import (
     CapsuleResult,
@@ -61,7 +62,7 @@ NAVIGATION = (
     ),
     ("Intelligence", "Attributed provider assertions under the active privacy policy.", "Phase 7"),
     ("Recommendations", "Deterministic next actions citing evidence and coverage gaps.", "Phase 6"),
-    ("Sources", "Input inventory, hashes, adapters, jobs, and diagnostics.", "Slice 2"),
+    ("Sources", "Input inventory, hashes, adapters, jobs, and diagnostics.", "Phase 5"),
     ("Exports", "Reviewed Case Capsule profiles and artifact verification.", "Slice 5"),
     ("Settings", "Case display, storage, privacy, and mapping preferences.", "Slice 2"),
 )
@@ -200,7 +201,7 @@ class MainWindow(QMainWindow):
             layout.addWidget(button)
 
         layout.addStretch(1)
-        version = QLabel("v0.5.0  ·  Complete core")
+        version = QLabel("v0.6.0  ·  Practical adapters")
         version.setObjectName("Muted")
         version.setContentsMargins(10, 0, 0, 2)
         layout.addWidget(version)
@@ -234,7 +235,8 @@ class MainWindow(QMainWindow):
         self._page_indices["Coverage"] = self._pages.addWidget(self.coverage_view)
         self._add_placeholder("Intelligence")
         self._add_placeholder("Recommendations")
-        self._add_placeholder("Sources")
+        self.sources_view = SourcesView()
+        self._page_indices["Sources"] = self._pages.addWidget(self.sources_view)
         self.exports_view = ExportsView()
         self.exports_view.export_requested.connect(self._start_export)
         self.exports_view.verify_requested.connect(self._verify_capsule)
@@ -332,6 +334,7 @@ class MainWindow(QMainWindow):
         self.evidence_view.set_analysis(analysis)
         self.coverage_view.set_analysis(analysis)
         self.timeline_view.set_records(records, analysis)
+        self.sources_view.set_investigation(active, records, rejections)
         self.dashboard_view.set_evidence_counts(len(records), len(rejections))
         self.dashboard_view.set_analysis(analysis, records, rejections)
         history = self._report_service.list_exports(active.case.case_id)

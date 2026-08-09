@@ -204,6 +204,8 @@ flowchart LR
 
 Changing an adapter's interpretation may produce a new normalized event version while retaining the same source reference.
 
+The v0.6 adapter boundary has two operations: a bounded `probe` that declares format, fields, capabilities, warnings, and time bounds; and `iter_items`, which yields accepted evidence or structured rejections. The inspection and import services share one ordered registry so a previewed adapter cannot silently resolve to a different importer. Vendor adapters map only selected structured fields. Generic CSV requires a versioned sidecar profile, and generic JSON arrays have an explicit size bound.
+
 ## Coverage model
 
 Coverage is evaluated for a tuple such as:

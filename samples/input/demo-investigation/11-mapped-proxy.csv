@@ -1,0 +1,3 @@
+event_id,time,host,user,action,destination_ip,domain,decision
+mapped-proxy-001,2026-08-06T09:12:28Z,FIN-WS-014,analyst-demo,connection-allowed,203.0.113.42,cdn-update.example.test,allowed
+mapped-proxy-002,2026-08-06T09:12:38Z,FIN-WS-014,analyst-demo,connection-allowed,198.51.100.25,cdn-updates.example.test,allowed

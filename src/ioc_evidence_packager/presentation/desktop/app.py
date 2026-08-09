@@ -19,6 +19,7 @@ from ioc_evidence_packager.application.services import (
     NewInvestigationRequest,
 )
 from ioc_evidence_packager.ingestion import SourceInspectionService
+from ioc_evidence_packager.ingestion.registry import AdapterRegistry
 from ioc_evidence_packager.presentation.desktop.branding import application_icon
 from ioc_evidence_packager.presentation.desktop.main_window import MainWindow
 from ioc_evidence_packager.presentation.desktop.theme import APP_STYLESHEET
@@ -80,10 +81,11 @@ def build_desktop(database_path: Path) -> DesktopContext:
     database.initialize()
     repository = SQLiteCaseRepository(database)
     case_service = CaseService(repository)
-    evidence_service = EvidenceService(SQLiteEvidenceRepository(database))
+    adapter_registry = AdapterRegistry()
+    evidence_service = EvidenceService(SQLiteEvidenceRepository(database), adapter_registry)
     analysis_service = AnalysisService(SQLiteAnalysisRepository(database))
     report_service = ReportService(SQLiteExportRepository(database))
-    source_inspection_service = SourceInspectionService()
+    source_inspection_service = SourceInspectionService(adapter_registry)
     window = MainWindow(
         case_service,
         evidence_service,
@@ -116,7 +118,7 @@ def create_qapplication(arguments: list[str] | None = None) -> QApplication:
 
     QCoreApplication.setOrganizationName(ORGANIZATION_NAME)
     QCoreApplication.setApplicationName(APPLICATION_NAME)
-    QCoreApplication.setApplicationVersion("0.5.0")
+    QCoreApplication.setApplicationVersion("0.6.0")
     existing = QApplication.instance()
     if existing is not None and not isinstance(existing, QApplication):
         raise RuntimeError("A non-GUI Qt application already exists in this process.")
@@ -147,7 +149,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--smoke-page",
-        choices=("Dashboard", "Evidence", "Timeline", "Coverage", "Exports"),
+        choices=("Dashboard", "Evidence", "Timeline", "Coverage", "Sources", "Exports"),
         default="Evidence",
         help="Workspace page to show during --smoke-test.",
     )
@@ -189,6 +191,11 @@ def main(argv: list[str] | None = None) -> int:
                     "04-authentication-events.jsonl",
                     "05-partial-with-warning.jsonl",
                     "06-unsupported-siem-export.csv",
+                    "07-suricata-eve.jsonl",
+                    "08-wazuh-alerts.jsonl",
+                    "09-hayabusa-results.jsonl",
+                    "10-generic-array.json",
+                    "11-mapped-proxy.csv",
                 )
                 use_demo = args.smoke_demo and all(
                     (demo_directory / name).is_file() for name in demo_names

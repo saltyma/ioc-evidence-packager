@@ -16,11 +16,12 @@ A connector implements one or more declared capabilities. The GUI enables only a
 
 | Priority | Source | Approach | Value |
 |---|---|---|---|
-| P0 | Canonical JSONL | Native reference adapter | Proves contracts and golden tests |
-| P0 | Generic JSON/CSV | User mapping profiles | Covers ad hoc exports without vendor branching |
-| P1 | Wazuh JSON | Versioned selected-schema adapter | Relevant SOC alert and endpoint evidence |
-| P1 | Hayabusa JSONL | Consume established Windows event triage output | Avoids reimplementing EVTX parsing/rules |
-| P1 | Suricata `eve.json` | Event-type-aware JSON adapter | Network, DNS, TLS, HTTP, alert context |
+| Implemented | Canonical JSONL | Native reference adapter | Proves contracts and golden tests |
+| Implemented | Bounded generic JSON arrays | Conservative built-in flat-field aliases | Covers small common exports without claiming arbitrary JSON support |
+| Implemented | CSV mapping profiles | Adjacent versioned `.ioc-map.json` sidecar | Makes analyst-authorized column meaning explicit |
+| Implemented | Wazuh alerts JSONL | Versioned selected-schema adapter | Relevant SOC alert and endpoint evidence |
+| Implemented | Hayabusa JSONL | Consume established Windows event triage output | Avoids reimplementing EVTX parsing/rules |
+| Implemented | Suricata `eve.json` | Event-type-aware selected-field adapter | Network, DNS, TLS, HTTP, alert, and file context |
 | P2 | Zeek TSV/JSON | Log-type adapters | Rich network pivots |
 | P2 | Plaso output | Import documented timeline exports | Interoperate with forensic tooling |
 | P2 | Velociraptor results | Artifact/result mapping profiles | Endpoint collection handoff |
@@ -44,6 +45,8 @@ An adapter declares:
 - fixtures and supported vendor/schema versions.
 
 Detection returns reasons and confidence metadata, but ambiguous selection requires analyst confirmation. Adapters never decide maliciousness.
+
+The v0.6 registry uses ordered exact-shape probes. Canonical and vendor-specific signatures run before generic mapping. A CSV without a valid adjacent profile remains `FORMAT_UNSUPPORTED`; this is intentional because header names alone are not sufficient evidence of field meaning. Generic JSON arrays are bounded to 16 MiB in the current implementation, while JSONL and CSV records are iterated line by line.
 
 ## Enrichment provider priorities
 

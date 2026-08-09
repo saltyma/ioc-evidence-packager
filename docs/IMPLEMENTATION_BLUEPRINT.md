@@ -390,6 +390,18 @@ Exceptions may retain a technical cause for local diagnostics, but user messages
 
 **Demo:** complete the north-star synthetic case entirely offline.
 
+### Slice 6: practical adapters and source inventory
+
+**Status: implemented in v0.6.0.**
+
+- extend the adapter contract from bounded probe to source-linked iteration;
+- add Suricata eve.json, Wazuh alerts, Hayabusa JSONL, bounded generic JSON-array, and explicit CSV mapping-profile adapters;
+- keep ambiguous CSV unsupported unless an adjacent versioned `.ioc-map.json` sidecar declares its semantics;
+- surface adapter/version, source digest, capabilities, time bounds, evidence/rejection counts, warnings, and diagnostics in Sources;
+- add schema-drift, mixed-time-zone, idempotent multi-adapter import, and safe-fixture performance tests.
+
+**Demo:** import six format families into one ledger and prove that each row retains the exact source digest and position.
+
 Each slice ends in a working application and tests. Do not build all infrastructure before the first visible workflow.
 
 ## Testing strategy

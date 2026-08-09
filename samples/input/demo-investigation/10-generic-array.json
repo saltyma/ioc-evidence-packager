@@ -1,0 +1,4 @@
+[
+  {"event_id":"generic-proxy-001","timestamp":"2026-08-06T09:12:25Z","category":"network","action":"connection-allowed","host":"FIN-WS-014","user":"analyst-demo","destination_ip":"203.0.113.42","domain":"cdn-update.example.test"},
+  {"event_id":"generic-proxy-002","timestamp":"2026-08-06T09:12:35Z","category":"network","action":"connection-allowed","host":"FIN-WS-014","user":"analyst-demo","destination_ip":"198.51.100.25","domain":"cdn-updates.example.test"}
+]

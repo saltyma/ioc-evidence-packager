@@ -42,6 +42,17 @@ The analyst can:
 
 Unsupported or malformed records are counted and explained; they are never quietly discarded.
 
+### Implemented adapter set (v0.6.0)
+
+- canonical event JSONL v1;
+- selected Suricata `eve.json` DNS/flow/alert/TLS/HTTP/fileinfo fields;
+- selected Wazuh alert JSONL fields;
+- selected Hayabusa JSONL fields;
+- bounded generic JSON arrays using conservative flat-field aliases;
+- CSV only when an adjacent versioned `.ioc-map.json` profile explicitly maps timestamp, entity, action, and observable columns.
+
+All adapters preserve the selected source digest and source position. They map only explicit structured fields, never mine IOC-looking substrings from descriptions, and emit `adapter_schema_drift`, `mapping_invalid`, or format-specific diagnostics instead of silently guessing.
+
 ## 3. IOC validation and search recipes
 
 **Tier:** Core and Smart

@@ -250,8 +250,9 @@ class NewCaseDialog(QDialog):
         privacy_title = QLabel("SOURCE BYTES ARE NOT IMPORTED YET")
         privacy_title.setObjectName("SectionEyebrow")
         privacy_copy = QLabel(
-            "This slice stores the selected path, SHA-256, format, capabilities, time bounds, "
-            "and warnings. Full record ingestion begins in Slice 3."
+            "Case setup stores the selected path, SHA-256, detected adapter, capabilities, "
+            "time bounds, and warnings. Source records are imported only after you create "
+            "the investigation and explicitly start the background import."
         )
         privacy_copy.setObjectName("Muted")
         privacy_copy.setWordWrap(True)

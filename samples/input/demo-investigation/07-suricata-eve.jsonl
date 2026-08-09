@@ -1,0 +1,2 @@
+{"timestamp":"2026-08-06T09:12:10.000000+00:00","flow_id":7001,"event_type":"dns","src_ip":"10.20.14.23","dest_ip":"192.0.2.53","dns":{"type":"answer","rrname":"cdn-update.example.test","answers":[{"rrtype":"A","rdata":"203.0.113.42"}]}}
+{"timestamp":"2026-08-06T09:12:20.000000+00:00","flow_id":7002,"event_type":"alert","src_ip":"10.20.14.23","dest_ip":"198.51.100.25","alert":{"signature_id":900002,"signature":"Synthetic benign lookalike connection"}}

@@ -1,0 +1,27 @@
+{
+  "schema": "ioc-csv-mapping/1.0.0",
+  "profile_id": "synthetic-proxy/1.0.0",
+  "delimiter": ",",
+  "columns": {
+    "event_id": "event_id",
+    "timestamp": "time",
+    "action": "action",
+    "host": "host",
+    "user": "user"
+  },
+  "defaults": {
+    "category": "network"
+  },
+  "observables": [
+    {
+      "column": "destination_ip",
+      "kind": "ipv4",
+      "field_path": "network.destination_ip"
+    },
+    {
+      "column": "domain",
+      "kind": "domain",
+      "field_path": "network.domain"
+    }
+  ]
+}

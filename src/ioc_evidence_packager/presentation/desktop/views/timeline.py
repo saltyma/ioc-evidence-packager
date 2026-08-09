@@ -67,7 +67,16 @@ class TimelineView(QWidget):
 
         self._table = QTableWidget(0, 8)
         self._table.setHorizontalHeaderLabels(
-            ["UTC time", "Class", "Category", "Action", "Host", "User", "Source", "Line"]
+            [
+                "UTC time",
+                "Class",
+                "Category",
+                "Action",
+                "Host",
+                "User",
+                "Source",
+                "Position",
+            ]
         )
         self._table.setAlternatingRowColors(True)
         self._table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -134,7 +143,7 @@ class TimelineView(QWidget):
                 record.host_name or "—",
                 record.user_name or "—",
                 record.source_name,
-                str(record.line_number),
+                f"{record.declared_position_kind} {record.declared_position_value}",
             )
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
@@ -158,7 +167,8 @@ class TimelineView(QWidget):
                 f"Event ID: {record.event_id}\n"
                 f"Source: {record.source_path}\n"
                 f"SHA-256: {record.source_sha256 or 'Unavailable'}\n"
-                f"Position: line {record.line_number}\n\n"
-                f"Raw canonical JSON:\n{record.raw_json}"
+                f"Position: {record.declared_position_kind} "
+                f"{record.declared_position_value}\n\n"
+                f"Preserved source record:\n{record.raw_json}"
             ),
         )

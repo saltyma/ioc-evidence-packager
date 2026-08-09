@@ -149,7 +149,7 @@ These controls improve reviewability. They do not alone prove acquisition qualit
 
 1. Launch a PySide6 desktop shell and create a durable local case.
 2. Validate one IPv4, domain, or SHA-256 lead.
-3. Preview and import a safe canonical JSONL source in a cancellable background job.
+3. Preview and import safe canonical, selected vendor JSONL, bounded JSON-array, or explicitly mapped CSV sources in a cancellable background job.
 4. Find structured direct matches and preserve provenance.
 5. Display the Evidence ledger and Coverage Matrix.
 6. Export deterministic HTML, JSONL, inventory, coverage, and manifest artifacts.

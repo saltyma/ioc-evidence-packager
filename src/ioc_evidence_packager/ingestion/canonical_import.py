@@ -16,12 +16,13 @@ from ioc_evidence_packager.domain.evidence import (
 )
 from ioc_evidence_packager.domain.models import CaseId
 from ioc_evidence_packager.domain.sources import SourcePreview
-from ioc_evidence_packager.ingestion.adapters.canonical_jsonl import (
+from ioc_evidence_packager.ingestion.adapters.common import (
+    CANONICAL_SCHEMA_ID,
     MAX_LINE_BYTES,
-    SCHEMA_ID,
 )
+from ioc_evidence_packager.ingestion.base import ImportItem
 
-ImportItem = EvidenceRecord | ImportRejection
+SCHEMA_ID = CANONICAL_SCHEMA_ID
 REQUIRED_TOP_LEVEL = ("event_id", "source", "time", "event", "observables", "adapter")
 
 
@@ -94,10 +95,10 @@ def iter_canonical_items(
                     imported_at,
                 )
                 continue
-            yield _convert_record(case_id, preview, line_number, text, value, imported_at)
+            yield convert_canonical_record(case_id, preview, line_number, text, value, imported_at)
 
 
-def _convert_record(
+def convert_canonical_record(
     case_id: CaseId,
     preview: SourcePreview,
     line_number: int,
@@ -300,6 +301,28 @@ def source_rejection(
     """Build a deterministic source-level rejection at synthetic line zero."""
 
     return _rejection(case_id, preview, 0, code, message, "", created_at)
+
+
+def record_rejection(
+    case_id: CaseId,
+    preview: SourcePreview,
+    line_number: int,
+    code: str,
+    message: str,
+    raw_value: str,
+    created_at: datetime,
+) -> ImportRejection:
+    """Build a deterministic record-level rejection for a non-canonical adapter."""
+
+    return _rejection(
+        case_id,
+        preview,
+        line_number,
+        code,
+        message,
+        _text_excerpt(raw_value),
+        created_at,
+    )
 
 
 def _stable_id(prefix: str, case_id: CaseId, preview: SourcePreview, line_number: int) -> str:

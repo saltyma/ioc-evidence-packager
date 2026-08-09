@@ -27,10 +27,20 @@ Start by selecting the four clean files together:
 
 The wizard hashes each complete file, inspects a bounded sample, and shows the detected fields, capabilities, UTC range, and warnings. After creating the investigation, open **Evidence** and choose **Import previewed sources**. Import runs in the background and can be cancelled safely between bounded batches.
 
-Then try the two diagnostic fixtures separately or alongside the clean files:
+Then add the five practical-adapter fixtures:
+
+- `07-suricata-eve.jsonl` — selected Suricata DNS/alert fields;
+- `08-wazuh-alerts.jsonl` — selected Wazuh authentication/network alert fields;
+- `09-hayabusa-results.jsonl` — selected Hayabusa DNS/file fields;
+- `10-generic-array.json` — a bounded flat JSON array;
+- `11-mapped-proxy.csv` — CSV authorized by the adjacent `11-mapped-proxy.csv.ioc-map.json` mapping profile.
+
+Do not select the `.ioc-map.json` sidecar separately. The CSV adapter discovers it next to the CSV and validates its schema and mapped headers.
+
+The two diagnostic fixtures can be selected alongside the supported files:
 
 - `05-partial-with-warning.jsonl` contains one valid event followed by intentionally malformed JSON. It should show **Warning** while retaining the valid sampled event.
-- `06-unsupported-siem-export.csv` is a realistic safe CSV export. It should show **Unsupported** because a CSV mapping adapter has not been implemented yet.
+- `06-unsupported-siem-export.csv` is a realistic safe CSV export with no mapping sidecar. It stays **Unsupported** because the application refuses to guess column meaning from header names alone.
 
 At least one selected file must be recognized as Ready or Warning before the wizard can create the investigation.
 
@@ -45,7 +55,12 @@ At least one selected file must be recognized as Ready or Warning before the wiz
 | `03-network-events.jsonl` | Ready | 3 | domain, IPv4, UTC timestamp |
 | `04-authentication-events.jsonl` | Ready | 2 | IPv4, UTC timestamp |
 | `05-partial-with-warning.jsonl` | Warning | 1 | IPv4, UTC timestamp |
-| `06-unsupported-siem-export.csv` | Unsupported | 0 | none until a CSV adapter exists |
+| `06-unsupported-siem-export.csv` | Unsupported | 0 | none without an explicit mapping profile |
+| `07-suricata-eve.jsonl` | Ready | 2 | domain, IPv4, UTC timestamp |
+| `08-wazuh-alerts.jsonl` | Ready | 2 | IPv4, UTC timestamp |
+| `09-hayabusa-results.jsonl` | Ready | 2 | domain, SHA-256, UTC timestamp |
+| `10-generic-array.json` | Ready | 2 | domain, IPv4, UTC timestamp |
+| `11-mapped-proxy.csv` | Ready | 2 | domain, IPv4, UTC timestamp |
 
 ## Expected import
 
@@ -53,22 +68,24 @@ At least one selected file must be recognized as Ready or Warning before the wiz
 |---|---:|---:|---|
 | Four clean JSONL files | 12 | 0 | Complete successful run |
 | Four clean files plus `05-partial-with-warning.jsonl` | 13 | 1 | The valid line is accepted; malformed line 2 is an `invalid_json` rejection |
-| `06-unsupported-siem-export.csv` | 0 | 0 | It is not eligible for the canonical JSONL importer |
+| `06-unsupported-siem-export.csv` | 0 | 0 | It has no mapping sidecar and is not eligible for import |
+| Five Phase 5 practical-adapter files | 10 | 0 | Two records from each adapter enter the same durable ledger |
+| All eleven evidence files | 23 | 1 | Six adapter families are supported; the unmapped CSV stays visible but ineligible |
 
 Importing the same previewed sources again does not duplicate durable evidence. If a file is changed after preview, the importer creates a `source_hash_mismatch` rejection and accepts no records from that source.
 
 ## Expected IPv4 analysis and coverage
 
-With the lead `203.0.113.42` and all six files selected:
+With the lead `203.0.113.42` and all eleven evidence files selected:
 
-- four direct sightings are created: DNS line 2, network lines 1 and 2, and partial-file line 1;
+- eight direct sightings are created: four canonical sightings plus Suricata DNS, Wazuh network, generic JSON network, and mapped CSV network sightings;
 - the `198.51.100.25` address and similarly named domain remain context, never matches;
 - DNS is `MATCH_FOUND`;
 - network is `PARTIAL_COVERAGE` because one compatible source contains a rejected line;
 - authentication is `SEARCHED_NO_MATCH`, which is neutral rather than a claim of safety;
-- the CSV receives a `FORMAT_UNSUPPORTED` diagnostic cell.
+- the unmapped CSV receives a `FORMAT_UNSUPPORTED` diagnostic cell.
 
-Dashboard summarizes the results, Evidence exposes every rule and source line, Timeline orders all 13 accepted events, and Exports can build either a Full Internal or Redacted Shareable capsule. A checked redacted example is available in [`samples/expected/demo-capsule-redacted`](../../expected/demo-capsule-redacted).
+Dashboard summarizes the results, Evidence exposes every rule and source position, Timeline orders all 23 accepted events, Sources compares every adapter and limitation, and Exports can build either a Full Internal or Redacted Shareable capsule. A checked redacted example is available in [`samples/expected/demo-capsule-redacted`](../../expected/demo-capsule-redacted).
 
 ## Scenario truth and expected evidence
 
@@ -81,5 +98,6 @@ The synthetic story is deliberately small but connected:
 5. The workstation connects twice to `203.0.113.42:443` using the same domain as TLS SNI.
 6. `cdn-updates.example.test`, `198.51.100.25`, `invoice-reviewer.exe`, and the `bbbb…bbbb` hash are benign lookalikes. Exact matching must not confuse them with the lead values.
 7. Authentication data provides host/user context but does not prove that the suspicious observable caused the login.
+8. The Phase 5 formats deliberately restate a subset of the same synthetic observations through different tool/export schemas. They prove normalization and provenance interoperability, not independent corroboration from real systems.
 
 These are planted facts for deterministic development—not a claim that any address, domain, hash, user, or process is malicious.
