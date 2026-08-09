@@ -211,6 +211,13 @@ class EvidenceView(QWidget):
         self._analysis = analysis
         self._apply_evidence_filters()
 
+    def set_search_filter(self, value: str) -> None:
+        """Apply a graph/recommendation pivot and refresh the ledger."""
+
+        self._classification_filter.setCurrentIndex(0)
+        self._search.setText(value)
+        self._tabs.setCurrentIndex(0)
+
     def set_import_running(self) -> None:
         self._import_button.setEnabled(False)
         self._cancel_button.setVisible(True)

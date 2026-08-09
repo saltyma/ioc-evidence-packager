@@ -8,10 +8,16 @@ from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 from ioc_evidence_packager.application.evidence_service import EvidenceService
 from ioc_evidence_packager.application.report_service import ReportService
 from ioc_evidence_packager.application.services import InvestigationSetup
+from ioc_evidence_packager.application.workspace_service import WorkspaceService
 from ioc_evidence_packager.domain.analysis import AnalysisSnapshot
 from ioc_evidence_packager.domain.evidence import EvidenceRecord, ImportRejection
-from ioc_evidence_packager.domain.models import CaseId
+from ioc_evidence_packager.domain.models import Case, CaseId
 from ioc_evidence_packager.domain.sources import SourcePreview
+from ioc_evidence_packager.domain.workspace import (
+    IntelligenceAssertion,
+    Recommendation,
+    RelationshipSnapshot,
+)
 from ioc_evidence_packager.ingestion import SourceInspectionService
 from ioc_evidence_packager.reporting.models import ExportProfile
 
@@ -103,6 +109,9 @@ class CapsuleExportWorker(QRunnable):
         analysis: AnalysisSnapshot | None,
         destination: Path,
         profile: ExportProfile,
+        relationships: RelationshipSnapshot,
+        recommendations: tuple[Recommendation, ...],
+        intelligence: tuple[IntelligenceAssertion, ...],
     ) -> None:
         super().__init__()
         self._service = service
@@ -112,6 +121,9 @@ class CapsuleExportWorker(QRunnable):
         self._analysis = analysis
         self._destination = destination
         self._profile = profile
+        self._relationships = relationships
+        self._recommendations = recommendations
+        self._intelligence = intelligence
         self.signals = CapsuleExportSignals()
 
     @Slot()
@@ -124,8 +136,50 @@ class CapsuleExportWorker(QRunnable):
                 self._analysis,
                 self._destination,
                 self._profile,
+                self._relationships,
+                self._recommendations,
+                self._intelligence,
             )
         except Exception as error:  # noqa: BLE001 - worker must not unwind into Qt
             self.signals.failed.emit(str(error))
             return
         self.signals.completed.emit(result)
+
+
+class IntelligenceLookupSignals(QObject):
+    completed = Signal(object)
+    failed = Signal(str)
+
+
+class IntelligenceLookupWorker(QRunnable):
+    """Run a confirmed provider object lookup away from the Qt event loop."""
+
+    def __init__(
+        self,
+        service: WorkspaceService,
+        case: Case,
+        observable_type: str,
+        value: str,
+        cache_hours: int,
+    ) -> None:
+        super().__init__()
+        self._service = service
+        self._case = case
+        self._observable_type = observable_type
+        self._value = value
+        self._cache_hours = cache_hours
+        self.signals = IntelligenceLookupSignals()
+
+    @Slot()
+    def run(self) -> None:
+        try:
+            assertion = self._service.query_virustotal(
+                self._case,
+                self._observable_type,
+                self._value,
+                cache_hours=self._cache_hours,
+            )
+        except Exception as error:  # noqa: BLE001 - worker must not unwind into Qt
+            self.signals.failed.emit(str(error))
+            return
+        self.signals.completed.emit(assertion)

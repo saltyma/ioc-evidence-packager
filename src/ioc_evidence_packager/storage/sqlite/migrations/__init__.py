@@ -284,6 +284,50 @@ MIGRATIONS = (
             """,
         ),
     ),
+    Migration(
+        version=6,
+        name="add_analyst_reasoning_workspace",
+        statements=(
+            """
+            CREATE TABLE recommendation_state (
+                case_id TEXT NOT NULL REFERENCES case_record(case_id) ON DELETE CASCADE,
+                recommendation_id TEXT NOT NULL,
+                status TEXT NOT NULL CHECK (
+                    status IN ('Proposed', 'Accepted', 'Completed', 'Dismissed')
+                ),
+                analyst_note TEXT,
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY(case_id, recommendation_id)
+            )
+            """,
+            """
+            CREATE TABLE intelligence_assertion (
+                assertion_id TEXT PRIMARY KEY,
+                case_id TEXT NOT NULL REFERENCES case_record(case_id) ON DELETE CASCADE,
+                provider TEXT NOT NULL,
+                provider_version TEXT NOT NULL,
+                observable_type TEXT NOT NULL,
+                observable_value TEXT NOT NULL,
+                claim TEXT NOT NULL CHECK (
+                    claim IN ('Malicious', 'Suspicious', 'Benign', 'Unknown', 'Context only')
+                ),
+                confidence_label TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                retrieved_at TEXT NOT NULL,
+                data_timestamp TEXT,
+                expires_at TEXT,
+                source_reference TEXT,
+                raw_response_sha256 TEXT,
+                origin TEXT NOT NULL CHECK (origin IN ('manual', 'import', 'virustotal')),
+                archived INTEGER NOT NULL DEFAULT 0 CHECK (archived IN (0, 1))
+            )
+            """,
+            """
+            CREATE INDEX idx_intelligence_case_observable
+                ON intelligence_assertion(case_id, observable_type, observable_value, retrieved_at)
+            """,
+        ),
+    ),
 )
 
 LATEST_SCHEMA_VERSION = MIGRATIONS[-1].version

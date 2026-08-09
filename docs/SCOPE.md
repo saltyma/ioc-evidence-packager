@@ -145,7 +145,7 @@ Raw substring scanning is not equivalent to a structured match. If supported as 
 | Exports | profile, destination, artifact list, verification result |
 | Settings | case time zone, privacy policy, safe display preferences |
 
-Relationships, Intelligence, and Recommendations may initially appear as disabled or preview tabs. They become release requirements only in the roadmap phases that implement them.
+Relationships, Intelligence, Recommendations, and Settings are implemented in v0.7.0. Their outputs remain explicitly typed: graph edges cite evidence, recommendations cite deterministic rules and inputs, and intelligence remains an attributed assertion rather than a local fact.
 
 ## Non-functional requirements
 

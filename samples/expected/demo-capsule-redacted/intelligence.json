@@ -1,0 +1,37 @@
+{
+  "assertions": [
+    {
+      "assertion_id": "assertion-import-32680171dec05947d71d6fbb",
+      "claim": "Benign",
+      "confidence_label": "Demo medium confidence",
+      "data_timestamp": "2026-08-05T18:00:00+00:00",
+      "expires_at": "2026-08-13T09:35:00+00:00",
+      "observable_type": "ipv4",
+      "observable_value": "203.0.113.42",
+      "origin": "import",
+      "provider": "Synthetic TI Beta",
+      "provider_version": "demo/1.0.0",
+      "raw_response_sha256": "dc0f0c11ac253e6c7b19a15c64a77b79c9d5b4bdce36e1c0b5cf72fe3441f4b8",
+      "retrieved_at": "2026-08-06T09:35:00+00:00",
+      "source_reference": null,
+      "summary": "Synthetic exercise assertion: infrastructure was described as an approved simulation endpoint."
+    },
+    {
+      "assertion_id": "assertion-import-cf9e324629e650d190792019",
+      "claim": "Malicious",
+      "confidence_label": "Demo high confidence",
+      "data_timestamp": "2026-08-06T08:00:00+00:00",
+      "expires_at": "2026-08-13T09:30:00+00:00",
+      "observable_type": "ipv4",
+      "observable_value": "203.0.113.42",
+      "origin": "import",
+      "provider": "Synthetic TI Alpha",
+      "provider_version": "demo/1.0.0",
+      "raw_response_sha256": "dc0f0c11ac253e6c7b19a15c64a77b79c9d5b4bdce36e1c0b5cf72fe3441f4b8",
+      "retrieved_at": "2026-08-06T09:30:00+00:00",
+      "source_reference": null,
+      "summary": "Synthetic exercise assertion: infrastructure was placed on an exercise blocklist."
+    }
+  ],
+  "schema": "intelligence-assertions/1.0.0"
+}

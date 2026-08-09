@@ -150,6 +150,28 @@ class SQLiteCaseRepository:
             connection.commit()
         return _case_from_row(row)
 
+    def update_preferences(
+        self,
+        case_id: CaseId,
+        *,
+        display_timezone: str,
+        privacy_mode: PrivacyMode,
+        updated_at: datetime,
+    ) -> Case | None:
+        with self._database.connection() as connection:
+            cursor = connection.execute(
+                """UPDATE case_record
+                   SET display_timezone = ?, privacy_mode = ?, updated_at = ?
+                   WHERE case_id = ?""",
+                (display_timezone, privacy_mode.value, updated_at.isoformat(), str(case_id)),
+            )
+            if cursor.rowcount == 0:
+                connection.rollback()
+                return None
+            row = connection.execute(SELECT_CASE, (str(case_id),)).fetchone()
+            connection.commit()
+        return _case_from_row(row)
+
     def get_lead(self, case_id: CaseId) -> Observable | None:
         with self._database.connection() as connection:
             row = connection.execute(SELECT_LEAD, (str(case_id),)).fetchone()

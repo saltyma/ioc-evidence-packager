@@ -1,45 +1,66 @@
 {
   "artifacts": [
     {
-      "byte_size": 11938,
+      "byte_size": 32182,
       "media_type": "text/html",
       "path": "report.html",
       "role": "human-readable report",
-      "sha256": "97d2a8d239cbb23681aecf334f13fb87d310345a7df6d8fc2b8419c43391dd96"
+      "sha256": "27b76cf8d165d7cbaeae4c212462881f8725a3d138391054666c03b4e33041eb"
     },
     {
       "byte_size": 20930,
       "media_type": "application/x-ndjson",
       "path": "evidence.jsonl",
       "role": "source-linked evidence",
-      "sha256": "d5016639e915319552979a41faee22aeb29452d975a67ba4999d6c8feaa4fe87"
+      "sha256": "034ffe1d19bf2e4dac940e4170faac960088ac8b5cb81b60c2fb882d1d3e3c69"
     },
     {
       "byte_size": 3618,
       "media_type": "text/csv",
       "path": "timeline.csv",
       "role": "deterministic timeline",
-      "sha256": "33b8dff2eeec730155bac46b044fff620dce770e73f4dc1cd95b2c397039e5ec"
+      "sha256": "caff03472e7eabdc13724c46fd786cd3e783418ff1f8db34cfd16261ae1f15fc"
     },
     {
       "byte_size": 4644,
       "media_type": "application/json",
       "path": "coverage.json",
       "role": "coverage matrix",
-      "sha256": "91bc3cc8925b0d8fc0f9c7b843e10f80f466be07a56c56d1ac081d2fe251281d"
+      "sha256": "2974c9c5307d74c2c20430a88ed629a190c50f5c5fea2a860c02835a9b80bad1"
     },
     {
       "byte_size": 16154,
       "media_type": "application/json",
       "path": "source-inventory.json",
       "role": "source inventory",
-      "sha256": "81e1936cf31f819e38bf7786fab98c572880626ecd4c0a46103b84c2aeb20d54"
+      "sha256": "eeff89e59fdd0cf2606ba9a8dfd1c8019356ada269427438cc86e4ff32943254"
+    },
+    {
+      "byte_size": 59628,
+      "media_type": "application/json",
+      "path": "relationships.json",
+      "role": "evidence-backed relationship graph",
+      "sha256": "c7481875b9a20d90ddf1a3aed06b960d382dc799e2318ad3401958abdf98ec09"
+    },
+    {
+      "byte_size": 4935,
+      "media_type": "application/json",
+      "path": "recommendations.json",
+      "role": "rule-explained next actions",
+      "sha256": "98200e6167af67320fa1de1f2b0f1b0d725a0fa353078dd4b08b3b5d15accb2d"
+    },
+    {
+      "byte_size": 1525,
+      "media_type": "application/json",
+      "path": "intelligence.json",
+      "role": "attributed intelligence assertions",
+      "sha256": "a446d9b77cdf524be27b3d288b5778cfb9b6c0bf9d31829d49bb8319bb5c14a8"
     }
   ],
-  "capsule_id": "export-715f78de-a325-46a0-a0f5-23e6bcd08560",
-  "capsule_schema": "1.0.0",
-  "case_id": "case-bc6828ea-b572-4289-82fa-1d6fbe0577bd",
-  "created_at": "2026-08-09T00:35:39.608154+00:00",
+  "capsule_id": "export-749a43e2-aa93-434a-991d-aa4b51366f52",
+  "capsule_schema": "1.1.0",
+  "case_id": "case-c90f8e90-c9a9-419a-becd-75fd1f4ba19f",
+  "created_at": "2026-08-09T02:14:59.955016+00:00",
   "export_profile": "redacted-shareable",
   "limitations": [
     "Network endpoint has incomplete coverage: 12 accepted record(s), 1 rejected line(s), or a source warning.",
@@ -51,79 +72,79 @@
     "search_recipe": "ipv4/1.0.0"
   },
   "run_ids": [
-    "analysis-60530976-8a3a-47c5-8272-7ed1b528e9e0"
+    "analysis-2f35508f-088c-4a32-ace4-0710fd76e492"
   ],
   "sources": [
     {
       "name": "01-dns-events.jsonl",
-      "preview_id": "preview-d979b045-5704-460f-bfc6-2b801dec0a19",
+      "preview_id": "preview-dd9ee192-a455-4f69-9493-794308ed7836",
       "sha256": "e20a70beb42d5b009e2707aa728a12e61ecd7e6ef0c3ae0fb98f9d006f231661",
       "status": "ready"
     },
     {
       "name": "02-endpoint-events.jsonl",
-      "preview_id": "preview-25995844-1d63-4ed3-933e-97de2a9d8abe",
+      "preview_id": "preview-20bd18db-1cc4-4d1f-ba05-9a77d74af508",
       "sha256": "af71027aa8e1af38a27242a2e968c83eefa3c7cd1314b7e040ead6078bc64c00",
       "status": "ready"
     },
     {
       "name": "03-network-events.jsonl",
-      "preview_id": "preview-cc7a094b-c503-42cd-9f46-d5af9818d04c",
+      "preview_id": "preview-378e4514-acd2-42c4-9dae-19ba15dbdfc0",
       "sha256": "82a0dfdbe4c5a18ae155c0aa3647fbc9d8fa518f51f155a631e60c219699fa44",
       "status": "ready"
     },
     {
       "name": "04-authentication-events.jsonl",
-      "preview_id": "preview-8647ffe0-43af-4e22-aec3-ffb0cc7e64db",
+      "preview_id": "preview-ba4c5e56-f899-47ca-8515-95f05330c8da",
       "sha256": "978ebc4d3a396c2018c21178917718ddcacaf8390c96dd8f1108c5ad67b3f74e",
       "status": "ready"
     },
     {
       "name": "05-partial-with-warning.jsonl",
-      "preview_id": "preview-4a17a074-5e67-4ee4-a6a1-4dd33610ae54",
+      "preview_id": "preview-881219ca-4fd3-4f4b-baf3-9b3356cdc906",
       "sha256": "8fce4bfbb3167ba323260c878825e63154506ac4e0e2243c5b90c2e11c270229",
       "status": "warning"
     },
     {
       "name": "06-unsupported-siem-export.csv",
-      "preview_id": "preview-127a9452-cbfc-45c6-9127-cece4fd331d9",
+      "preview_id": "preview-78cdd82b-e790-48e9-b712-54a7e143515e",
       "sha256": "ebd7c3fe81e5653e078082b29435fa27a3b37f08f9ead7fbbf94241a457144ce",
       "status": "unsupported"
     },
     {
       "name": "07-suricata-eve.jsonl",
-      "preview_id": "preview-d332047b-83d8-459e-8ebe-5cb32264b940",
+      "preview_id": "preview-bf326b53-921c-4edd-bca8-3887ac2f4bd7",
       "sha256": "b806f2db3a98d92725304025de4c296e91ee639f713f0440ce4af6a14aabbd5a",
       "status": "ready"
     },
     {
       "name": "08-wazuh-alerts.jsonl",
-      "preview_id": "preview-86ef5a41-a4e3-424c-8f9a-168d97e8ccb8",
+      "preview_id": "preview-9c93b046-d9b6-467c-847c-ff0c0e1bd564",
       "sha256": "687a9b080f2c32e0751ec91a4656aef86a6ab417bf21348899216d0526026482",
       "status": "ready"
     },
     {
       "name": "09-hayabusa-results.jsonl",
-      "preview_id": "preview-b7b9473e-6c37-415a-94c3-7064569d8833",
+      "preview_id": "preview-7ecc28d1-598c-4ef5-8928-c2ebf9ca1490",
       "sha256": "a9d96d6703916cca37be202babeb35b30506357689313c39de297430f8e33089",
       "status": "ready"
     },
     {
       "name": "10-generic-array.json",
-      "preview_id": "preview-f46a14dd-3e6a-4c70-b535-d0053537e575",
+      "preview_id": "preview-7476ae2f-8725-4f69-90bb-f15888846aeb",
       "sha256": "c1ce90cd8aeabfc3d57f819b755648dc06cf4c71a7a02c71ce5b585bae68bbb5",
       "status": "ready"
     },
     {
       "name": "11-mapped-proxy.csv",
-      "preview_id": "preview-b623bb09-bfb2-44e4-b180-4a5e35275f86",
+      "preview_id": "preview-774d2e60-fb3c-458b-8811-c58c6abf579d",
       "sha256": "74fef217e0bd3a47bcdf95eaa6ff8bdc0104005137eaf0368b9ff5cbfdf0c931",
       "status": "ready"
     }
   ],
   "tool": {
     "name": "ioc-evidence-packager",
-    "version": "0.6.0"
+    "version": "0.7.0"
   },
   "warning_summary": {
     "coverage_warnings": 2,

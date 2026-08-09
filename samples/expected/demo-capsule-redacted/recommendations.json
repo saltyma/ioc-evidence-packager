@@ -1,0 +1,110 @@
+{
+  "recommendations": [
+    {
+      "action": "Review source warnings and rejected lines before drawing a no-match conclusion.",
+      "analyst_note": null,
+      "category": "Coverage",
+      "coverage_cell_ids": [
+        "coverage-442a9fcefb70a514c089da684941237b1292ba15f39f91d78f003784f4c6fa44"
+      ],
+      "evidence_ids": [
+        "evidence-2ee130f49d9cf6efdf8a9b92ef8f6bdc",
+        "evidence-ca4cdb8998ba38aa9bf97ff409e88166",
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292",
+        "evidence-8560dbe70bf392d9988e980d9623fdf0",
+        "evidence-fb850df8e15b143973841273dd3726d2",
+        "evidence-ae427d5ec4de5c9733248d1e0605246b",
+        "evidence-f19b96f26a816bbbea1828c6c264666d",
+        "evidence-cbf7d8caf5883d57089346cf1be986f4",
+        "evidence-c7f0af77cae1b7dd8b7c0bba0cfd1d9d",
+        "evidence-69fa712ae216fec73aabd6e53b36d86d",
+        "evidence-eff8b995f22e573b9b1dddb222d8a374",
+        "evidence-af01f37a90a61d4a23f23df37e95e4eb"
+      ],
+      "expected_value": "Reduce the blind spot before drawing a conclusion.",
+      "priority": "Immediate",
+      "rationale": "Network endpoint has incomplete coverage: 12 accepted record(s), 1 rejected line(s), or a source warning.",
+      "recommendation_id": "recommendation-503000b71cb940aa2476",
+      "relationship_ids": [],
+      "rule": "REC-COVERAGE-PARTIAL/1.0.0",
+      "safety_note": "Preserve the original source and document every retry.",
+      "status": "Proposed",
+      "title": "Complete partial telemetry for Network endpoint",
+      "updated_at": null
+    },
+    {
+      "action": "Open the cited evidence, review adjacent events, then export a verified Case Capsule.",
+      "analyst_note": null,
+      "category": "Preservation",
+      "coverage_cell_ids": [],
+      "evidence_ids": [
+        "evidence-8560dbe70bf392d9988e980d9623fdf0",
+        "evidence-ae427d5ec4de5c9733248d1e0605246b",
+        "evidence-af01f37a90a61d4a23f23df37e95e4eb",
+        "evidence-b30c59a9381c0a6b05b588dac8e39288",
+        "evidence-ca4cdb8998ba38aa9bf97ff409e88166",
+        "evidence-cbf7d8caf5883d57089346cf1be986f4",
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292",
+        "evidence-f19b96f26a816bbbea1828c6c264666d"
+      ],
+      "expected_value": "Protect the strongest current lead evidence and validate its surrounding context.",
+      "priority": "Immediate",
+      "rationale": "The deterministic recipe produced 8 exact sighting(s).",
+      "recommendation_id": "recommendation-29678986510b9aab8b9d",
+      "relationship_ids": [],
+      "rule": "REC-PRESERVE-DIRECT/1.0.0",
+      "safety_note": "A direct match is not proof of compromise; validate provenance and context.",
+      "status": "Proposed",
+      "title": "Preserve and review direct-match records",
+      "updated_at": null
+    },
+    {
+      "action": "Add a mapping-capable adapter or convert this source to canonical JSONL.",
+      "analyst_note": null,
+      "category": "Ingestion",
+      "coverage_cell_ids": [
+        "coverage-5283d163c7df166c24d2aecaec2869830eb456b226d4d5cb6b978478b9cfc081"
+      ],
+      "evidence_ids": [],
+      "expected_value": "Make the source searchable without altering the original.",
+      "priority": "Useful",
+      "rationale": "No installed adapter recognizes this source.",
+      "recommendation_id": "recommendation-2c2347d4bda8a3ccaeda",
+      "relationship_ids": [],
+      "rule": "REC-FORMAT-UNSUPPORTED/1.0.0",
+      "safety_note": "Use an explicit sidecar mapping and verify both file hashes.",
+      "status": "Proposed",
+      "title": "Map unsupported telemetry for 06-unsupported-siem-export.csv",
+      "updated_at": null
+    },
+    {
+      "action": "Open each cited relationship and filter Evidence by its domain and IP values.",
+      "analyst_note": null,
+      "category": "Pivot",
+      "coverage_cell_ids": [],
+      "evidence_ids": [
+        "evidence-2d7847d43b9178589166709aefca0623",
+        "evidence-b30c59a9381c0a6b05b588dac8e39288",
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292",
+        "evidence-e414515c0cd85af0259948d4252fdbfc"
+      ],
+      "expected_value": "Test whether related infrastructure appears elsewhere in the scoped evidence.",
+      "priority": "Useful",
+      "rationale": "The evidence graph contains 5 domain-to-IP resolution relationship(s).",
+      "recommendation_id": "recommendation-82ba213f35376745102f",
+      "relationship_ids": [
+        "relationship-bff8b817571456ebe058",
+        "relationship-6cdf0bea5ca78424d0a2",
+        "relationship-1c04f00bfd626f568e51",
+        "relationship-bdbf6e7e7102b0aeefaf",
+        "relationship-93cd0404c269aea73c67"
+      ],
+      "rule": "REC-DNS-PIVOT/1.0.0",
+      "safety_note": "Keep the pivot bounded to the case; do not resolve domains over the network in Offline mode.",
+      "status": "Proposed",
+      "title": "Pivot across DNS resolutions",
+      "updated_at": null
+    }
+  ],
+  "schema": "recommendations/1.0.0"
+}

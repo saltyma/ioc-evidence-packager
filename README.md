@@ -4,7 +4,7 @@
 
 > Turn a suspicious observable and available telemetry into an explainable investigation workspace and a portable, verifiable handoff.
 
-**Status:** v0.6.0 completes the five core slices plus the practical-adapter slice: heterogeneous source preview/import, exact IOC matching, coverage, timeline, source inventory, and verifiable Case Capsules.
+**Status:** v0.7.0 completes the analyst reasoning workspace: evidence-backed relationships, deterministic recommendations with durable analyst state, attributed/conflict-aware intelligence, persisted case and device settings, and eight-artifact verifiable Case Capsules.
 
 IOC Evidence Packager is a local-first desktop application for SOC analysts, incident responders, and DFIR learners. An analyst opens a case, supplies one or more indicators and approved evidence exports, and progressively builds a source-linked timeline, relationship view, coverage assessment, optional intelligence, and an exportable **Case Capsule**.
 
@@ -73,7 +73,7 @@ This distinction is central to the product. A clean DNS export and a missing DNS
 6. Trace every direct sighting and coverage statement back to source bytes and physical lines.
 7. Export and verify a Full Internal or Redacted Shareable Case Capsule.
 
-Workspace areas are stable; later roadmap phases attach relationships, intelligence, and recommendations without restructuring the shell:
+All workspace areas are now functional and reload from durable case/application state:
 
 ```text
 Dashboard   Evidence   Timeline   Relationships   Coverage
@@ -91,6 +91,9 @@ case-001/
 |-- timeline.csv               # Deterministic, spreadsheet-safe chronology
 |-- coverage.json              # States, reasons, recovery, supporting IDs
 |-- source-inventory.json      # Digests, adapters, counts, warnings
+|-- relationships.json        # Typed evidence-backed nodes and edges
+|-- recommendations.json      # Rules, lifecycle, safety, citations
+|-- intelligence.json         # Attributed provider/manual assertions
 `-- manifest.json              # Versions, policies, hashes, limitations
 ```
 
@@ -104,11 +107,15 @@ Different export profiles can omit or redact sensitive fields. The original loca
 - **Deterministic Timeline:** UTC chronology with direct/context classification and an honest Undated lane.
 - **Practical adapters:** canonical JSONL, Suricata eve.json, Wazuh alerts, Hayabusa JSONL, bounded generic JSON arrays, and explicitly mapped CSV all enter one provenance-preserving ledger.
 - **Inspectable source inventory:** every supplied source exposes its digest, adapter/version, mapped capabilities, time range, evidence/rejection counts, and limitations.
+- **Focused relationship graph:** an analyst-selected one-hop graph plus a complete accessible edge table; every edge carries a stable rule, explanation, and supporting evidence IDs.
+- **Explainable next actions:** priority, rationale, expected value, safety note, action, and evidence/coverage/relationship citations with a durable analyst lifecycle.
+- **Attributed intelligence:** manual and versioned JSON import, conflict detection, archive history, provider-native confidence, expiry/cache metadata, and an optional policy-gated VirusTotal object-report connector.
+- **Persistent settings:** case timezone/privacy policy plus device density, popup width, semantic contrast, provider enablement, cache lifetime, and new-case defaults.
 - **Verifiable Case Capsules:** Full Internal and Redacted Shareable profiles, deterministic artifacts, manifest hashing, tamper detection, and export history.
 - **Confidence without a magic score:** facts, intelligence assertions, correlations, and analyst assessments stay separate.
 - **Reproducible runs:** case history records policies, versions, warnings, and artifacts.
 
-Typed relationships, deterministic recommendations, and privacy-gated intelligence providers remain later roadmap phases; the current UI labels those areas honestly rather than simulating results.
+The desktop never invents relationships or recommendations: both are regenerated from versioned rules, while analyst decisions and attributed intelligence are persisted separately for auditability.
 
 The detailed behavior and guardrails are in [Core and Smart Features](docs/FEATURES.md).
 
@@ -138,7 +145,7 @@ The current application guides an analyst from case setup through durable eviden
 - hashes every selected file locally with SHA-256;
 - detects canonical JSONL, selected Suricata/Wazuh/Hayabusa schemas, bounded generic JSON arrays, and sidecar-mapped CSV using bounded previews;
 - shows sampled fields, searchable capabilities, time bounds, and safe warnings before import;
-- persists cases, imports, sightings, coverage, and export history in SQLite schema 5;
+- persists cases, imports, sightings, coverage, exports, recommendation decisions, and intelligence assertions in SQLite schema 6;
 - verifies each source SHA-256 again immediately before import so changed evidence is rejected;
 - streams JSONL/CSV adapters and bounded JSON-array mappings in background batches without freezing the desktop;
 - exposes monotonic progress, cooperative cancellation, safe retry, and structured per-line rejections;
@@ -147,6 +154,10 @@ The current application guides an analyst from case setup through durable eviden
 - runs the matching recipe automatically, records structured explanations, and labels non-matches as context;
 - evaluates all six coverage states from capabilities, results, warnings, rejections, and source diagnostics;
 - presents deterministic UTC ordering in Timeline and case-level findings/limitations on Dashboard;
+- builds a focused one-hop relationship graph and full edge ledger with Evidence pivots;
+- generates transparent next actions and preserves analyst lifecycle changes and dismissal reasons;
+- keeps intelligence separate from evidence, flags contradictory claims, and requires a disclosure preview before optional VirusTotal object-report lookups;
+- applies bounded, wrapping, semantically color-coded detail popups across every table-backed workspace;
 - builds capsules on a worker thread, writes the manifest last, verifies every artifact, publishes atomically, and records successful history;
 - applies capsule-local host/user pseudonyms and omits raw source records/paths in Redacted Shareable exports;
 - reopens the investigation with the same setup state and an explicit Offline policy.
@@ -179,7 +190,7 @@ Open **New investigation** and use these values:
 
 Create the investigation, open **Evidence**, and select **Import previewed sources**. The original four canonical files produce 12 durable records and no rejection. Selecting all eleven evidence files produces 23 durable records plus one `invalid_json` rejection across six adapter families; `06-unsupported-siem-export.csv` remains visible but ineligible because it has no mapping sidecar. Retrying is idempotent, so durable totals stay unchanged.
 
-With all eleven evidence files selected, the IPv4 recipe produces eight exact sightings across canonical, Suricata, Wazuh, generic JSON, and mapped CSV records. Coverage still shows DNS `MATCH_FOUND`, network `PARTIAL_COVERAGE`, authentication `SEARCHED_NO_MATCH`, and the unmapped CSV as `FORMAT_UNSUPPORTED`. Open **Sources** to audit every adapter and limitation, then **Exports** to create a capsule that is published only after every artifact passes manifest verification.
+With all eleven evidence files selected, the IPv4 recipe produces eight exact sightings across canonical, Suricata, Wazuh, generic JSON, and mapped CSV records. Coverage still shows DNS `MATCH_FOUND`, network `PARTIAL_COVERAGE`, authentication `SEARCHED_NO_MATCH`, and the unmapped CSV as `FORMAT_UNSUPPORTED`. Import `12-intelligence-assertions.json` on **Intelligence** to see a deliberate provider conflict. **Relationships** and **Recommendations** expose their evidence/coverage citations. Open **Sources** to audit every adapter and limitation, then **Exports** to create a capsule that is published only after all eight artifacts pass manifest verification.
 
 The included guide explains the synthetic incident, expected Ready/Warning/Unsupported states, alternate domain and SHA-256 leads, and the exact evidence/rejection totals. All addresses and domains are private or documentation-only; do not replace them with personal or production infrastructure in a public repository.
 
@@ -239,7 +250,7 @@ tests/security/               Hostile-input and trust-boundary fixtures
 
 ## Next implementation milestone
 
-The five core slices and Phase 5 practical adapters are complete. The next roadmap milestone is **Phase 6: Relationships and next actions**—bounded typed relationships, evidence-preserving pivots, and deterministic recommendations that cite the exact evidence and coverage conditions that triggered them. See the [Roadmap](docs/ROADMAP.md).
+The full desktop investigation workspace is complete through v0.7.0. The next milestone is packaging and handoff quality: reviewed Windows packaging, cross-artifact export preview, optional PDF/ZIP projections, and one deliberately scoped platform handoff. The investigation-game/playbook use case will be designed after this application-completion review, not mixed into the product core. See the [Roadmap](docs/ROADMAP.md).
 
 ## License
 

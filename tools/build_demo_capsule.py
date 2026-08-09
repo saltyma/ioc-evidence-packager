@@ -12,6 +12,7 @@ from ioc_evidence_packager.application.services import (
     NewCaseRequest,
     NewInvestigationRequest,
 )
+from ioc_evidence_packager.application.workspace_service import WorkspaceService
 from ioc_evidence_packager.ingestion import SourceInspectionService
 from ioc_evidence_packager.reporting.models import ExportProfile
 from ioc_evidence_packager.storage.sqlite import (
@@ -20,6 +21,7 @@ from ioc_evidence_packager.storage.sqlite import (
     SQLiteDatabase,
     SQLiteEvidenceRepository,
     SQLiteExportRepository,
+    SQLiteWorkspaceRepository,
 )
 
 DEMO_NAMES = (
@@ -57,6 +59,7 @@ def main() -> int:
         evidence_service = EvidenceService(SQLiteEvidenceRepository(database))
         analysis_service = AnalysisService(SQLiteAnalysisRepository(database))
         report_service = ReportService(SQLiteExportRepository(database))
+        workspace_service = WorkspaceService(SQLiteWorkspaceRepository(database))
         setup = case_service.create_investigation(
             NewInvestigationRequest(
                 case=NewCaseRequest(
@@ -80,6 +83,13 @@ def main() -> int:
             evidence,
             rejections,
         )
+        workspace_service.import_assertions(
+            setup.case.case_id, demo / "12-intelligence-assertions.json"
+        )
+        relationships = workspace_service.relationships(evidence)
+        recommendations = workspace_service.recommendations(
+            setup.case.case_id, analysis, relationships
+        )
         result = report_service.export_case(
             setup,
             evidence,
@@ -87,6 +97,9 @@ def main() -> int:
             analysis,
             args.destination,
             ExportProfile(args.profile),
+            relationships,
+            recommendations,
+            workspace_service.assertions(setup.case.case_id),
         )
     print(f"Verified demo capsule: {result.destination}")
     return 0

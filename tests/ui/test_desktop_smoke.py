@@ -126,6 +126,8 @@ def test_background_import_populates_evidence_and_rejections(tmp_path: Path) -> 
     assert context.window.timeline_view.row_count == 1
     assert context.window.coverage_view.row_count >= 3
     assert context.window.sources_view.row_count == 1
+    assert context.window.relationships_view.row_count > 0
+    assert context.window.recommendations_view.row_count > 0
     assert not context.window.evidence_view.findChildren(QPlainTextEdit)
     assert not context.window.timeline_view.findChildren(QPlainTextEdit)
     assert not context.window.coverage_view.findChildren(QPlainTextEdit)

@@ -1,0 +1,1722 @@
+{
+  "edges": [
+    {
+      "evidence_ids": [
+        "evidence-8560dbe70bf392d9988e980d9623fdf0"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-06109c121d6821846918",
+      "relation": "contains",
+      "relationship_id": "relationship-6394b749577c3d14b06c",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-1cc87eab263e59fdd96c"
+    },
+    {
+      "evidence_ids": [
+        "evidence-ca4cdb8998ba38aa9bf97ff409e88166"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-06109c121d6821846918",
+      "relation": "contains",
+      "relationship_id": "relationship-b02a644b335e078a2248",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-520936d07207b202aedb"
+    },
+    {
+      "evidence_ids": [
+        "evidence-eff8b995f22e573b9b1dddb222d8a374"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-06109c121d6821846918",
+      "relation": "contains",
+      "relationship_id": "relationship-11167399a91dfe9ca613",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-63378251506dfddcaf37"
+    },
+    {
+      "evidence_ids": [
+        "evidence-af01f37a90a61d4a23f23df37e95e4eb"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-179bdcde2949de6981d3",
+      "relation": "contains",
+      "relationship_id": "relationship-3a108aaf8cd0d41ffba6",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-ce095a8a3fff88991610"
+    },
+    {
+      "evidence_ids": [
+        "evidence-8560dbe70bf392d9988e980d9623fdf0"
+      ],
+      "explanation": "Canonical field tls.server_name contains this observable.",
+      "from": "entity-1cc87eab263e59fdd96c",
+      "relation": "references",
+      "relationship_id": "relationship-5de12a0e2fd89bb71199",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-75f9afa83d8cd3312500"
+    },
+    {
+      "evidence_ids": [
+        "evidence-8560dbe70bf392d9988e980d9623fdf0"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-1cc87eab263e59fdd96c",
+      "relation": "observed on",
+      "relationship_id": "relationship-9c3bf4706c3f5cb47a30",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-8560dbe70bf392d9988e980d9623fdf0"
+      ],
+      "explanation": "Canonical field network.destination_ip contains this observable.",
+      "from": "entity-1cc87eab263e59fdd96c",
+      "relation": "references",
+      "relationship_id": "relationship-fa4bc5cd303b749d297e",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-fe4b40a24edd5cc7eadc"
+    },
+    {
+      "evidence_ids": [
+        "evidence-e414515c0cd85af0259948d4252fdbfc"
+      ],
+      "explanation": "The domain and IPv4 address occur in the same DNS event.",
+      "from": "entity-26b726137a121bdf5752",
+      "relation": "resolved to",
+      "relationship_id": "relationship-bff8b817571456ebe058",
+      "rule_id": "REL-DNS-ANSWER-1",
+      "to": "entity-dc75669332ed8ec2acbb"
+    },
+    {
+      "evidence_ids": [
+        "evidence-d856440d079218fe27afd5eb29a98047"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-2a867038a7b57f6d1d93",
+      "relation": "associated with",
+      "relationship_id": "relationship-0afa9466071c84fd5034",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-0d5e64385871d71f5ef3"
+    },
+    {
+      "evidence_ids": [
+        "evidence-d856440d079218fe27afd5eb29a98047"
+      ],
+      "explanation": "Canonical field process.command_line contains this observable.",
+      "from": "entity-2a867038a7b57f6d1d93",
+      "relation": "references",
+      "relationship_id": "relationship-92efef1545f1523e0c98",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-75f9afa83d8cd3312500"
+    },
+    {
+      "evidence_ids": [
+        "evidence-d856440d079218fe27afd5eb29a98047"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-2a867038a7b57f6d1d93",
+      "relation": "observed on",
+      "relationship_id": "relationship-8c67e0f6aa66e07d5298",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-b02ca5afad4119b76fccc756dd3767a4"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-312cb1300b3654e8f083",
+      "relation": "associated with",
+      "relationship_id": "relationship-02db4f336cf33ce3dcc0",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-b933f93a1ea0c27628db"
+    },
+    {
+      "evidence_ids": [
+        "evidence-b02ca5afad4119b76fccc756dd3767a4"
+      ],
+      "explanation": "Canonical field authentication.source_ip contains this observable.",
+      "from": "entity-312cb1300b3654e8f083",
+      "relation": "references",
+      "relationship_id": "relationship-93decb552618a48c600f",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-9af45ac21aa4ed7e58c5"
+    },
+    {
+      "evidence_ids": [
+        "evidence-b02ca5afad4119b76fccc756dd3767a4"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-312cb1300b3654e8f083",
+      "relation": "observed on",
+      "relationship_id": "relationship-2b448a70fcde91f4dc24",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-e414515c0cd85af0259948d4252fdbfc"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-32d3524200a2e4223b85",
+      "relation": "associated with",
+      "relationship_id": "relationship-5acde6b8a7a89162dbdf",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-0d5e64385871d71f5ef3"
+    },
+    {
+      "evidence_ids": [
+        "evidence-e414515c0cd85af0259948d4252fdbfc"
+      ],
+      "explanation": "Canonical field dns.question contains this observable.",
+      "from": "entity-32d3524200a2e4223b85",
+      "relation": "references",
+      "relationship_id": "relationship-70929261d7133279814e",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-26b726137a121bdf5752"
+    },
+    {
+      "evidence_ids": [
+        "evidence-e414515c0cd85af0259948d4252fdbfc"
+      ],
+      "explanation": "Canonical field dns.answers[0] contains this observable.",
+      "from": "entity-32d3524200a2e4223b85",
+      "relation": "references",
+      "relationship_id": "relationship-b1a87a5fc49ce20de965",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-dc75669332ed8ec2acbb"
+    },
+    {
+      "evidence_ids": [
+        "evidence-e414515c0cd85af0259948d4252fdbfc"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-32d3524200a2e4223b85",
+      "relation": "observed on",
+      "relationship_id": "relationship-e7aba79212bc3c9ac9df",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-2d7847d43b9178589166709aefca0623"
+      ],
+      "explanation": "The domain and IPv4 address occur in the same DNS event.",
+      "from": "entity-3db4943dcb90d033fff5",
+      "relation": "resolved to",
+      "relationship_id": "relationship-6cdf0bea5ca78424d0a2",
+      "rule_id": "REL-DNS-ANSWER-1",
+      "to": "entity-005373d81097aab2f449"
+    },
+    {
+      "evidence_ids": [
+        "evidence-cbf7d8caf5883d57089346cf1be986f4"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-421384a592b041a8dc52",
+      "relation": "associated with",
+      "relationship_id": "relationship-6e466f532af25dac07cb",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-0d5e64385871d71f5ef3"
+    },
+    {
+      "evidence_ids": [
+        "evidence-cbf7d8caf5883d57089346cf1be986f4"
+      ],
+      "explanation": "Canonical field network.domain contains this observable.",
+      "from": "entity-421384a592b041a8dc52",
+      "relation": "references",
+      "relationship_id": "relationship-3c1ccf1e90fc9b82680f",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-75f9afa83d8cd3312500"
+    },
+    {
+      "evidence_ids": [
+        "evidence-cbf7d8caf5883d57089346cf1be986f4"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-421384a592b041a8dc52",
+      "relation": "observed on",
+      "relationship_id": "relationship-1a2057fe403a5f6dbe92",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-cbf7d8caf5883d57089346cf1be986f4"
+      ],
+      "explanation": "Canonical field network.destination_ip contains this observable.",
+      "from": "entity-421384a592b041a8dc52",
+      "relation": "references",
+      "relationship_id": "relationship-f3c04bff8960525325c8",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-fe4b40a24edd5cc7eadc"
+    },
+    {
+      "evidence_ids": [
+        "evidence-f19b96f26a816bbbea1828c6c264666d"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-43bda5280424291902d4",
+      "relation": "associated with",
+      "relationship_id": "relationship-9fcea5df6fc224f569a1",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-0d5e64385871d71f5ef3"
+    },
+    {
+      "evidence_ids": [
+        "evidence-f19b96f26a816bbbea1828c6c264666d"
+      ],
+      "explanation": "Canonical field dns.question contains this observable.",
+      "from": "entity-43bda5280424291902d4",
+      "relation": "references",
+      "relationship_id": "relationship-7de3a87b704ff9e3eb12",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-75f9afa83d8cd3312500"
+    },
+    {
+      "evidence_ids": [
+        "evidence-f19b96f26a816bbbea1828c6c264666d"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-43bda5280424291902d4",
+      "relation": "observed on",
+      "relationship_id": "relationship-89119307c98534ffd9b3",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-f19b96f26a816bbbea1828c6c264666d"
+      ],
+      "explanation": "Canonical field network.destination_ip contains this observable.",
+      "from": "entity-43bda5280424291902d4",
+      "relation": "references",
+      "relationship_id": "relationship-fe91ece6dc33db080003",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-fe4b40a24edd5cc7eadc"
+    },
+    {
+      "evidence_ids": [
+        "evidence-d856440d079218fe27afd5eb29a98047"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-489255e74ab1bad7ad79",
+      "relation": "contains",
+      "relationship_id": "relationship-86cc0ca455e4a1dcf3f7",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-2a867038a7b57f6d1d93"
+    },
+    {
+      "evidence_ids": [
+        "evidence-f9ba05b17616ec49129fb9e2460699e9"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-489255e74ab1bad7ad79",
+      "relation": "contains",
+      "relationship_id": "relationship-18ca6818fe33191b1be0",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-83cc7818ffcad6a04260"
+    },
+    {
+      "evidence_ids": [
+        "evidence-85f3a4d312ddf53712687c9500a1e4eb"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-489255e74ab1bad7ad79",
+      "relation": "contains",
+      "relationship_id": "relationship-fd995fdb302269dad92a",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-922c48db051d9a0b0c4e"
+    },
+    {
+      "evidence_ids": [
+        "evidence-6cc699c5baaa284e133f2ccba0ce73d9"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-489255e74ab1bad7ad79",
+      "relation": "contains",
+      "relationship_id": "relationship-a054ee3e123dcd800e8e",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-c40c2c2bbe2f25e86dcb"
+    },
+    {
+      "evidence_ids": [
+        "evidence-4327bec621c83c79d0ede34ffe735af1"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-4ec7f9ad7f290b7d153c",
+      "relation": "associated with",
+      "relationship_id": "relationship-087c7c8b405a7307b9d6",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-0d5e64385871d71f5ef3"
+    },
+    {
+      "evidence_ids": [
+        "evidence-4327bec621c83c79d0ede34ffe735af1"
+      ],
+      "explanation": "Canonical field dns.question contains this observable.",
+      "from": "entity-4ec7f9ad7f290b7d153c",
+      "relation": "references",
+      "relationship_id": "relationship-698826f80093045a238c",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-75f9afa83d8cd3312500"
+    },
+    {
+      "evidence_ids": [
+        "evidence-4327bec621c83c79d0ede34ffe735af1"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-4ec7f9ad7f290b7d153c",
+      "relation": "observed on",
+      "relationship_id": "relationship-441819e9e229a820a006",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-e414515c0cd85af0259948d4252fdbfc"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-51ede8ca3b5e5d3798b5",
+      "relation": "contains",
+      "relationship_id": "relationship-a3d0eaf63781a6e3ce2c",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-32d3524200a2e4223b85"
+    },
+    {
+      "evidence_ids": [
+        "evidence-2d7847d43b9178589166709aefca0623"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-51ede8ca3b5e5d3798b5",
+      "relation": "contains",
+      "relationship_id": "relationship-5356d81a592a90da3365",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-9dc09f73d5391b44ceb8"
+    },
+    {
+      "evidence_ids": [
+        "evidence-b30c59a9381c0a6b05b588dac8e39288"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-51ede8ca3b5e5d3798b5",
+      "relation": "contains",
+      "relationship_id": "relationship-b8d0ec6cadde7c681249",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-fe70f59a5efc77891e36"
+    },
+    {
+      "evidence_ids": [
+        "evidence-ca4cdb8998ba38aa9bf97ff409e88166"
+      ],
+      "explanation": "Canonical field tls.server_name contains this observable.",
+      "from": "entity-520936d07207b202aedb",
+      "relation": "references",
+      "relationship_id": "relationship-75db184cc5732a1afd3c",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-75f9afa83d8cd3312500"
+    },
+    {
+      "evidence_ids": [
+        "evidence-ca4cdb8998ba38aa9bf97ff409e88166"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-520936d07207b202aedb",
+      "relation": "observed on",
+      "relationship_id": "relationship-add35d91ac19e9839c13",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-ca4cdb8998ba38aa9bf97ff409e88166"
+      ],
+      "explanation": "Canonical field network.destination_ip contains this observable.",
+      "from": "entity-520936d07207b202aedb",
+      "relation": "references",
+      "relationship_id": "relationship-ab0cc34dd85ec1cf5a4e",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-fe4b40a24edd5cc7eadc"
+    },
+    {
+      "evidence_ids": [
+        "evidence-650c921358229d0610c0f9f1ed874628"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-549560e16fc97d3aaaa7",
+      "relation": "associated with",
+      "relationship_id": "relationship-0e8e884af8480f2948cd",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-0d5e64385871d71f5ef3"
+    },
+    {
+      "evidence_ids": [
+        "evidence-650c921358229d0610c0f9f1ed874628"
+      ],
+      "explanation": "Canonical field file.sha256 contains this observable.",
+      "from": "entity-549560e16fc97d3aaaa7",
+      "relation": "references",
+      "relationship_id": "relationship-75b4cfa0fc2845e51e42",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-e2517471bf2ec9f89710"
+    },
+    {
+      "evidence_ids": [
+        "evidence-650c921358229d0610c0f9f1ed874628"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-549560e16fc97d3aaaa7",
+      "relation": "observed on",
+      "relationship_id": "relationship-2ebbaf8811bc46b1edee",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-f19b96f26a816bbbea1828c6c264666d"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-5f7ad67cd66ef48fa0fd",
+      "relation": "contains",
+      "relationship_id": "relationship-21bdfe6c80d9fee34d5a",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-43bda5280424291902d4"
+    },
+    {
+      "evidence_ids": [
+        "evidence-c7f0af77cae1b7dd8b7c0bba0cfd1d9d"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-5f7ad67cd66ef48fa0fd",
+      "relation": "contains",
+      "relationship_id": "relationship-10cd9b86cfe8e901d5ff",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-7651af1ce66a4d233755"
+    },
+    {
+      "evidence_ids": [
+        "evidence-eff8b995f22e573b9b1dddb222d8a374"
+      ],
+      "explanation": "Canonical field tls.server_name contains this observable.",
+      "from": "entity-63378251506dfddcaf37",
+      "relation": "references",
+      "relationship_id": "relationship-3e39be77f53ee732f952",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-26b726137a121bdf5752"
+    },
+    {
+      "evidence_ids": [
+        "evidence-eff8b995f22e573b9b1dddb222d8a374"
+      ],
+      "explanation": "Canonical field network.destination_ip contains this observable.",
+      "from": "entity-63378251506dfddcaf37",
+      "relation": "references",
+      "relationship_id": "relationship-e0c5e9fca2f9c970c440",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-dc75669332ed8ec2acbb"
+    },
+    {
+      "evidence_ids": [
+        "evidence-eff8b995f22e573b9b1dddb222d8a374"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-63378251506dfddcaf37",
+      "relation": "observed on",
+      "relationship_id": "relationship-742d3216d40d5cd91bf9",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292"
+      ],
+      "explanation": "The domain and IPv4 address occur in the same DNS event.",
+      "from": "entity-75f9afa83d8cd3312500",
+      "relation": "resolved to",
+      "relationship_id": "relationship-1c04f00bfd626f568e51",
+      "rule_id": "REL-DNS-ANSWER-1",
+      "to": "entity-8849d2fdc4ab7b950798"
+    },
+    {
+      "evidence_ids": [
+        "evidence-b30c59a9381c0a6b05b588dac8e39288",
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292"
+      ],
+      "explanation": "The domain and IPv4 address occur in the same DNS event.",
+      "from": "entity-75f9afa83d8cd3312500",
+      "relation": "resolved to",
+      "relationship_id": "relationship-bdbf6e7e7102b0aeefaf",
+      "rule_id": "REL-DNS-ANSWER-1",
+      "to": "entity-fe4b40a24edd5cc7eadc"
+    },
+    {
+      "evidence_ids": [
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292"
+      ],
+      "explanation": "The domain and IPv4 address occur in the same DNS event.",
+      "from": "entity-75f9afa83d8cd3312500",
+      "relation": "resolved to",
+      "relationship_id": "relationship-93cd0404c269aea73c67",
+      "rule_id": "REL-DNS-ANSWER-1",
+      "to": "entity-feba9a454e93235cd7b5"
+    },
+    {
+      "evidence_ids": [
+        "evidence-49d2482f470e46e9550a101baeeeb1ac"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-7622f5fa6d3c66d5050d",
+      "relation": "associated with",
+      "relationship_id": "relationship-b54250e7b2b78d9fe93b",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-0d5e64385871d71f5ef3"
+    },
+    {
+      "evidence_ids": [
+        "evidence-49d2482f470e46e9550a101baeeeb1ac"
+      ],
+      "explanation": "Canonical field authentication.source_ip contains this observable.",
+      "from": "entity-7622f5fa6d3c66d5050d",
+      "relation": "references",
+      "relationship_id": "relationship-086b00987dcaf8f1dc31",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-8849d2fdc4ab7b950798"
+    },
+    {
+      "evidence_ids": [
+        "evidence-49d2482f470e46e9550a101baeeeb1ac"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-7622f5fa6d3c66d5050d",
+      "relation": "observed on",
+      "relationship_id": "relationship-e3be52d814187fa4a589",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-c7f0af77cae1b7dd8b7c0bba0cfd1d9d"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-7651af1ce66a4d233755",
+      "relation": "associated with",
+      "relationship_id": "relationship-e735d42717ad60979b3c",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-0d5e64385871d71f5ef3"
+    },
+    {
+      "evidence_ids": [
+        "evidence-c7f0af77cae1b7dd8b7c0bba0cfd1d9d"
+      ],
+      "explanation": "Canonical field dns.question contains this observable.",
+      "from": "entity-7651af1ce66a4d233755",
+      "relation": "references",
+      "relationship_id": "relationship-40ece4678623578a4464",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-26b726137a121bdf5752"
+    },
+    {
+      "evidence_ids": [
+        "evidence-c7f0af77cae1b7dd8b7c0bba0cfd1d9d"
+      ],
+      "explanation": "Canonical field network.destination_ip contains this observable.",
+      "from": "entity-7651af1ce66a4d233755",
+      "relation": "references",
+      "relationship_id": "relationship-d0a5d3c776dc83014e4c",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-dc75669332ed8ec2acbb"
+    },
+    {
+      "evidence_ids": [
+        "evidence-c7f0af77cae1b7dd8b7c0bba0cfd1d9d"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-7651af1ce66a4d233755",
+      "relation": "observed on",
+      "relationship_id": "relationship-ff9fa0e5d53df0007053",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-fb850df8e15b143973841273dd3726d2"
+      ],
+      "explanation": "Canonical field network.source_ip contains this observable.",
+      "from": "entity-7a0372a7b3ee6b01df0e",
+      "relation": "references",
+      "relationship_id": "relationship-d445461d38cfa134f90d",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-8849d2fdc4ab7b950798"
+    },
+    {
+      "evidence_ids": [
+        "evidence-fb850df8e15b143973841273dd3726d2"
+      ],
+      "explanation": "Canonical field network.destination_ip contains this observable.",
+      "from": "entity-7a0372a7b3ee6b01df0e",
+      "relation": "references",
+      "relationship_id": "relationship-08f13e58ad8a96d84e7b",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-dc75669332ed8ec2acbb"
+    },
+    {
+      "evidence_ids": [
+        "evidence-ae427d5ec4de5c9733248d1e0605246b"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-83beac0fa538b1853acf",
+      "relation": "associated with",
+      "relationship_id": "relationship-c3bb9eadf4b1d6e120c3",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-0d5e64385871d71f5ef3"
+    },
+    {
+      "evidence_ids": [
+        "evidence-ae427d5ec4de5c9733248d1e0605246b"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-83beac0fa538b1853acf",
+      "relation": "observed on",
+      "relationship_id": "relationship-046b0c4fd623d38c8e09",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-ae427d5ec4de5c9733248d1e0605246b"
+      ],
+      "explanation": "Canonical field network.destination_ip contains this observable.",
+      "from": "entity-83beac0fa538b1853acf",
+      "relation": "references",
+      "relationship_id": "relationship-18c1c3dddf1dbf0e1008",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-fe4b40a24edd5cc7eadc"
+    },
+    {
+      "evidence_ids": [
+        "evidence-f9ba05b17616ec49129fb9e2460699e9"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-83cc7818ffcad6a04260",
+      "relation": "associated with",
+      "relationship_id": "relationship-cf836f2e1561c449b7e1",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-0d5e64385871d71f5ef3"
+    },
+    {
+      "evidence_ids": [
+        "evidence-f9ba05b17616ec49129fb9e2460699e9"
+      ],
+      "explanation": "Canonical field file.sha256 contains this observable.",
+      "from": "entity-83cc7818ffcad6a04260",
+      "relation": "references",
+      "relationship_id": "relationship-d99c003b5de9d7d94658",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-e2517471bf2ec9f89710"
+    },
+    {
+      "evidence_ids": [
+        "evidence-f9ba05b17616ec49129fb9e2460699e9"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-83cc7818ffcad6a04260",
+      "relation": "observed on",
+      "relationship_id": "relationship-d4a3c780c6b61bed0cb2",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-85f3a4d312ddf53712687c9500a1e4eb"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-922c48db051d9a0b0c4e",
+      "relation": "associated with",
+      "relationship_id": "relationship-ad0f1f2354e6d816e09e",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-0d5e64385871d71f5ef3"
+    },
+    {
+      "evidence_ids": [
+        "evidence-85f3a4d312ddf53712687c9500a1e4eb"
+      ],
+      "explanation": "Canonical field file.sha256 contains this observable.",
+      "from": "entity-922c48db051d9a0b0c4e",
+      "relation": "references",
+      "relationship_id": "relationship-4f7658c5d97bfc7136bf",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-c830475b5d9c63dbb67c"
+    },
+    {
+      "evidence_ids": [
+        "evidence-85f3a4d312ddf53712687c9500a1e4eb"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-922c48db051d9a0b0c4e",
+      "relation": "observed on",
+      "relationship_id": "relationship-831579054ed7e4bdb983",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-69fa712ae216fec73aabd6e53b36d86d"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-92da901c924316c9d326",
+      "relation": "associated with",
+      "relationship_id": "relationship-98add605e7fd00cf4e04",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-0d5e64385871d71f5ef3"
+    },
+    {
+      "evidence_ids": [
+        "evidence-69fa712ae216fec73aabd6e53b36d86d"
+      ],
+      "explanation": "Canonical field network.domain contains this observable.",
+      "from": "entity-92da901c924316c9d326",
+      "relation": "references",
+      "relationship_id": "relationship-4d71a2d98ea28f6e565d",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-26b726137a121bdf5752"
+    },
+    {
+      "evidence_ids": [
+        "evidence-69fa712ae216fec73aabd6e53b36d86d"
+      ],
+      "explanation": "Canonical field network.destination_ip contains this observable.",
+      "from": "entity-92da901c924316c9d326",
+      "relation": "references",
+      "relationship_id": "relationship-dc4ac046b735ec25cc89",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-dc75669332ed8ec2acbb"
+    },
+    {
+      "evidence_ids": [
+        "evidence-69fa712ae216fec73aabd6e53b36d86d"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-92da901c924316c9d326",
+      "relation": "observed on",
+      "relationship_id": "relationship-5614eac21b87f88d6352",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292"
+      ],
+      "explanation": "Canonical field dns.question contains this observable.",
+      "from": "entity-9893c10568aaede689b9",
+      "relation": "references",
+      "relationship_id": "relationship-8d47585d1a8aa2f9806f",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-75f9afa83d8cd3312500"
+    },
+    {
+      "evidence_ids": [
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292"
+      ],
+      "explanation": "Canonical field network.source_ip contains this observable.",
+      "from": "entity-9893c10568aaede689b9",
+      "relation": "references",
+      "relationship_id": "relationship-ddc927daf7b764f51283",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-8849d2fdc4ab7b950798"
+    },
+    {
+      "evidence_ids": [
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292"
+      ],
+      "explanation": "Canonical field dns.answers[0] contains this observable.",
+      "from": "entity-9893c10568aaede689b9",
+      "relation": "references",
+      "relationship_id": "relationship-c521976a3947cdaa63f3",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-fe4b40a24edd5cc7eadc"
+    },
+    {
+      "evidence_ids": [
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292"
+      ],
+      "explanation": "Canonical field network.destination_ip contains this observable.",
+      "from": "entity-9893c10568aaede689b9",
+      "relation": "references",
+      "relationship_id": "relationship-fbb210ffec4e8b416822",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-feba9a454e93235cd7b5"
+    },
+    {
+      "evidence_ids": [
+        "evidence-2d7847d43b9178589166709aefca0623"
+      ],
+      "explanation": "Canonical field dns.answers[0] contains this observable.",
+      "from": "entity-9dc09f73d5391b44ceb8",
+      "relation": "references",
+      "relationship_id": "relationship-79ad9e4a4901cc25fa5b",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-005373d81097aab2f449"
+    },
+    {
+      "evidence_ids": [
+        "evidence-2d7847d43b9178589166709aefca0623"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-9dc09f73d5391b44ceb8",
+      "relation": "associated with",
+      "relationship_id": "relationship-4899c2bb5101962f020f",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-0d5e64385871d71f5ef3"
+    },
+    {
+      "evidence_ids": [
+        "evidence-2d7847d43b9178589166709aefca0623"
+      ],
+      "explanation": "Canonical field dns.question contains this observable.",
+      "from": "entity-9dc09f73d5391b44ceb8",
+      "relation": "references",
+      "relationship_id": "relationship-6f2eac5277c019568cd5",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-3db4943dcb90d033fff5"
+    },
+    {
+      "evidence_ids": [
+        "evidence-2d7847d43b9178589166709aefca0623"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-9dc09f73d5391b44ceb8",
+      "relation": "observed on",
+      "relationship_id": "relationship-6f1fc4ff476d437e13f9",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-cbf7d8caf5883d57089346cf1be986f4"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-a8fe00b888ea0df6bd1e",
+      "relation": "contains",
+      "relationship_id": "relationship-5f124762662fc52c0f11",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-421384a592b041a8dc52"
+    },
+    {
+      "evidence_ids": [
+        "evidence-69fa712ae216fec73aabd6e53b36d86d"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-a8fe00b888ea0df6bd1e",
+      "relation": "contains",
+      "relationship_id": "relationship-3ff8aa63fc0169ec707f",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-92da901c924316c9d326"
+    },
+    {
+      "evidence_ids": [
+        "evidence-2ee130f49d9cf6efdf8a9b92ef8f6bdc"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-b2927ee96c796020e696",
+      "relation": "associated with",
+      "relationship_id": "relationship-becbf9cdf835aa1663d5",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-0d5e64385871d71f5ef3"
+    },
+    {
+      "evidence_ids": [
+        "evidence-2ee130f49d9cf6efdf8a9b92ef8f6bdc"
+      ],
+      "explanation": "Canonical field authentication.source_ip contains this observable.",
+      "from": "entity-b2927ee96c796020e696",
+      "relation": "references",
+      "relationship_id": "relationship-4d28f2f53c1d5b3479b0",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-9af45ac21aa4ed7e58c5"
+    },
+    {
+      "evidence_ids": [
+        "evidence-2ee130f49d9cf6efdf8a9b92ef8f6bdc"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-b2927ee96c796020e696",
+      "relation": "observed on",
+      "relationship_id": "relationship-b4b1e7aaeedf9ddce0df",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-fb850df8e15b143973841273dd3726d2"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-b3b65bb03dd9a680390e",
+      "relation": "contains",
+      "relationship_id": "relationship-e6728000912cabb6dd92",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-7a0372a7b3ee6b01df0e"
+    },
+    {
+      "evidence_ids": [
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-b3b65bb03dd9a680390e",
+      "relation": "contains",
+      "relationship_id": "relationship-afe88296e990e497ac59",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-9893c10568aaede689b9"
+    },
+    {
+      "evidence_ids": [
+        "evidence-6cc699c5baaa284e133f2ccba0ce73d9"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-c40c2c2bbe2f25e86dcb",
+      "relation": "associated with",
+      "relationship_id": "relationship-7c4a72af7f9f6163081d",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-0d5e64385871d71f5ef3"
+    },
+    {
+      "evidence_ids": [
+        "evidence-6cc699c5baaa284e133f2ccba0ce73d9"
+      ],
+      "explanation": "Canonical field file.sha256 contains this observable.",
+      "from": "entity-c40c2c2bbe2f25e86dcb",
+      "relation": "references",
+      "relationship_id": "relationship-76b59ae8d72ab470abff",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-e2517471bf2ec9f89710"
+    },
+    {
+      "evidence_ids": [
+        "evidence-6cc699c5baaa284e133f2ccba0ce73d9"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-c40c2c2bbe2f25e86dcb",
+      "relation": "observed on",
+      "relationship_id": "relationship-c8949b432ac2301f2813",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-af01f37a90a61d4a23f23df37e95e4eb"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-ce095a8a3fff88991610",
+      "relation": "observed on",
+      "relationship_id": "relationship-977878084118335fe07a",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-af01f37a90a61d4a23f23df37e95e4eb"
+      ],
+      "explanation": "Canonical field network.destination_ip contains this observable.",
+      "from": "entity-ce095a8a3fff88991610",
+      "relation": "references",
+      "relationship_id": "relationship-dd2fcc2b6487257af6a5",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-fe4b40a24edd5cc7eadc"
+    },
+    {
+      "evidence_ids": [
+        "evidence-b02ca5afad4119b76fccc756dd3767a4"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-d37fbe9b09d2f6d0803a",
+      "relation": "contains",
+      "relationship_id": "relationship-40b812e42b004a8bb0f0",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-312cb1300b3654e8f083"
+    },
+    {
+      "evidence_ids": [
+        "evidence-49d2482f470e46e9550a101baeeeb1ac"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-d37fbe9b09d2f6d0803a",
+      "relation": "contains",
+      "relationship_id": "relationship-77a62d6862f5ef650955",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-7622f5fa6d3c66d5050d"
+    },
+    {
+      "evidence_ids": [
+        "evidence-4327bec621c83c79d0ede34ffe735af1"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-d4b7c0d8230b69fc82f3",
+      "relation": "contains",
+      "relationship_id": "relationship-4b301eb7e6e41f912c3c",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-4ec7f9ad7f290b7d153c"
+    },
+    {
+      "evidence_ids": [
+        "evidence-650c921358229d0610c0f9f1ed874628"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-d4b7c0d8230b69fc82f3",
+      "relation": "contains",
+      "relationship_id": "relationship-1c76a11d66f2637cf2e4",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-549560e16fc97d3aaaa7"
+    },
+    {
+      "evidence_ids": [
+        "evidence-ae427d5ec4de5c9733248d1e0605246b"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-ddc23abb0b7c6a7bc9ee",
+      "relation": "contains",
+      "relationship_id": "relationship-593847fc6d3256b7754e",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-83beac0fa538b1853acf"
+    },
+    {
+      "evidence_ids": [
+        "evidence-2ee130f49d9cf6efdf8a9b92ef8f6bdc"
+      ],
+      "explanation": "The selected source contains this canonical event.",
+      "from": "entity-ddc23abb0b7c6a7bc9ee",
+      "relation": "contains",
+      "relationship_id": "relationship-a09897259a962b1bfb7b",
+      "rule_id": "REL-SOURCE-EVENT-1",
+      "to": "entity-b2927ee96c796020e696"
+    },
+    {
+      "evidence_ids": [
+        "evidence-2d7847d43b9178589166709aefca0623"
+      ],
+      "explanation": "The host and observable occur in the same source event.",
+      "from": "entity-redacted-524f62ccd80108f71cf6",
+      "relation": "connected to",
+      "relationship_id": "relationship-39cd69dbd5ff7786eeff",
+      "rule_id": "REL-HOST-OBS-1",
+      "to": "entity-005373d81097aab2f449"
+    },
+    {
+      "evidence_ids": [
+        "evidence-69fa712ae216fec73aabd6e53b36d86d",
+        "evidence-c7f0af77cae1b7dd8b7c0bba0cfd1d9d",
+        "evidence-e414515c0cd85af0259948d4252fdbfc",
+        "evidence-eff8b995f22e573b9b1dddb222d8a374"
+      ],
+      "explanation": "The host and observable occur in the same source event.",
+      "from": "entity-redacted-524f62ccd80108f71cf6",
+      "relation": "queried",
+      "relationship_id": "relationship-4491e27e52a070f6edf7",
+      "rule_id": "REL-HOST-OBS-1",
+      "to": "entity-26b726137a121bdf5752"
+    },
+    {
+      "evidence_ids": [
+        "evidence-2d7847d43b9178589166709aefca0623"
+      ],
+      "explanation": "The host and observable occur in the same source event.",
+      "from": "entity-redacted-524f62ccd80108f71cf6",
+      "relation": "queried",
+      "relationship_id": "relationship-eb8ad820ff752e1fad34",
+      "rule_id": "REL-HOST-OBS-1",
+      "to": "entity-3db4943dcb90d033fff5"
+    },
+    {
+      "evidence_ids": [
+        "evidence-4327bec621c83c79d0ede34ffe735af1",
+        "evidence-8560dbe70bf392d9988e980d9623fdf0",
+        "evidence-b30c59a9381c0a6b05b588dac8e39288",
+        "evidence-ca4cdb8998ba38aa9bf97ff409e88166",
+        "evidence-cbf7d8caf5883d57089346cf1be986f4",
+        "evidence-d856440d079218fe27afd5eb29a98047",
+        "evidence-f19b96f26a816bbbea1828c6c264666d"
+      ],
+      "explanation": "The host and observable occur in the same source event.",
+      "from": "entity-redacted-524f62ccd80108f71cf6",
+      "relation": "queried",
+      "relationship_id": "relationship-cc48774d91fea222a64c",
+      "rule_id": "REL-HOST-OBS-1",
+      "to": "entity-75f9afa83d8cd3312500"
+    },
+    {
+      "evidence_ids": [
+        "evidence-49d2482f470e46e9550a101baeeeb1ac"
+      ],
+      "explanation": "The host and observable occur in the same source event.",
+      "from": "entity-redacted-524f62ccd80108f71cf6",
+      "relation": "connected to",
+      "relationship_id": "relationship-f69f16578f88c273b7e8",
+      "rule_id": "REL-HOST-OBS-1",
+      "to": "entity-8849d2fdc4ab7b950798"
+    },
+    {
+      "evidence_ids": [
+        "evidence-2ee130f49d9cf6efdf8a9b92ef8f6bdc",
+        "evidence-b02ca5afad4119b76fccc756dd3767a4"
+      ],
+      "explanation": "The host and observable occur in the same source event.",
+      "from": "entity-redacted-524f62ccd80108f71cf6",
+      "relation": "connected to",
+      "relationship_id": "relationship-c94cb821e0140c4d0503",
+      "rule_id": "REL-HOST-OBS-1",
+      "to": "entity-9af45ac21aa4ed7e58c5"
+    },
+    {
+      "evidence_ids": [
+        "evidence-85f3a4d312ddf53712687c9500a1e4eb"
+      ],
+      "explanation": "The host and observable occur in the same source event.",
+      "from": "entity-redacted-524f62ccd80108f71cf6",
+      "relation": "observed hash",
+      "relationship_id": "relationship-9623ed7809b971cfeaa1",
+      "rule_id": "REL-HOST-OBS-1",
+      "to": "entity-c830475b5d9c63dbb67c"
+    },
+    {
+      "evidence_ids": [
+        "evidence-69fa712ae216fec73aabd6e53b36d86d",
+        "evidence-c7f0af77cae1b7dd8b7c0bba0cfd1d9d",
+        "evidence-e414515c0cd85af0259948d4252fdbfc",
+        "evidence-eff8b995f22e573b9b1dddb222d8a374"
+      ],
+      "explanation": "The host and observable occur in the same source event.",
+      "from": "entity-redacted-524f62ccd80108f71cf6",
+      "relation": "connected to",
+      "relationship_id": "relationship-f123a5ad6e5919bd27aa",
+      "rule_id": "REL-HOST-OBS-1",
+      "to": "entity-dc75669332ed8ec2acbb"
+    },
+    {
+      "evidence_ids": [
+        "evidence-650c921358229d0610c0f9f1ed874628",
+        "evidence-6cc699c5baaa284e133f2ccba0ce73d9",
+        "evidence-f9ba05b17616ec49129fb9e2460699e9"
+      ],
+      "explanation": "The host and observable occur in the same source event.",
+      "from": "entity-redacted-524f62ccd80108f71cf6",
+      "relation": "observed hash",
+      "relationship_id": "relationship-4f436aef2b44a4985057",
+      "rule_id": "REL-HOST-OBS-1",
+      "to": "entity-e2517471bf2ec9f89710"
+    },
+    {
+      "evidence_ids": [
+        "evidence-8560dbe70bf392d9988e980d9623fdf0",
+        "evidence-ae427d5ec4de5c9733248d1e0605246b",
+        "evidence-af01f37a90a61d4a23f23df37e95e4eb",
+        "evidence-b30c59a9381c0a6b05b588dac8e39288",
+        "evidence-ca4cdb8998ba38aa9bf97ff409e88166",
+        "evidence-cbf7d8caf5883d57089346cf1be986f4",
+        "evidence-f19b96f26a816bbbea1828c6c264666d"
+      ],
+      "explanation": "The host and observable occur in the same source event.",
+      "from": "entity-redacted-524f62ccd80108f71cf6",
+      "relation": "connected to",
+      "relationship_id": "relationship-2f673bcdcfcbd583f3bd",
+      "rule_id": "REL-HOST-OBS-1",
+      "to": "entity-fe4b40a24edd5cc7eadc"
+    },
+    {
+      "evidence_ids": [
+        "evidence-b30c59a9381c0a6b05b588dac8e39288"
+      ],
+      "explanation": "The event declares this user.",
+      "from": "entity-fe70f59a5efc77891e36",
+      "relation": "associated with",
+      "relationship_id": "relationship-1aaff5f8c193f5507765",
+      "rule_id": "REL-EVENT-USER-1",
+      "to": "entity-redacted-0d5e64385871d71f5ef3"
+    },
+    {
+      "evidence_ids": [
+        "evidence-b30c59a9381c0a6b05b588dac8e39288"
+      ],
+      "explanation": "Canonical field dns.question contains this observable.",
+      "from": "entity-fe70f59a5efc77891e36",
+      "relation": "references",
+      "relationship_id": "relationship-21e597ef92251812f143",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-75f9afa83d8cd3312500"
+    },
+    {
+      "evidence_ids": [
+        "evidence-b30c59a9381c0a6b05b588dac8e39288"
+      ],
+      "explanation": "The event declares this host.",
+      "from": "entity-fe70f59a5efc77891e36",
+      "relation": "observed on",
+      "relationship_id": "relationship-2488a5a2db0309bbc3ac",
+      "rule_id": "REL-EVENT-HOST-1",
+      "to": "entity-redacted-524f62ccd80108f71cf6"
+    },
+    {
+      "evidence_ids": [
+        "evidence-b30c59a9381c0a6b05b588dac8e39288"
+      ],
+      "explanation": "Canonical field dns.answers[0] contains this observable.",
+      "from": "entity-fe70f59a5efc77891e36",
+      "relation": "references",
+      "relationship_id": "relationship-765974ab1bcfbbb30702",
+      "rule_id": "REL-EVENT-OBS-1",
+      "to": "entity-fe4b40a24edd5cc7eadc"
+    }
+  ],
+  "nodes": [
+    {
+      "entity_id": "entity-75f9afa83d8cd3312500",
+      "entity_type": "domain",
+      "evidence_ids": [
+        "evidence-4327bec621c83c79d0ede34ffe735af1",
+        "evidence-8560dbe70bf392d9988e980d9623fdf0",
+        "evidence-b30c59a9381c0a6b05b588dac8e39288",
+        "evidence-ca4cdb8998ba38aa9bf97ff409e88166",
+        "evidence-cbf7d8caf5883d57089346cf1be986f4",
+        "evidence-d856440d079218fe27afd5eb29a98047",
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292",
+        "evidence-f19b96f26a816bbbea1828c6c264666d"
+      ],
+      "value": "cdn-update.example.test"
+    },
+    {
+      "entity_id": "entity-26b726137a121bdf5752",
+      "entity_type": "domain",
+      "evidence_ids": [
+        "evidence-69fa712ae216fec73aabd6e53b36d86d",
+        "evidence-c7f0af77cae1b7dd8b7c0bba0cfd1d9d",
+        "evidence-e414515c0cd85af0259948d4252fdbfc",
+        "evidence-eff8b995f22e573b9b1dddb222d8a374"
+      ],
+      "value": "cdn-updates.example.test"
+    },
+    {
+      "entity_id": "entity-3db4943dcb90d033fff5",
+      "entity_type": "domain",
+      "evidence_ids": [
+        "evidence-2d7847d43b9178589166709aefca0623"
+      ],
+      "value": "portal.example.test"
+    },
+    {
+      "entity_id": "entity-7622f5fa6d3c66d5050d",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-49d2482f470e46e9550a101baeeeb1ac"
+      ],
+      "value": "demo-auth-001"
+    },
+    {
+      "entity_id": "entity-312cb1300b3654e8f083",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-b02ca5afad4119b76fccc756dd3767a4"
+      ],
+      "value": "demo-auth-002"
+    },
+    {
+      "entity_id": "entity-9dc09f73d5391b44ceb8",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-2d7847d43b9178589166709aefca0623"
+      ],
+      "value": "demo-dns-001"
+    },
+    {
+      "entity_id": "entity-fe70f59a5efc77891e36",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-b30c59a9381c0a6b05b588dac8e39288"
+      ],
+      "value": "demo-dns-002"
+    },
+    {
+      "entity_id": "entity-32d3524200a2e4223b85",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-e414515c0cd85af0259948d4252fdbfc"
+      ],
+      "value": "demo-dns-003"
+    },
+    {
+      "entity_id": "entity-2a867038a7b57f6d1d93",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-d856440d079218fe27afd5eb29a98047"
+      ],
+      "value": "demo-endpoint-001"
+    },
+    {
+      "entity_id": "entity-c40c2c2bbe2f25e86dcb",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-6cc699c5baaa284e133f2ccba0ce73d9"
+      ],
+      "value": "demo-endpoint-002"
+    },
+    {
+      "entity_id": "entity-83cc7818ffcad6a04260",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-f9ba05b17616ec49129fb9e2460699e9"
+      ],
+      "value": "demo-endpoint-003"
+    },
+    {
+      "entity_id": "entity-922c48db051d9a0b0c4e",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-85f3a4d312ddf53712687c9500a1e4eb"
+      ],
+      "value": "demo-endpoint-004"
+    },
+    {
+      "entity_id": "entity-520936d07207b202aedb",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-ca4cdb8998ba38aa9bf97ff409e88166"
+      ],
+      "value": "demo-network-001"
+    },
+    {
+      "entity_id": "entity-1cc87eab263e59fdd96c",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-8560dbe70bf392d9988e980d9623fdf0"
+      ],
+      "value": "demo-network-002"
+    },
+    {
+      "entity_id": "entity-63378251506dfddcaf37",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-eff8b995f22e573b9b1dddb222d8a374"
+      ],
+      "value": "demo-network-003"
+    },
+    {
+      "entity_id": "entity-ce095a8a3fff88991610",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-af01f37a90a61d4a23f23df37e95e4eb"
+      ],
+      "value": "demo-partial-001"
+    },
+    {
+      "entity_id": "entity-43bda5280424291902d4",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-f19b96f26a816bbbea1828c6c264666d"
+      ],
+      "value": "generic-json-generic-proxy-001"
+    },
+    {
+      "entity_id": "entity-7651af1ce66a4d233755",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-c7f0af77cae1b7dd8b7c0bba0cfd1d9d"
+      ],
+      "value": "generic-json-generic-proxy-002"
+    },
+    {
+      "entity_id": "entity-549560e16fc97d3aaaa7",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-650c921358229d0610c0f9f1ed874628"
+      ],
+      "value": "hayabusa-11-902"
+    },
+    {
+      "entity_id": "entity-4ec7f9ad7f290b7d153c",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-4327bec621c83c79d0ede34ffe735af1"
+      ],
+      "value": "hayabusa-3008-901"
+    },
+    {
+      "entity_id": "entity-421384a592b041a8dc52",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-cbf7d8caf5883d57089346cf1be986f4"
+      ],
+      "value": "mapped-csv-mapped-proxy-001"
+    },
+    {
+      "entity_id": "entity-92da901c924316c9d326",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-69fa712ae216fec73aabd6e53b36d86d"
+      ],
+      "value": "mapped-csv-mapped-proxy-002"
+    },
+    {
+      "entity_id": "entity-9893c10568aaede689b9",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292"
+      ],
+      "value": "suricata-7001-1"
+    },
+    {
+      "entity_id": "entity-7a0372a7b3ee6b01df0e",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-fb850df8e15b143973841273dd3726d2"
+      ],
+      "value": "suricata-7002-2"
+    },
+    {
+      "entity_id": "entity-b2927ee96c796020e696",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-2ee130f49d9cf6efdf8a9b92ef8f6bdc"
+      ],
+      "value": "wazuh-5501-1"
+    },
+    {
+      "entity_id": "entity-83beac0fa538b1853acf",
+      "entity_type": "event",
+      "evidence_ids": [
+        "evidence-ae427d5ec4de5c9733248d1e0605246b"
+      ],
+      "value": "wazuh-8801-2"
+    },
+    {
+      "entity_id": "entity-redacted-524f62ccd80108f71cf6",
+      "entity_type": "host",
+      "evidence_ids": [
+        "evidence-2d7847d43b9178589166709aefca0623",
+        "evidence-2ee130f49d9cf6efdf8a9b92ef8f6bdc",
+        "evidence-4327bec621c83c79d0ede34ffe735af1",
+        "evidence-49d2482f470e46e9550a101baeeeb1ac",
+        "evidence-650c921358229d0610c0f9f1ed874628",
+        "evidence-69fa712ae216fec73aabd6e53b36d86d",
+        "evidence-6cc699c5baaa284e133f2ccba0ce73d9",
+        "evidence-8560dbe70bf392d9988e980d9623fdf0",
+        "evidence-85f3a4d312ddf53712687c9500a1e4eb",
+        "evidence-ae427d5ec4de5c9733248d1e0605246b",
+        "evidence-af01f37a90a61d4a23f23df37e95e4eb",
+        "evidence-b02ca5afad4119b76fccc756dd3767a4",
+        "evidence-b30c59a9381c0a6b05b588dac8e39288",
+        "evidence-c7f0af77cae1b7dd8b7c0bba0cfd1d9d",
+        "evidence-ca4cdb8998ba38aa9bf97ff409e88166",
+        "evidence-cbf7d8caf5883d57089346cf1be986f4",
+        "evidence-d856440d079218fe27afd5eb29a98047",
+        "evidence-e414515c0cd85af0259948d4252fdbfc",
+        "evidence-eff8b995f22e573b9b1dddb222d8a374",
+        "evidence-f19b96f26a816bbbea1828c6c264666d",
+        "evidence-f9ba05b17616ec49129fb9e2460699e9"
+      ],
+      "value": "HOST-CF3B42C3DD"
+    },
+    {
+      "entity_id": "entity-8849d2fdc4ab7b950798",
+      "entity_type": "ipv4",
+      "evidence_ids": [
+        "evidence-49d2482f470e46e9550a101baeeeb1ac",
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292",
+        "evidence-fb850df8e15b143973841273dd3726d2"
+      ],
+      "value": "10.20.14.23"
+    },
+    {
+      "entity_id": "entity-005373d81097aab2f449",
+      "entity_type": "ipv4",
+      "evidence_ids": [
+        "evidence-2d7847d43b9178589166709aefca0623"
+      ],
+      "value": "192.0.2.10"
+    },
+    {
+      "entity_id": "entity-feba9a454e93235cd7b5",
+      "entity_type": "ipv4",
+      "evidence_ids": [
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292"
+      ],
+      "value": "192.0.2.53"
+    },
+    {
+      "entity_id": "entity-9af45ac21aa4ed7e58c5",
+      "entity_type": "ipv4",
+      "evidence_ids": [
+        "evidence-2ee130f49d9cf6efdf8a9b92ef8f6bdc",
+        "evidence-b02ca5afad4119b76fccc756dd3767a4"
+      ],
+      "value": "192.0.2.55"
+    },
+    {
+      "entity_id": "entity-dc75669332ed8ec2acbb",
+      "entity_type": "ipv4",
+      "evidence_ids": [
+        "evidence-69fa712ae216fec73aabd6e53b36d86d",
+        "evidence-c7f0af77cae1b7dd8b7c0bba0cfd1d9d",
+        "evidence-e414515c0cd85af0259948d4252fdbfc",
+        "evidence-eff8b995f22e573b9b1dddb222d8a374",
+        "evidence-fb850df8e15b143973841273dd3726d2"
+      ],
+      "value": "198.51.100.25"
+    },
+    {
+      "entity_id": "entity-fe4b40a24edd5cc7eadc",
+      "entity_type": "ipv4",
+      "evidence_ids": [
+        "evidence-8560dbe70bf392d9988e980d9623fdf0",
+        "evidence-ae427d5ec4de5c9733248d1e0605246b",
+        "evidence-af01f37a90a61d4a23f23df37e95e4eb",
+        "evidence-b30c59a9381c0a6b05b588dac8e39288",
+        "evidence-ca4cdb8998ba38aa9bf97ff409e88166",
+        "evidence-cbf7d8caf5883d57089346cf1be986f4",
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292",
+        "evidence-f19b96f26a816bbbea1828c6c264666d"
+      ],
+      "value": "203.0.113.42"
+    },
+    {
+      "entity_id": "entity-e2517471bf2ec9f89710",
+      "entity_type": "sha256",
+      "evidence_ids": [
+        "evidence-650c921358229d0610c0f9f1ed874628",
+        "evidence-6cc699c5baaa284e133f2ccba0ce73d9",
+        "evidence-f9ba05b17616ec49129fb9e2460699e9"
+      ],
+      "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "entity_id": "entity-c830475b5d9c63dbb67c",
+      "entity_type": "sha256",
+      "evidence_ids": [
+        "evidence-85f3a4d312ddf53712687c9500a1e4eb"
+      ],
+      "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "entity_id": "entity-51ede8ca3b5e5d3798b5",
+      "entity_type": "source",
+      "evidence_ids": [
+        "evidence-2d7847d43b9178589166709aefca0623",
+        "evidence-b30c59a9381c0a6b05b588dac8e39288",
+        "evidence-e414515c0cd85af0259948d4252fdbfc"
+      ],
+      "value": "01-dns-events.jsonl"
+    },
+    {
+      "entity_id": "entity-489255e74ab1bad7ad79",
+      "entity_type": "source",
+      "evidence_ids": [
+        "evidence-6cc699c5baaa284e133f2ccba0ce73d9",
+        "evidence-85f3a4d312ddf53712687c9500a1e4eb",
+        "evidence-d856440d079218fe27afd5eb29a98047",
+        "evidence-f9ba05b17616ec49129fb9e2460699e9"
+      ],
+      "value": "02-endpoint-events.jsonl"
+    },
+    {
+      "entity_id": "entity-06109c121d6821846918",
+      "entity_type": "source",
+      "evidence_ids": [
+        "evidence-8560dbe70bf392d9988e980d9623fdf0",
+        "evidence-ca4cdb8998ba38aa9bf97ff409e88166",
+        "evidence-eff8b995f22e573b9b1dddb222d8a374"
+      ],
+      "value": "03-network-events.jsonl"
+    },
+    {
+      "entity_id": "entity-d37fbe9b09d2f6d0803a",
+      "entity_type": "source",
+      "evidence_ids": [
+        "evidence-49d2482f470e46e9550a101baeeeb1ac",
+        "evidence-b02ca5afad4119b76fccc756dd3767a4"
+      ],
+      "value": "04-authentication-events.jsonl"
+    },
+    {
+      "entity_id": "entity-179bdcde2949de6981d3",
+      "entity_type": "source",
+      "evidence_ids": [
+        "evidence-af01f37a90a61d4a23f23df37e95e4eb"
+      ],
+      "value": "05-partial-with-warning.jsonl"
+    },
+    {
+      "entity_id": "entity-b3b65bb03dd9a680390e",
+      "entity_type": "source",
+      "evidence_ids": [
+        "evidence-e1923c04bf03aa85f5aff1fb7fc81292",
+        "evidence-fb850df8e15b143973841273dd3726d2"
+      ],
+      "value": "07-suricata-eve.jsonl"
+    },
+    {
+      "entity_id": "entity-ddc23abb0b7c6a7bc9ee",
+      "entity_type": "source",
+      "evidence_ids": [
+        "evidence-2ee130f49d9cf6efdf8a9b92ef8f6bdc",
+        "evidence-ae427d5ec4de5c9733248d1e0605246b"
+      ],
+      "value": "08-wazuh-alerts.jsonl"
+    },
+    {
+      "entity_id": "entity-d4b7c0d8230b69fc82f3",
+      "entity_type": "source",
+      "evidence_ids": [
+        "evidence-4327bec621c83c79d0ede34ffe735af1",
+        "evidence-650c921358229d0610c0f9f1ed874628"
+      ],
+      "value": "09-hayabusa-results.jsonl"
+    },
+    {
+      "entity_id": "entity-5f7ad67cd66ef48fa0fd",
+      "entity_type": "source",
+      "evidence_ids": [
+        "evidence-c7f0af77cae1b7dd8b7c0bba0cfd1d9d",
+        "evidence-f19b96f26a816bbbea1828c6c264666d"
+      ],
+      "value": "10-generic-array.json"
+    },
+    {
+      "entity_id": "entity-a8fe00b888ea0df6bd1e",
+      "entity_type": "source",
+      "evidence_ids": [
+        "evidence-69fa712ae216fec73aabd6e53b36d86d",
+        "evidence-cbf7d8caf5883d57089346cf1be986f4"
+      ],
+      "value": "11-mapped-proxy.csv"
+    },
+    {
+      "entity_id": "entity-redacted-0d5e64385871d71f5ef3",
+      "entity_type": "user",
+      "evidence_ids": [
+        "evidence-2d7847d43b9178589166709aefca0623",
+        "evidence-2ee130f49d9cf6efdf8a9b92ef8f6bdc",
+        "evidence-4327bec621c83c79d0ede34ffe735af1",
+        "evidence-49d2482f470e46e9550a101baeeeb1ac",
+        "evidence-650c921358229d0610c0f9f1ed874628",
+        "evidence-69fa712ae216fec73aabd6e53b36d86d",
+        "evidence-6cc699c5baaa284e133f2ccba0ce73d9",
+        "evidence-85f3a4d312ddf53712687c9500a1e4eb",
+        "evidence-ae427d5ec4de5c9733248d1e0605246b",
+        "evidence-b30c59a9381c0a6b05b588dac8e39288",
+        "evidence-c7f0af77cae1b7dd8b7c0bba0cfd1d9d",
+        "evidence-cbf7d8caf5883d57089346cf1be986f4",
+        "evidence-d856440d079218fe27afd5eb29a98047",
+        "evidence-e414515c0cd85af0259948d4252fdbfc",
+        "evidence-f19b96f26a816bbbea1828c6c264666d",
+        "evidence-f9ba05b17616ec49129fb9e2460699e9"
+      ],
+      "value": "USER-01B97FE545"
+    },
+    {
+      "entity_id": "entity-redacted-b933f93a1ea0c27628db",
+      "entity_type": "user",
+      "evidence_ids": [
+        "evidence-b02ca5afad4119b76fccc756dd3767a4"
+      ],
+      "value": "USER-77A2ECAEE0"
+    }
+  ],
+  "schema": "relationship-graph/1.0.0"
+}

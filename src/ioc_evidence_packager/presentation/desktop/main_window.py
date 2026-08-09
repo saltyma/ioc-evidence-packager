@@ -1,9 +1,11 @@
 """Native desktop shell and navigation coordination."""
 
+from dataclasses import replace
 from pathlib import Path
 
 from PySide6.QtCore import QSize, Qt, QThreadPool
 from PySide6.QtWidgets import (
+    QApplication,
     QButtonGroup,
     QFrame,
     QHBoxLayout,
@@ -20,6 +22,7 @@ from ioc_evidence_packager.application.analysis_service import AnalysisService
 from ioc_evidence_packager.application.evidence_service import EvidenceService
 from ioc_evidence_packager.application.report_service import ReportService
 from ioc_evidence_packager.application.services import CaseService, InvestigationSetup
+from ioc_evidence_packager.application.workspace_service import WorkspaceService
 from ioc_evidence_packager.domain.analysis import AnalysisSnapshot
 from ioc_evidence_packager.domain.errors import IOCEvidencePackagerError
 from ioc_evidence_packager.domain.evidence import (
@@ -28,21 +31,38 @@ from ioc_evidence_packager.domain.evidence import (
     ImportRejection,
     ImportSummary,
 )
-from ioc_evidence_packager.domain.models import Case, CaseId
+from ioc_evidence_packager.domain.models import Case, CaseId, PrivacyMode
 from ioc_evidence_packager.domain.sources import SourcePreview
+from ioc_evidence_packager.domain.workspace import (
+    AssertionId,
+    IntelligenceClaim,
+    RecommendationId,
+    RecommendationStatus,
+    RelationshipSnapshot,
+)
 from ioc_evidence_packager.ingestion import SourceInspectionService
 from ioc_evidence_packager.presentation.desktop.branding import application_icon
 from ioc_evidence_packager.presentation.desktop.jobs import (
     CapsuleExportWorker,
     EvidenceImportWorker,
+    IntelligenceLookupWorker,
 )
+from ioc_evidence_packager.presentation.desktop.settings_store import (
+    DesktopPreferences,
+    DesktopSettingsStore,
+)
+from ioc_evidence_packager.presentation.desktop.theme import desktop_stylesheet
 from ioc_evidence_packager.presentation.desktop.views.coverage import CoverageView
 from ioc_evidence_packager.presentation.desktop.views.dashboard import DashboardView
+from ioc_evidence_packager.presentation.desktop.views.detail_dialog import DetailDialog
 from ioc_evidence_packager.presentation.desktop.views.evidence import EvidenceView
 from ioc_evidence_packager.presentation.desktop.views.exports import ExportsView
 from ioc_evidence_packager.presentation.desktop.views.home import HomeView
+from ioc_evidence_packager.presentation.desktop.views.intelligence import IntelligenceView
 from ioc_evidence_packager.presentation.desktop.views.new_case import NewCaseDialog
-from ioc_evidence_packager.presentation.desktop.views.placeholder import PlaceholderView
+from ioc_evidence_packager.presentation.desktop.views.recommendations import RecommendationsView
+from ioc_evidence_packager.presentation.desktop.views.relationships import RelationshipsView
+from ioc_evidence_packager.presentation.desktop.views.settings import SettingsView
 from ioc_evidence_packager.presentation.desktop.views.sources import SourcesView
 from ioc_evidence_packager.presentation.desktop.views.timeline import TimelineView
 from ioc_evidence_packager.reporting.models import (
@@ -54,17 +74,17 @@ NAVIGATION = (
     ("Dashboard", "Case summary, findings, limitations, and next actions.", "Slice 1"),
     ("Evidence", "Source-linked facts, exact matches, provenance, and raw records.", "Slice 4"),
     ("Timeline", "A deterministic chronology with direct, context, and undated lanes.", "Slice 5"),
-    ("Relationships", "Bounded typed relationships with evidence-backed edges.", "Phase 6"),
+    ("Relationships", "Bounded typed relationships with evidence-backed edges.", "v0.7"),
     (
         "Coverage",
         "Matched, searched, partial, missing, failed, and unsupported evidence.",
         "Slice 4",
     ),
-    ("Intelligence", "Attributed provider assertions under the active privacy policy.", "Phase 7"),
-    ("Recommendations", "Deterministic next actions citing evidence and coverage gaps.", "Phase 6"),
+    ("Intelligence", "Attributed provider assertions under the active privacy policy.", "v0.7"),
+    ("Recommendations", "Deterministic next actions citing evidence and coverage gaps.", "v0.7"),
     ("Sources", "Input inventory, hashes, adapters, jobs, and diagnostics.", "Phase 5"),
     ("Exports", "Reviewed Case Capsule profiles and artifact verification.", "Slice 5"),
-    ("Settings", "Case display, storage, privacy, and mapping preferences.", "Slice 2"),
+    ("Settings", "Case display, storage, privacy, and mapping preferences.", "v0.7"),
 )
 
 
@@ -77,22 +97,31 @@ class MainWindow(QMainWindow):
         evidence_service: EvidenceService,
         analysis_service: AnalysisService,
         report_service: ReportService,
+        workspace_service: WorkspaceService,
+        settings_store: DesktopSettingsStore,
         source_inspection_service: SourceInspectionService,
+        database_path: Path,
     ) -> None:
         super().__init__()
         self._case_service = case_service
         self._evidence_service = evidence_service
         self._analysis_service = analysis_service
         self._report_service = report_service
+        self._workspace_service = workspace_service
+        self._settings_store = settings_store
+        self._preferences = settings_store.load()
         self._source_inspection_service = source_inspection_service
+        self._database_path = database_path
         self._current_case: Case | None = None
         self._current_setup: InvestigationSetup | None = None
         self._import_worker: EvidenceImportWorker | None = None
         self._import_case_id: CaseId | None = None
         self._export_worker: CapsuleExportWorker | None = None
+        self._intelligence_worker: IntelligenceLookupWorker | None = None
         self._records: tuple[EvidenceRecord, ...] = ()
         self._rejections: tuple[ImportRejection, ...] = ()
         self._analysis: AnalysisSnapshot | None = None
+        self._relationships = RelationshipSnapshot((), ())
         self._thread_pool = QThreadPool.globalInstance()
         self._page_indices: dict[str, int] = {}
         self._nav_buttons: dict[str, QPushButton] = {}
@@ -100,6 +129,8 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(application_icon())
         self.resize(1280, 820)
         self.setMinimumSize(1024, 680)
+        DetailDialog.set_preferred_width(self._preferences.detail_width)
+        self._apply_device_preferences()
         self._build_ui()
         self.show_home()
 
@@ -156,10 +187,10 @@ class MainWindow(QMainWindow):
         layout.addWidget(self._case_context)
         layout.addStretch(1)
 
-        privacy = QLabel("●  Offline")
-        privacy.setObjectName("PrivacyBadge")
-        privacy.setToolTip("No network calls, telemetry, DNS resolution, or remote UI assets.")
-        layout.addWidget(privacy)
+        self._privacy_badge = QLabel("●  Offline")
+        self._privacy_badge.setObjectName("PrivacyBadge")
+        self._privacy_badge.setToolTip("The active case policy controls remote disclosure.")
+        layout.addWidget(self._privacy_badge)
 
         self._jobs_button = QPushButton("Jobs  0")
         self._jobs_button.setEnabled(False)
@@ -201,7 +232,7 @@ class MainWindow(QMainWindow):
             layout.addWidget(button)
 
         layout.addStretch(1)
-        version = QLabel("v0.6.0  ·  Practical adapters")
+        version = QLabel("v0.7.0  ·  Analyst reasoning")
         version.setObjectName("Muted")
         version.setContentsMargins(10, 0, 0, 2)
         layout.addWidget(version)
@@ -229,23 +260,32 @@ class MainWindow(QMainWindow):
         self._page_indices["Evidence"] = self._pages.addWidget(self.evidence_view)
         self.timeline_view = TimelineView()
         self._page_indices["Timeline"] = self._pages.addWidget(self.timeline_view)
-        self._add_placeholder("Relationships")
+        self.relationships_view = RelationshipsView()
+        self.relationships_view.pivot_requested.connect(self._pivot_to_evidence)
+        self._page_indices["Relationships"] = self._pages.addWidget(self.relationships_view)
         self.coverage_view = CoverageView()
         self.coverage_view.analysis_requested.connect(self._rerun_analysis)
         self._page_indices["Coverage"] = self._pages.addWidget(self.coverage_view)
-        self._add_placeholder("Intelligence")
-        self._add_placeholder("Recommendations")
+        self.intelligence_view = IntelligenceView()
+        self.intelligence_view.add_requested.connect(self._add_intelligence)
+        self.intelligence_view.import_requested.connect(self._import_intelligence)
+        self.intelligence_view.archive_requested.connect(self._archive_intelligence)
+        self.intelligence_view.query_requested.connect(self._query_intelligence)
+        self._page_indices["Intelligence"] = self._pages.addWidget(self.intelligence_view)
+        self.recommendations_view = RecommendationsView()
+        self.recommendations_view.state_requested.connect(self._set_recommendation_state)
+        self.recommendations_view.evidence_pivot_requested.connect(self._pivot_to_evidence)
+        self._page_indices["Recommendations"] = self._pages.addWidget(self.recommendations_view)
         self.sources_view = SourcesView()
         self._page_indices["Sources"] = self._pages.addWidget(self.sources_view)
         self.exports_view = ExportsView()
         self.exports_view.export_requested.connect(self._start_export)
         self.exports_view.verify_requested.connect(self._verify_capsule)
         self._page_indices["Exports"] = self._pages.addWidget(self.exports_view)
-        self._add_placeholder("Settings")
-
-    def _add_placeholder(self, name: str) -> None:
-        entry = next(item for item in NAVIGATION if item[0] == name)
-        self._page_indices[name] = self._pages.addWidget(PlaceholderView(*entry))
+        self.settings_view = SettingsView(self._database_path)
+        self.settings_view.save_requested.connect(self._save_settings)
+        self.settings_view.reset_requested.connect(self._reset_settings)
+        self._page_indices["Settings"] = self._pages.addWidget(self.settings_view)
 
     def _build_status_bar(self) -> QFrame:
         bar = QFrame()
@@ -257,7 +297,7 @@ class MainWindow(QMainWindow):
         self._status_text.setObjectName("Muted")
         layout.addWidget(self._status_text)
         layout.addStretch(1)
-        schema = QLabel("Schema 5")
+        schema = QLabel("Schema 6")
         schema.setObjectName("Muted")
         layout.addWidget(schema)
         return bar
@@ -294,10 +334,14 @@ class MainWindow(QMainWindow):
         self.dashboard_view.set_investigation(setup)
         self._reload_evidence(setup)
         self._case_context.setText(case.title)
+        self._update_privacy_badge(case)
         self._export_button.setEnabled(self._analysis is not None)
         for name, button in self._nav_buttons.items():
             button.setEnabled(name == "Cases" or self._current_case is not None)
-        self._status_text.setText("Ready · Case saved locally · Offline policy active")
+        self._status_text.setText(
+            "Ready · Case saved locally · "
+            f"{case.privacy_mode.value.replace('_', ' ').title()} policy active"
+        )
         self.show_page("Dashboard")
 
     def _create_case(self) -> None:
@@ -305,7 +349,15 @@ class MainWindow(QMainWindow):
         if dialog.exec() != NewCaseDialog.DialogCode.Accepted:
             return
         try:
-            setup = self._case_service.create_investigation(dialog.request())
+            request = dialog.request()
+            request = replace(
+                request,
+                case=replace(
+                    request.case,
+                    privacy_mode=PrivacyMode(self._preferences.default_privacy_mode),
+                ),
+            )
+            setup = self._case_service.create_investigation(request)
         except IOCEvidencePackagerError as error:
             self._show_error("Could not create case", str(error))
             return
@@ -330,11 +382,20 @@ class MainWindow(QMainWindow):
         self._records = records
         self._rejections = rejections
         self._analysis = analysis
+        self._relationships = self._workspace_service.relationships(records)
         self.evidence_view.set_investigation(active, list(records), list(rejections))
         self.evidence_view.set_analysis(analysis)
         self.coverage_view.set_analysis(analysis)
         self.timeline_view.set_records(records, analysis)
         self.sources_view.set_investigation(active, records, rejections)
+        self.relationships_view.set_relationships(self._relationships)
+        self.recommendations_view.set_recommendations(
+            self._workspace_service.recommendations(
+                active.case.case_id, analysis, self._relationships
+            )
+        )
+        self._reload_intelligence(active.case)
+        self.settings_view.set_settings(active.case, self._preferences)
         self.dashboard_view.set_evidence_counts(len(records), len(rejections))
         self.dashboard_view.set_analysis(analysis, records, rejections)
         history = self._report_service.list_exports(active.case.case_id)
@@ -429,6 +490,193 @@ class MainWindow(QMainWindow):
         self._status_text.setText(
             f"Analysis complete · {len(self._analysis.sightings)} direct sighting(s)"
         )
+        self._reload_reasoning()
+
+    def _reload_reasoning(self) -> None:
+        if self._current_setup is None:
+            return
+        self._relationships = self._workspace_service.relationships(self._records)
+        self.relationships_view.set_relationships(self._relationships)
+        self.recommendations_view.set_recommendations(
+            self._workspace_service.recommendations(
+                self._current_setup.case.case_id, self._analysis, self._relationships
+            )
+        )
+
+    def _pivot_to_evidence(self, value: str) -> None:
+        self.evidence_view.set_search_filter(value)
+        self.show_page("Evidence")
+        self._status_text.setText(f"Evidence pivot applied · {value}")
+
+    def _set_recommendation_state(self, recommendation_id: str, status: str, note: object) -> None:
+        if self._current_case is None:
+            return
+        try:
+            self._workspace_service.set_recommendation_state(
+                self._current_case.case_id,
+                RecommendationId(recommendation_id),
+                RecommendationStatus(status),
+                str(note) if note is not None else None,
+            )
+        except (ValueError, IOCEvidencePackagerError) as error:
+            self._show_error("Could not update recommendation", str(error))
+            return
+        self._reload_reasoning()
+        self._status_text.setText(
+            f"Recommendation marked {status.casefold()} · analyst state saved"
+        )
+
+    def _observable_inventory(self) -> tuple[tuple[str, str], ...]:
+        values = {
+            (item.kind, item.canonical)
+            for record in self._records
+            for item in record.observables
+            if item.kind in {"ipv4", "domain", "sha256"}
+        }
+        if self._current_setup is not None and self._current_setup.lead is not None:
+            lead = self._current_setup.lead
+            values.add((lead.observable_type.value, lead.canonical_value))
+        return tuple(sorted(values))
+
+    def _reload_intelligence(self, case: Case | None = None) -> None:
+        active = case or self._current_case
+        if active is None:
+            return
+        self.intelligence_view.set_intelligence(
+            active,
+            self._workspace_service.assertions(active.case_id),
+            self._observable_inventory(),
+            provider_enabled=self._preferences.virustotal_enabled,
+            confirm_external_links=self._preferences.confirm_external_links,
+        )
+
+    def _add_intelligence(self, value: object) -> None:
+        if self._current_case is None or not isinstance(value, dict):
+            return
+        try:
+            self._workspace_service.add_manual_assertion(
+                self._current_case.case_id,
+                provider=str(value.get("provider", "")),
+                observable_type=str(value.get("observable_type", "")),
+                observable_value=str(value.get("observable_value", "")),
+                claim=IntelligenceClaim(str(value.get("claim", ""))),
+                confidence_label=str(value.get("confidence_label", "")),
+                summary=str(value.get("summary", "")),
+                source_reference=str(value.get("source_reference", "")) or None,
+            )
+        except (ValueError, IOCEvidencePackagerError) as error:
+            self._show_error("Could not add assertion", str(error))
+            return
+        self._reload_intelligence()
+        self._status_text.setText("Attributed intelligence assertion saved locally")
+
+    def _import_intelligence(self, path: str) -> None:
+        if self._current_case is None:
+            return
+        try:
+            count = self._workspace_service.import_assertions(
+                self._current_case.case_id, Path(path)
+            )
+        except IOCEvidencePackagerError as error:
+            self._show_error("Could not import intelligence", str(error))
+            return
+        self._reload_intelligence()
+        self._status_text.setText(f"Imported {count} attributed intelligence assertion(s)")
+
+    def _archive_intelligence(self, assertion_id: str) -> None:
+        if self._current_case is None:
+            return
+        self._workspace_service.archive_assertion(
+            self._current_case.case_id, AssertionId(assertion_id)
+        )
+        self._reload_intelligence()
+        self._status_text.setText("Assertion archived · audit row retained in SQLite")
+
+    def _query_intelligence(self, observable_type: str, value: str) -> None:
+        if self._current_case is None or self._intelligence_worker is not None:
+            return
+        worker = IntelligenceLookupWorker(
+            self._workspace_service,
+            self._current_case,
+            observable_type,
+            value,
+            self._preferences.cache_hours,
+        )
+        worker.signals.completed.connect(self._intelligence_completed)
+        worker.signals.failed.connect(self._intelligence_failed)
+        self._intelligence_worker = worker
+        self._jobs_button.setText("Jobs  1")
+        self._jobs_button.setEnabled(True)
+        self._status_text.setText("VirusTotal object lookup running · selected IOC disclosed")
+        self._thread_pool.start(worker)
+
+    def _intelligence_completed(self, _value: object) -> None:
+        self._intelligence_worker = None
+        self._jobs_button.setText("Jobs  0")
+        self._jobs_button.setEnabled(False)
+        self._reload_intelligence()
+        self._status_text.setText(
+            "Provider assertion saved · attribution and response digest retained"
+        )
+
+    def _intelligence_failed(self, message: str) -> None:
+        self._intelligence_worker = None
+        self._jobs_button.setText("Jobs  0")
+        self._jobs_button.setEnabled(False)
+        self._status_text.setText("Provider lookup failed safely · no evidence changed")
+        self._show_error("Intelligence lookup failed", message)
+
+    def _save_settings(self, privacy_mode: str, timezone: str, preferences: object) -> None:
+        if self._current_case is None or not isinstance(preferences, DesktopPreferences):
+            return
+        try:
+            updated = self._case_service.update_preferences(
+                self._current_case.case_id,
+                display_timezone=timezone,
+                privacy_mode=PrivacyMode(privacy_mode),
+            )
+        except (ValueError, IOCEvidencePackagerError) as error:
+            self._show_error("Could not save settings", str(error))
+            return
+        self._settings_store.save(preferences)
+        self._preferences = preferences
+        DetailDialog.set_preferred_width(preferences.detail_width)
+        self._apply_device_preferences()
+        self._current_case = updated
+        if self._current_setup is not None:
+            self._current_setup = InvestigationSetup(
+                case=updated,
+                lead=self._current_setup.lead,
+                source_previews=self._current_setup.source_previews,
+            )
+        self._update_privacy_badge(updated)
+        self._reload_intelligence(updated)
+        self.settings_view.set_settings(updated, preferences)
+        self.settings_view.mark_saved()
+        self._status_text.setText("Settings saved · case policy and device preferences applied")
+
+    def _reset_settings(self) -> None:
+        self._preferences = self._settings_store.reset()
+        DetailDialog.set_preferred_width(self._preferences.detail_width)
+        self._apply_device_preferences()
+        if self._current_case is not None:
+            self.settings_view.set_settings(self._current_case, self._preferences)
+            self._reload_intelligence()
+        self.settings_view.mark_saved("Device preferences reset; case policy was not changed.")
+
+    def _update_privacy_badge(self, case: Case) -> None:
+        label = case.privacy_mode.value.replace("_", " ").title()
+        self._privacy_badge.setText(f"●  {label}")
+
+    def _apply_device_preferences(self) -> None:
+        app = QApplication.instance()
+        if isinstance(app, QApplication):
+            app.setStyleSheet(
+                desktop_stylesheet(
+                    compact=self._preferences.density == "Compact",
+                    high_contrast=self._preferences.high_contrast,
+                )
+            )
 
     def _start_export(self, profile_value: str, destination_value: str) -> None:
         if self._export_worker is not None or self._import_worker is not None:
@@ -449,6 +697,11 @@ class MainWindow(QMainWindow):
             self._analysis,
             Path(destination_value),
             profile,
+            self._relationships,
+            self._workspace_service.recommendations(
+                setup.case.case_id, self._analysis, self._relationships
+            ),
+            self._workspace_service.assertions(setup.case.case_id),
         )
         worker.signals.completed.connect(self._export_completed)
         worker.signals.failed.connect(self._export_failed)

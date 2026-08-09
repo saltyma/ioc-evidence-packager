@@ -18,10 +18,12 @@ from ioc_evidence_packager.application.services import (
     NewCaseRequest,
     NewInvestigationRequest,
 )
+from ioc_evidence_packager.application.workspace_service import WorkspaceService
 from ioc_evidence_packager.ingestion import SourceInspectionService
 from ioc_evidence_packager.ingestion.registry import AdapterRegistry
 from ioc_evidence_packager.presentation.desktop.branding import application_icon
 from ioc_evidence_packager.presentation.desktop.main_window import MainWindow
+from ioc_evidence_packager.presentation.desktop.settings_store import DesktopSettingsStore
 from ioc_evidence_packager.presentation.desktop.theme import APP_STYLESHEET
 from ioc_evidence_packager.storage.sqlite import (
     SQLiteAnalysisRepository,
@@ -29,6 +31,7 @@ from ioc_evidence_packager.storage.sqlite import (
     SQLiteDatabase,
     SQLiteEvidenceRepository,
     SQLiteExportRepository,
+    SQLiteWorkspaceRepository,
 )
 
 APPLICATION_NAME = "IOC Evidence Packager"
@@ -70,6 +73,7 @@ class DesktopContext:
     evidence_service: EvidenceService
     analysis_service: AnalysisService
     report_service: ReportService
+    workspace_service: WorkspaceService
     source_inspection_service: SourceInspectionService
     window: MainWindow
 
@@ -85,13 +89,18 @@ def build_desktop(database_path: Path) -> DesktopContext:
     evidence_service = EvidenceService(SQLiteEvidenceRepository(database), adapter_registry)
     analysis_service = AnalysisService(SQLiteAnalysisRepository(database))
     report_service = ReportService(SQLiteExportRepository(database))
+    workspace_service = WorkspaceService(SQLiteWorkspaceRepository(database))
+    settings_store = DesktopSettingsStore()
     source_inspection_service = SourceInspectionService(adapter_registry)
     window = MainWindow(
         case_service,
         evidence_service,
         analysis_service,
         report_service,
+        workspace_service,
+        settings_store,
         source_inspection_service,
+        database_path,
     )
     return DesktopContext(
         database=database,
@@ -99,6 +108,7 @@ def build_desktop(database_path: Path) -> DesktopContext:
         evidence_service=evidence_service,
         analysis_service=analysis_service,
         report_service=report_service,
+        workspace_service=workspace_service,
         source_inspection_service=source_inspection_service,
         window=window,
     )
@@ -118,7 +128,7 @@ def create_qapplication(arguments: list[str] | None = None) -> QApplication:
 
     QCoreApplication.setOrganizationName(ORGANIZATION_NAME)
     QCoreApplication.setApplicationName(APPLICATION_NAME)
-    QCoreApplication.setApplicationVersion("0.6.0")
+    QCoreApplication.setApplicationVersion("0.7.0")
     existing = QApplication.instance()
     if existing is not None and not isinstance(existing, QApplication):
         raise RuntimeError("A non-GUI Qt application already exists in this process.")
@@ -149,7 +159,18 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--smoke-page",
-        choices=("Dashboard", "Evidence", "Timeline", "Coverage", "Sources", "Exports"),
+        choices=(
+            "Dashboard",
+            "Evidence",
+            "Timeline",
+            "Relationships",
+            "Coverage",
+            "Intelligence",
+            "Recommendations",
+            "Sources",
+            "Exports",
+            "Settings",
+        ),
         default="Evidence",
         help="Workspace page to show during --smoke-test.",
     )
@@ -177,6 +198,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         context = build_desktop(database_path)
         if args.smoke_test:
+            use_demo = False
             recent = context.case_service.list_recent_cases()
             if recent:
                 setup = context.case_service.open_investigation(recent[0].case_id)
@@ -235,6 +257,11 @@ def main(argv: list[str] | None = None) -> int:
                     setup.case.case_id,
                     setup.source_previews,
                 )
+                intelligence_fixture = demo_directory / "12-intelligence-assertions.json"
+                if use_demo and intelligence_fixture.is_file():
+                    context.workspace_service.import_assertions(
+                        setup.case.case_id, intelligence_fixture
+                    )
             context.window.open_investigation(setup)
             context.window.show_page(args.smoke_page)
         context.window.show()

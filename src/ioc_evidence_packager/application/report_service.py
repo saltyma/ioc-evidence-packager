@@ -10,6 +10,11 @@ from ioc_evidence_packager.domain.analysis import AnalysisSnapshot
 from ioc_evidence_packager.domain.errors import ValidationError
 from ioc_evidence_packager.domain.evidence import EvidenceRecord, ImportRejection
 from ioc_evidence_packager.domain.models import CaseId
+from ioc_evidence_packager.domain.workspace import (
+    IntelligenceAssertion,
+    Recommendation,
+    RelationshipSnapshot,
+)
 from ioc_evidence_packager.reporting.capsule import export_capsule, verify_capsule
 from ioc_evidence_packager.reporting.models import (
     CapsuleResult,
@@ -35,6 +40,9 @@ class ReportService:
         analysis: AnalysisSnapshot | None,
         destination: Path,
         profile: ExportProfile,
+        relationships: RelationshipSnapshot | None = None,
+        recommendations: tuple[Recommendation, ...] = (),
+        intelligence: tuple[IntelligenceAssertion, ...] = (),
     ) -> CapsuleResult:
         if analysis is None:
             raise ValidationError("Import evidence and run the IOC recipe before exporting.")
@@ -45,6 +53,9 @@ class ReportService:
             evidence,
             rejections,
             analysis,
+            relationships or RelationshipSnapshot((), ()),
+            recommendations,
+            intelligence,
         )
         created_at = datetime.now(UTC)
         export_id = ExportId(f"export-{uuid4()}")

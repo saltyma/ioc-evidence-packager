@@ -142,6 +142,8 @@ Ordering is deterministic: normalized time, then source ID, then source position
 
 **Tier:** Smart, after the evidence table
 
+**Implemented in v0.7.0:** deterministic source/event/host/user/IPv4/domain/SHA-256 nodes, evidence-citing typed edges, automatic or analyst-selected one-hop focus, type/relation/text filters, an accessible full edge ledger, semantic node colors, and Evidence pivots.
+
 Nodes represent observables, events, hosts, users, processes, files, and provider assertions. Edges are typed and carry their rule and supporting evidence IDs.
 
 Examples:
@@ -159,6 +161,8 @@ Graph expansion is bounded to avoid a "hairball." The default graph contains the
 
 **Tier:** Connected
 
+**Implemented in v0.7.0:** manual assertions, versioned local JSON import, explicit conflict detection, archive-with-history behavior, expiry/cache display, response hashes, privacy-policy gating, a per-query disclosure preview, environment-only VirusTotal credentials, and background VirusTotal v3 object-report lookup for IPv4/domain/SHA-256. Provider claims never change local evidence classification.
+
 Provider results remain separate from local evidence and from one another. The panel shows provider, retrieval time, query value, response age, terms/licensing note, raw-response hash, cache state, and a normalized summary.
 
 The application does not average providers into a universal score. Contradictory results are displayed as contradictory assertions.
@@ -166,6 +170,8 @@ The application does not average providers into a universal score. Contradictory
 ## 9. Explainable next-action engine
 
 **Tier:** Smart
+
+**Implemented in v0.7.0:** versioned rules over coverage/sightings/relationships; Immediate/Useful/Optional priority; rationale, expected value, safety and action text; evidence/coverage/relationship citations; and a durable Proposed/Accepted/Completed/Dismissed analyst lifecycle with mandatory dismissal reason.
 
 Recommendations are deterministic rules over evidence, relationships, source capabilities, and coverage gaps. Each recommendation contains:
 

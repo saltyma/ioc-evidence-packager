@@ -27,10 +27,13 @@ from ioc_evidence_packager.reporting.models import (
     VerificationResult,
 )
 
-CAPSULE_SCHEMA = "1.0.0"
+CAPSULE_SCHEMA = "1.1.0"
 EVIDENCE_SCHEMA = "evidence-record/1.0.0"
 COVERAGE_SCHEMA = "coverage/1.0.0"
 SOURCE_SCHEMA = "source-inventory/1.1.0"
+RELATIONSHIP_SCHEMA = "relationship-graph/1.0.0"
+RECOMMENDATION_SCHEMA = "recommendations/1.0.0"
+INTELLIGENCE_SCHEMA = "intelligence-assertions/1.0.0"
 
 ARTIFACTS = (
     ("report.html", "text/html", "human-readable report"),
@@ -38,6 +41,9 @@ ARTIFACTS = (
     ("timeline.csv", "text/csv", "deterministic timeline"),
     ("coverage.json", "application/json", "coverage matrix"),
     ("source-inventory.json", "application/json", "source inventory"),
+    ("relationships.json", "application/json", "evidence-backed relationship graph"),
+    ("recommendations.json", "application/json", "rule-explained next actions"),
+    ("intelligence.json", "application/json", "attributed intelligence assertions"),
 )
 
 
@@ -165,6 +171,9 @@ def _build_projection(
     ]
     coverage = [_coverage_projection(cell) for cell in report.analysis.coverage]
     sources = [_source_projection(preview, report, profile) for preview in report.source_previews]
+    relationships = _relationship_projection(report, profile, salt)
+    recommendations = [_recommendation_projection(item, profile) for item in report.recommendations]
+    intelligence = [_intelligence_projection(item, profile) for item in report.intelligence]
     limitations = [
         cell["reason"]["message"]
         for cell in coverage
@@ -182,6 +191,9 @@ def _build_projection(
         "evidence": evidence,
         "coverage": coverage,
         "sources": sources,
+        "relationships": relationships,
+        "recommendations": recommendations,
+        "intelligence": intelligence,
         "limitations": limitations,
     }
 
@@ -286,6 +298,89 @@ def _source_projection(preview: Any, report: CaseReport, profile: ExportProfile)
     }
 
 
+def _relationship_projection(
+    report: CaseReport, profile: ExportProfile, salt: str
+) -> dict[str, Any]:
+    redacted = profile is ExportProfile.REDACTED_SHAREABLE
+    entity_ids = {
+        node.entity_id: (
+            f"entity-redacted-{hashlib.sha256(f'{salt}|{node.entity_type.value}|{node.value}'.encode()).hexdigest()[:20]}"
+            if redacted and node.entity_type.value in {"host", "user"}
+            else str(node.entity_id)
+        )
+        for node in report.relationships.nodes
+    }
+    nodes = []
+    for node in report.relationships.nodes:
+        value = node.value
+        if redacted and node.entity_type.value in {"host", "user"}:
+            value = _pseudonym(node.entity_type.value.upper(), value, salt) or "REDACTED"
+        nodes.append(
+            {
+                "entity_id": entity_ids[node.entity_id],
+                "entity_type": node.entity_type.value,
+                "value": value,
+                "evidence_ids": list(node.evidence_ids),
+            }
+        )
+    edges = [
+        {
+            "relationship_id": str(edge.relationship_id),
+            "from": entity_ids[edge.source_id],
+            "to": entity_ids[edge.target_id],
+            "relation": edge.relation,
+            "rule_id": edge.rule_id,
+            "explanation": edge.explanation,
+            "evidence_ids": list(edge.evidence_ids),
+        }
+        for edge in report.relationships.edges
+    ]
+    return {"schema": RELATIONSHIP_SCHEMA, "nodes": nodes, "edges": edges}
+
+
+def _recommendation_projection(item: Any, profile: ExportProfile) -> dict[str, Any]:
+    return {
+        "recommendation_id": str(item.recommendation_id),
+        "rule": f"{item.rule_id}/{item.rule_version}",
+        "priority": item.priority.value,
+        "status": item.status.value,
+        "category": item.category,
+        "title": item.title,
+        "rationale": item.rationale,
+        "expected_value": item.expected_value,
+        "safety_note": item.safety_note,
+        "action": item.action,
+        "evidence_ids": list(item.evidence_ids),
+        "coverage_cell_ids": list(item.coverage_cell_ids),
+        "relationship_ids": list(item.relationship_ids),
+        "analyst_note": (
+            None if profile is ExportProfile.REDACTED_SHAREABLE else item.analyst_note
+        ),
+        "updated_at": item.updated_at.isoformat() if item.updated_at else None,
+    }
+
+
+def _intelligence_projection(item: Any, profile: ExportProfile) -> dict[str, Any]:
+    return {
+        "assertion_id": str(item.assertion_id),
+        "provider": item.provider,
+        "provider_version": item.provider_version,
+        "origin": item.origin,
+        "observable_type": item.observable_type,
+        "observable_value": item.observable_value,
+        "claim": item.claim.value,
+        "confidence_label": item.confidence_label,
+        "summary": item.summary,
+        "retrieved_at": item.retrieved_at.isoformat(),
+        "data_timestamp": item.data_timestamp.isoformat() if item.data_timestamp else None,
+        "expires_at": item.expires_at.isoformat() if item.expires_at else None,
+        "source_reference": (
+            None if profile is ExportProfile.REDACTED_SHAREABLE else item.source_reference
+        ),
+        "raw_response_sha256": item.raw_response_sha256,
+    }
+
+
 def _write_artifacts(root: Path, projection: dict[str, Any]) -> None:
     _write_text(root / "report.html", _render_html(projection))
     _write_text(
@@ -300,6 +395,15 @@ def _write_artifacts(root: Path, projection: dict[str, Any]) -> None:
     _write_json(
         root / "source-inventory.json",
         {"schema": SOURCE_SCHEMA, "sources": projection["sources"]},
+    )
+    _write_json(root / "relationships.json", projection["relationships"])
+    _write_json(
+        root / "recommendations.json",
+        {"schema": RECOMMENDATION_SCHEMA, "recommendations": projection["recommendations"]},
+    )
+    _write_json(
+        root / "intelligence.json",
+        {"schema": INTELLIGENCE_SCHEMA, "assertions": projection["intelligence"]},
     )
 
 
@@ -323,6 +427,9 @@ def _render_html(projection: dict[str, Any]) -> str:
         evidence=projection["evidence"],
         coverage=projection["coverage"],
         sources=projection["sources"],
+        relationships=projection["relationships"],
+        recommendations=projection["recommendations"],
+        intelligence=projection["intelligence"],
         limitations=projection["limitations"],
     )
 
@@ -453,12 +560,41 @@ def _verify_evidence_references(root: Path, messages: list[str]) -> None:
             for cell in coverage.get("cells", [])
             for value in cell.get("evidence_ids", [])
         }
+        relationships: dict[str, Any] = json.loads(
+            (root / "relationships.json").read_text(encoding="utf-8")
+        )
+        relationship_evidence = {
+            str(value)
+            for edge in relationships.get("edges", [])
+            for value in edge.get("evidence_ids", [])
+        }
+        relationship_ids = {
+            str(edge.get("relationship_id")) for edge in relationships.get("edges", [])
+        }
+        recommendations: dict[str, Any] = json.loads(
+            (root / "recommendations.json").read_text(encoding="utf-8")
+        )
+        recommendation_evidence = {
+            str(value)
+            for item in recommendations.get("recommendations", [])
+            for value in item.get("evidence_ids", [])
+        }
+        recommendation_relationships = {
+            str(value)
+            for item in recommendations.get("recommendations", [])
+            for value in item.get("relationship_ids", [])
+        }
     except (OSError, json.JSONDecodeError, KeyError, TypeError) as error:
         messages.append(f"Machine-readable artifact validation failed: {error}")
         return
-    missing = referenced - evidence_ids
+    missing = (referenced | relationship_evidence | recommendation_evidence) - evidence_ids
     if missing:
         messages.append(f"Coverage references {len(missing)} missing evidence ID(s).")
+    missing_relationships = recommendation_relationships - relationship_ids
+    if missing_relationships:
+        messages.append(
+            f"Recommendations reference {len(missing_relationships)} missing relationship ID(s)."
+        )
 
 
 def _pseudonym(kind: str, value: str | None, salt: str) -> str | None:
@@ -508,6 +644,9 @@ _REPORT_TEMPLATE = """<!doctype html>
 <div class="metrics"><div class="card"><div class="muted">Evidence</div><div class="value">{{ evidence|length }}</div></div><div class="card"><div class="muted">Direct sightings</div><div class="value">{{ direct_count }}</div></div><div class="card"><div class="muted">Coverage limitations</div><div class="value">{{ limitations|length }}</div></div></div>
 <h2>Coverage</h2><div class="card"><table><thead><tr><th>Step</th><th>Telemetry</th><th>State</th><th>Reason</th></tr></thead><tbody>{% for cell in coverage %}<tr><td>{{ cell.step_label }}</td><td>{{ cell.telemetry }}</td><td><code>{{ cell.state }}</code></td><td>{{ cell.reason.message }}</td></tr>{% endfor %}</tbody></table></div>
 <h2>Evidence ledger</h2><div class="card"><table><thead><tr><th>Time</th><th>Class</th><th>Event</th><th>Host/User</th><th>Source</th></tr></thead><tbody>{% for item in evidence %}<tr><td>{{ item.occurred_at or "Undated" }}</td><td>{{ item.classification }}</td><td>{{ item.category }} · {{ item.action }}{% if item.matches %}<br><span class="ok">{{ item.matches[0].explanation }}</span>{% endif %}</td><td>{{ item.host or "—" }}<br>{{ item.user or "—" }}</td><td>{{ item.provenance.source_name }} line {{ item.provenance.physical_line }}<br><code>{{ item.evidence_id }}</code></td></tr>{% endfor %}</tbody></table></div>
+<h2>Relationships</h2><div class="card"><p class="muted">{{ relationships.nodes|length }} typed nodes · {{ relationships.edges|length }} evidence-backed edges. Each edge is contextual and cites source evidence.</p><table><thead><tr><th>Relationship</th><th>Rule</th><th>Supporting evidence</th></tr></thead><tbody>{% for edge in relationships.edges %}<tr><td><code>{{ edge.from }}</code> · {{ edge.relation }} · <code>{{ edge.to }}</code></td><td>{{ edge.rule_id }}</td><td>{{ edge.evidence_ids|length }}</td></tr>{% endfor %}</tbody></table></div>
+<h2>Recommendations</h2><div class="card"><table><thead><tr><th>Priority / state</th><th>Action</th><th>Why</th><th>Rule</th></tr></thead><tbody>{% for item in recommendations %}<tr><td>{{ item.priority }}<br><code>{{ item.status }}</code></td><td>{{ item.title }}<br>{{ item.action }}</td><td>{{ item.rationale }}<br><span class="muted">Safety: {{ item.safety_note }}</span></td><td>{{ item.rule }}</td></tr>{% endfor %}</tbody></table></div>
+<h2>Intelligence assertions</h2><div class="card"><p class="muted">Attributed context only; these claims do not alter evidence classification.</p><table><thead><tr><th>Provider</th><th>Observable</th><th>Claim</th><th>Provider confidence</th><th>Retrieved</th></tr></thead><tbody>{% for item in intelligence %}<tr><td>{{ item.provider }}</td><td>{{ item.observable_type }} · <code>{{ item.observable_value }}</code></td><td>{{ item.claim }}</td><td>{{ item.confidence_label }}</td><td>{{ item.retrieved_at }}</td></tr>{% endfor %}</tbody></table></div>
 <h2>Source inventory</h2><div class="card"><table><thead><tr><th>Source</th><th>Status</th><th>Adapter</th><th>Accepted / rejected</th><th>SHA-256</th></tr></thead><tbody>{% for source in sources %}<tr><td>{{ source.name }}</td><td>{{ source.status }}</td><td>{{ source.adapter or "Unsupported" }}</td><td>{{ source.accepted_records }} / {{ source.rejected_records }}</td><td><code>{{ source.sha256 or "Unavailable" }}</code></td></tr>{% endfor %}</tbody></table></div>
 <h2>Limitations</h2><div class="card">{% if limitations %}<ul>{% for item in limitations %}<li class="warn">{{ item }}</li>{% endfor %}</ul>{% else %}<p>No coverage limitation was recorded for the implemented recipe steps. This is not a declaration that the environment is safe.</p>{% endif %}</div>
 <p class="muted">Portable offline projection. Verify manifest.json before relying on these artifacts. Source digests prove byte identity, not acquisition custody.</p>

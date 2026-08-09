@@ -44,6 +44,8 @@ The two diagnostic fixtures can be selected alongside the supported files:
 
 At least one selected file must be recognized as Ready or Warning before the wizard can create the investigation.
 
+`12-intelligence-assertions.json` is not evidence and must not be selected in the New Investigation wizard. Import it later from **Intelligence → Import assertion file**. It contains two explicitly synthetic, contradictory provider claims for the documentation-only IPv4 lead so the conflict UI can be exercised without a network account.
+
 ![Expected source-preview screen](../../../docs/assets/source-preview-demo.png)
 
 ## Expected preview
@@ -86,6 +88,8 @@ With the lead `203.0.113.42` and all eleven evidence files selected:
 - the unmapped CSV receives a `FORMAT_UNSUPPORTED` diagnostic cell.
 
 Dashboard summarizes the results, Evidence exposes every rule and source position, Timeline orders all 23 accepted events, Sources compares every adapter and limitation, and Exports can build either a Full Internal or Redacted Shareable capsule. A checked redacted example is available in [`samples/expected/demo-capsule-redacted`](../../expected/demo-capsule-redacted).
+
+Relationships builds evidence-citing source/event/host/user/observable edges and defaults to a bounded one-hop focus. Recommendations explains its coverage/preservation/pivot rules and supports the durable analyst lifecycle. Importing fixture 12 produces two visibly conflicting assertions; neither assertion changes the eight direct evidence sightings or proves maliciousness.
 
 ## Scenario truth and expected evidence
 

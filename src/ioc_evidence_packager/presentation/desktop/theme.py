@@ -188,7 +188,7 @@ QPushButton#NavButton:checked {
     border-color: #5D498E;
 }
 
-QLineEdit, QTextEdit, QPlainTextEdit, QComboBox {
+QLineEdit, QTextEdit, QPlainTextEdit, QTextBrowser, QComboBox, QSpinBox {
     color: #EFEAF6;
     background: #110E17;
     border: 1px solid #443A56;
@@ -201,12 +201,16 @@ QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, QComboBox:focus {
     border-color: #A78BFA;
 }
 
-QPlainTextEdit#DetailContent {
+QTextBrowser#DetailContent {
     background: #0E0B14;
     border-color: #4B3F60;
     padding: 12px;
-    font-family: "Cascadia Mono", "Consolas", monospace;
 }
+
+QLabel#SemanticGood { color: #67D7A4; font-weight: 700; }
+QLabel#SemanticWarn { color: #F2B84B; font-weight: 700; }
+QLabel#SemanticDanger { color: #FF7F9F; font-weight: 700; }
+QLabel#SemanticInfo { color: #70D6E8; font-weight: 700; }
 
 QTableWidget {
     color: #E8E2F1;
@@ -278,3 +282,28 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
     height: 0;
 }
 """
+
+
+def desktop_stylesheet(*, compact: bool, high_contrast: bool) -> str:
+    """Return the visual system plus small device-local accessibility preferences."""
+
+    additions: list[str] = []
+    if compact:
+        additions.append(
+            """
+            QWidget { font-size: 12px; }
+            QPushButton { padding: 5px 10px; }
+            QHeaderView::section { padding: 5px; }
+            QLineEdit, QTextEdit, QPlainTextEdit, QTextBrowser, QComboBox, QSpinBox {
+                padding: 5px;
+            }
+            """
+        )
+    if not high_contrast:
+        additions.append(
+            """
+            QLabel#SemanticGood, QLabel#SemanticWarn, QLabel#SemanticDanger,
+            QLabel#SemanticInfo { color: #C9C1D5; }
+            """
+        )
+    return APP_STYLESHEET + "\n".join(additions)

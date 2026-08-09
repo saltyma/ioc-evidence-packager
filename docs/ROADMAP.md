@@ -70,30 +70,31 @@ The roadmap is GUI-first and vertical. Every phase ends in a demonstrable analys
 
 **Exit achieved:** six adapter families produce one coherent, source-linked Evidence ledger, Timeline, Coverage Matrix, Sources inventory, and Case Capsule.
 
-## Phase 6 - Relationships and next actions
+## Phase 6 - Relationships and next actions (implemented in v0.7.0)
 
-- Add typed entity relationships and one-hop bounded graph/table views.
-- Add observable pivots that preserve their origin.
-- Implement deterministic next-action rules with evidence and coverage citations.
-- Add analyst assessment and recommendation lifecycle.
-- Extend the golden case with multi-host process/network pivots.
+- [x] Add typed entity relationships and focused one-hop graph/table views.
+- [x] Add observable pivots that preserve evidence origin.
+- [x] Implement deterministic next-action rules with evidence, coverage, and relationship citations.
+- [x] Add the persisted Proposed/Accepted/Completed/Dismissed recommendation lifecycle.
+- [x] Extend the synthetic demo with multi-source host, DNS, network, file, and user pivots.
 
 **Exit demo:** the application connects a file execution to process and network activity, then proposes a useful, justified next step without taking autonomous action.
 
-## Phase 7 - Privacy-controlled intelligence
+## Phase 7 - Privacy-controlled intelligence (foundation implemented in v0.7.0)
 
-- Implement the policy gate, disclosure preview, credential references, cache, and provider assertion model.
-- Integrate Public Suffix List and locally cached MITRE ATT&CK data.
-- Add a small reliable provider set, starting with CIRCL hashlookup and selected abuse.ch services; evaluate RDAP and GreyNoise next.
-- Display conflicting assertions without a universal score.
-- Record provider, query, time, cache, raw-response hash, limits, and errors.
+- [x] Implement the policy gate, disclosure preview, environment-only credential reference, cache lifetime, and provider assertion model.
+- [ ] Integrate Public Suffix List and locally cached MITRE ATT&CK data when relationship rules consume them.
+- [x] Add manual entry, versioned local assertion import, and a VirusTotal v3 existing-object report connector; evaluate additional providers only against reliability and licensing requirements.
+- [x] Display conflicting assertions without a universal score.
+- [x] Record provider, query value, retrieval/data time, expiry/cache state, origin, source reference, and raw-response hash.
 
-**Exit:** offline cases remain fully functional; connected cases show exactly what left the workstation and keep provider claims separate from local facts.
+**Exit achieved for the v0.7 connector boundary:** offline cases remain fully functional; connected lookups show exactly what leaves the workstation and keep provider claims separate from local facts.
 
 ## Phase 8 - Packaging quality and handoffs
 
 - Add redaction profiles and cross-artifact preview.
-- Add timeline CSV, graph JSON, optional PDF, and ZIP capsule.
+- [x] Add timeline CSV and relationship graph JSON to the verified capsule.
+- Add optional PDF and ZIP capsule projections.
 - Add verification utility and evaluate detached signatures.
 - Add one reviewed platform handoff such as TheHive, MISP, OpenCTI, or Timesketch.
 - Package a Windows installer; test upgrades, migrations, and clean-machine launch.

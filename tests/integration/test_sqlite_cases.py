@@ -41,8 +41,8 @@ def test_initial_migration_is_idempotent(tmp_path: Path) -> None:
         table = connection.execute(
             "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'case_record'"
         ).fetchone()
-    assert version == 5
-    assert migration_count == 5
+    assert version == 6
+    assert migration_count == 6
     assert table is not None
 
 
@@ -309,6 +309,9 @@ def test_full_capsule_is_deterministic_verified_and_tamper_evident(tmp_path: Pat
         "timeline.csv",
         "coverage.json",
         "source-inventory.json",
+        "relationships.json",
+        "recommendations.json",
+        "intelligence.json",
     }
     assert {item.path: item.sha256 for item in first.artifacts} == {
         item.path: item.sha256 for item in second.artifacts

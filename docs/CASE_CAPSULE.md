@@ -6,7 +6,7 @@ A Case Capsule is a portable projection of a local investigation. It lets anothe
 
 The capsule is an export, not the live case database and not a complete legal chain-of-custody record.
 
-**Implementation status:** the v0.6.0 desktop ships the filesystem capsule with Full Internal and Redacted Shareable profiles, multi-adapter source inventory, background rendering, atomic publication, manifest verification, export history, and a checked synthetic example.
+**Implementation status:** the v0.7.0 desktop ships the filesystem capsule with Full Internal and Redacted Shareable profiles, multi-adapter source inventory, evidence-backed relationships, recommendations, attributed intelligence, background rendering, atomic publication, manifest verification, export history, and a checked synthetic example.
 
 ## Logical structure
 
@@ -16,19 +16,15 @@ case-001/
 |-- report.pdf                      # Optional by profile
 |-- evidence.jsonl
 |-- timeline.csv
-|-- graph.json
 |-- coverage.json
 |-- source-inventory.json
-|-- assessments.json
+|-- relationships.json
 |-- recommendations.json
-|-- enrichment/
-|   |-- normalized-assertions.json
-|   `-- raw-response-index.json
-|-- attachments/                    # Optional, allow-listed artifacts only
+|-- intelligence.json
 `-- manifest.json
 ```
 
-The implemented v1 capsule requires `report.html`, `evidence.jsonl`, `timeline.csv`, `coverage.json`, `source-inventory.json`, and `manifest.json`. Other artifacts are introduced by roadmap phase and declared in the manifest.
+The implemented v1.1 capsule requires `report.html`, `evidence.jsonl`, `timeline.csv`, `coverage.json`, `source-inventory.json`, `relationships.json`, `recommendations.json`, `intelligence.json`, and `manifest.json`.
 
 ## Artifact roles
 
@@ -38,14 +34,13 @@ The implemented v1 capsule requires `report.html`, `evidence.jsonl`, `timeline.c
 | `report.pdf` | Optional fixed-layout shareable rendering; never the only evidence representation |
 | `evidence.jsonl` | Versioned normalized facts, sightings, provenance, and review/export state |
 | `timeline.csv` | Flat analyst-friendly event sequence with spreadsheet-safe escaping |
-| `graph.json` | Typed nodes/edges with supporting evidence IDs |
+| `relationships.json` | Typed nodes/edges with stable rule IDs, explanations, and supporting evidence IDs |
 | `coverage.json` | Normative coverage cells, states, reasons, and supporting source/job IDs |
 | `source-inventory.json` | Supplied/skipped/failed sources, digests, adapter/format versions, mapped fields, capabilities, counts, warnings, and time bounds |
 
 `source-inventory/1.1.0` adds the detected format, sampled-record count, mapped fields, and declared capabilities. For mapped CSV, the format identity includes the mapping-profile ID and complete SHA-256. Changing either the CSV bytes or its mapping profile after preview blocks import and requires a new preview.
-| `assessments.json` | Human-authored assessments, confidence vocabulary, rationale, and citations |
 | `recommendations.json` | Proposed/accepted/completed/dismissed next actions and their evidence links |
-| `enrichment/*` | Provider assertions and an index of retained raw responses |
+| `intelligence.json` | Provider/manual assertions, native confidence, retrieval/expiry metadata, references according to profile, and raw-response hashes |
 | `manifest.json` | Capsule identity, schema/tool versions, policies, artifact hashes, and warnings |
 
 ## Export profiles
@@ -76,14 +71,14 @@ Uses a destination-specific connector such as STIX, MISP, OpenCTI, TheHive, or T
 
 ```json
 {
-  "capsule_schema": "1.0.0",
+  "capsule_schema": "1.1.0",
   "capsule_id": "case-001-export-0001",
   "case_id": "case-001",
   "export_profile": "full-internal",
   "created_at": "2026-08-06T14:00:00Z",
   "tool": {
     "name": "ioc-evidence-packager",
-    "version": "0.6.0"
+    "version": "0.7.0"
   },
   "run_ids": ["run-0001"],
   "policy_versions": {
@@ -126,7 +121,7 @@ Export sequence:
 7. atomically publish or rename the completed directory/ZIP when supported;
 8. record the successful export in the local case.
 
-The verifier checks schema support, safe relative paths, missing/extra files, byte sizes, hashes, duplicate paths, and internally referenced evidence IDs. A future detached signature can authenticate a manifest, but signatures do not replace acquisition and custody procedures.
+The verifier checks schema support, safe relative paths, missing/extra files, byte sizes, hashes, duplicate paths, evidence IDs referenced by coverage/relationships/recommendations, and recommendation relationship IDs. A future detached signature can authenticate a manifest, but signatures do not replace acquisition and custody procedures.
 
 ## Determinism
 

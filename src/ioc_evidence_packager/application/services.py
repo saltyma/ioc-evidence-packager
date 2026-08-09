@@ -151,6 +151,24 @@ class CaseService:
             source_previews=tuple(self._repository.list_source_previews(case_id)),
         )
 
+    def update_preferences(
+        self,
+        case_id: CaseId,
+        *,
+        display_timezone: str,
+        privacy_mode: PrivacyMode,
+    ) -> Case:
+        timezone = _required_text(display_timezone, "Display timezone", MAX_TIMEZONE_LENGTH)
+        case = self._repository.update_preferences(
+            case_id,
+            display_timezone=timezone,
+            privacy_mode=privacy_mode,
+            updated_at=self._clock.now(),
+        )
+        if case is None:
+            raise CaseNotFoundError(f"Case does not exist: {case_id}")
+        return case
+
 
 def _required_text(value: str, label: str, maximum: int) -> str:
     normalized = " ".join(value.split())

@@ -11,6 +11,11 @@ from ioc_evidence_packager.domain.evidence import EvidenceRecord, ImportRejectio
 from ioc_evidence_packager.domain.models import Case, CaseId
 from ioc_evidence_packager.domain.observables import Observable
 from ioc_evidence_packager.domain.sources import SourcePreview
+from ioc_evidence_packager.domain.workspace import (
+    IntelligenceAssertion,
+    Recommendation,
+    RelationshipSnapshot,
+)
 
 ExportId = NewType("ExportId", str)
 
@@ -32,6 +37,9 @@ class CaseReport:
     evidence: tuple[EvidenceRecord, ...]
     rejections: tuple[ImportRejection, ...]
     analysis: AnalysisSnapshot
+    relationships: RelationshipSnapshot = RelationshipSnapshot((), ())
+    recommendations: tuple[Recommendation, ...] = ()
+    intelligence: tuple[IntelligenceAssertion, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

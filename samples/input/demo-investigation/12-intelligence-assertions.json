@@ -1,0 +1,31 @@
+{
+  "schema": "ioc-intelligence-assertions/1.0.0",
+  "assertions": [
+    {
+      "provider": "Synthetic TI Alpha",
+      "provider_version": "demo/1.0.0",
+      "observable_type": "ipv4",
+      "observable_value": "203.0.113.42",
+      "claim": "Malicious",
+      "confidence_label": "Demo high confidence",
+      "summary": "Synthetic exercise assertion: infrastructure was placed on an exercise blocklist.",
+      "retrieved_at": "2026-08-06T09:30:00Z",
+      "data_timestamp": "2026-08-06T08:00:00Z",
+      "expires_at": "2026-08-13T09:30:00Z",
+      "source_reference": "urn:ioc-packager:synthetic-ti-alpha:203.0.113.42"
+    },
+    {
+      "provider": "Synthetic TI Beta",
+      "provider_version": "demo/1.0.0",
+      "observable_type": "ipv4",
+      "observable_value": "203.0.113.42",
+      "claim": "Benign",
+      "confidence_label": "Demo medium confidence",
+      "summary": "Synthetic exercise assertion: infrastructure was described as an approved simulation endpoint.",
+      "retrieved_at": "2026-08-06T09:35:00Z",
+      "data_timestamp": "2026-08-05T18:00:00Z",
+      "expires_at": "2026-08-13T09:35:00Z",
+      "source_reference": "urn:ioc-packager:synthetic-ti-beta:203.0.113.42"
+    }
+  ]
+}

@@ -16,6 +16,7 @@ from ioc_evidence_packager.application.services import (
 )
 from ioc_evidence_packager.domain.errors import ValidationError
 from ioc_evidence_packager.ingestion import SourceInspectionService
+from ioc_evidence_packager.presentation.desktop.views.intelligence import _is_https_reference
 from ioc_evidence_packager.reporting import ExportProfile, verify_capsule
 from ioc_evidence_packager.storage.sqlite import (
     SQLiteAnalysisRepository,
@@ -90,7 +91,7 @@ def test_verifier_rejects_manifest_path_traversal(tmp_path: Path) -> None:
     (capsule / "manifest.json").write_text(
         json.dumps(
             {
-                "capsule_schema": "1.0.0",
+                "capsule_schema": "1.1.0",
                 "artifacts": [
                     {
                         "path": "../outside.txt",
@@ -107,6 +108,14 @@ def test_verifier_rejects_manifest_path_traversal(tmp_path: Path) -> None:
 
     assert not result.valid
     assert any("Unsafe artifact path" in message for message in result.messages)
+
+
+def test_intelligence_reference_launcher_accepts_only_plain_https_urls() -> None:
+    assert _is_https_reference("https://www.virustotal.com/gui/ip-address/203.0.113.42")
+    assert not _is_https_reference("http://example.test/report")
+    assert not _is_https_reference("file:///C:/evidence.txt")
+    assert not _is_https_reference("https://user@example.test/report")
+    assert not _is_https_reference("urn:synthetic:provider:assertion")
 
 
 def _hostile_event() -> dict[str, object]:

@@ -45,6 +45,8 @@ Official standards, guidance, datasets, and product documentation used for the p
 - [GreyNoise Community API](https://docs.greynoise.io/reference/getcommunityip) — limited community IP context.
 - [AbuseIPDB API](https://www.abuseipdb.com/api.html) — reported IP-abuse context and usage documentation.
 - [VirusTotal public vs. premium API](https://docs.virustotal.com/reference/public-vs-premium-api) — public API quotas and usage restrictions that require explicit BYOK/product decisions.
+- [VirusTotal API v3 overview](https://docs.virustotal.com/reference/overview) — official object-oriented API and public/premium boundary used by the optional connector.
+- [VirusTotal IP address report](https://docs.virustotal.com/reference/ip-info) and [file report](https://docs.virustotal.com/reference/file-info) — official existing-object `GET` endpoints; the project does not upload samples.
 
 ## Intelligence, case, and timeline platforms
 

@@ -213,6 +213,8 @@ A narrative ordering is an analyst-created view, not a mutation of chronological
 
 ## Relationships
 
+**Implemented in v0.7.0.** The default graph now chooses a high-degree case entity and renders only its bounded one-hop neighborhood; analysts can select a different focus. The adjacent table retains all filtered edges. Type, relation, and text filters apply to both surfaces, a row click opens the shared semantic detail popup, and Pivot to Evidence transfers a specific entity value into the Evidence ledger.
+
 The default graph shows the lead, direct sightings, and one-hop entities. A side panel explains the selected node or edge and lists supporting evidence IDs.
 
 Controls:
@@ -245,11 +247,15 @@ Network-policy-disabled intelligence is shown separately from evidence coverage 
 
 ## Intelligence
 
+**Implemented in v0.7.0.** The table uses explicit Provider, Observable, Claim, Provider confidence, Retrieved, Cache, Origin, and Conflict columns. Manual entry and versioned JSON import work offline. A VirusTotal existing-object lookup is enabled only when both the case privacy mode and device preference permit it, requires an API key in the launch environment, previews the exact IOC disclosure, runs in the background, and stores attribution plus a raw-response digest—not the credential or raw evidence.
+
 Provider cards remain independent. Each shows query, retrieval time, provider, normalized claims, raw-response availability/hash, cache age, and error/rate-limit state. Conflicts are shown side by side.
 
 Actions include retry under policy, open official provider page, add a returned observable as a case pivot, and mark relevance. Adding a pivot records the originating assertion; it does not convert that assertion into a local sighting.
 
 ## Recommendations
+
+**Implemented in v0.7.0.** Filters cover priority, lifecycle state, text, rules, and citations. The full-height table keeps action rows primary; a row click opens the common width-bounded semantic popup. Accept, Mark completed, Dismiss with reason, Reset to proposed, and Open cited evidence are durable analyst actions.
 
 Recommendations are grouped by Immediate, Useful, and Optional. Each card contains rationale, evidence/coverage links, safety note, expected value, and suggested tool/query.
 
@@ -282,6 +288,8 @@ The export workflow is a review, not a file-format dropdown:
 Export history records profile, redaction policy version, artifact list, destination, and hash verification.
 
 ## Settings
+
+**Implemented in v0.7.0.** Case timezone and privacy mode persist in SQLite. Device-local settings persist through QSettings: density, 620–900 px detail width, semantic contrast, provider enablement, assertion freshness, external-link confirmation, and the default privacy mode for new cases. Storage/version information is read-only and explains the safe database-relocation procedure.
 
 ### Case settings
 

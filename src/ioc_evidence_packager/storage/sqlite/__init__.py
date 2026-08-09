@@ -5,6 +5,7 @@ from ioc_evidence_packager.storage.sqlite.connection import SQLiteDatabase
 from ioc_evidence_packager.storage.sqlite.evidence_repository import SQLiteEvidenceRepository
 from ioc_evidence_packager.storage.sqlite.export_repository import SQLiteExportRepository
 from ioc_evidence_packager.storage.sqlite.repositories import SQLiteCaseRepository
+from ioc_evidence_packager.storage.sqlite.workspace_repository import SQLiteWorkspaceRepository
 
 __all__ = [
     "SQLiteAnalysisRepository",
@@ -12,4 +13,5 @@ __all__ = [
     "SQLiteDatabase",
     "SQLiteEvidenceRepository",
     "SQLiteExportRepository",
+    "SQLiteWorkspaceRepository",
 ]

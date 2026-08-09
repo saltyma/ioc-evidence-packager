@@ -85,6 +85,20 @@ Provider results are never averaged into a universal score. The UI can sort or s
 
 ## Privacy and request policy
 
+### Implemented connector boundary (v0.7.0)
+
+The desktop currently supports attributed manual entry, versioned local JSON assertion import, and one optional VirusTotal API v3 existing-object report connector for IPv4, domain, and SHA-256 values. The connector:
+
+- is disabled by default and requires both Safe Enrichment/Enterprise case policy and a device-local enable toggle;
+- reads `IOC_PACKAGER_VT_API_KEY` only from the launch environment and never stores or exports it;
+- shows the exact provider/type/value disclosure before a request;
+- performs a `GET` for an existing object report and never uploads files, URLs, evidence, or samples;
+- runs away from the UI thread, bounds response size/time, and stores normalized attribution plus the raw-response SHA-256;
+- reuses a fresh case-local assertion until its configured 1–168 hour expiry;
+- keeps VirusTotal's own analysis-stat vocabulary instead of creating a product risk score.
+
+Additional providers remain candidates, not simulated buttons. They require a separate licensing, privacy, schema-drift, quota, and test-fixture review.
+
 Every request passes a policy gate before a connector receives it.
 
 ```mermaid
