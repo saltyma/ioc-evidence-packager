@@ -1,15 +1,11 @@
 # ruff: noqa: E501 - complete analyst-facing explanations stay close to widgets
 """Bounded evidence-backed relationship graph and edge ledger."""
 
-import math
-
 from PySide6.QtCore import Signal
-from PySide6.QtGui import QBrush, QColor, QPen
+from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
-    QGraphicsScene,
-    QGraphicsView,
     QHBoxLayout,
     QHeaderView,
     QLabel,
@@ -28,17 +24,11 @@ from ioc_evidence_packager.domain.workspace import (
     RelationshipSnapshot,
 )
 from ioc_evidence_packager.presentation.desktop.views.detail_dialog import DetailDialog
-
-TYPE_COLORS = {
-    "source": "#70D6E8",
-    "event": "#C9B8FF",
-    "host": "#67D7A4",
-    "user": "#F2B84B",
-    "ipv4": "#FF9F7A",
-    "domain": "#A78BFA",
-    "sha256": "#FF7F9F",
-    "observable": "#D9D2E3",
-}
+from ioc_evidence_packager.presentation.desktop.views.relationship_graph import (
+    TYPE_COLORS,
+    RelationshipGraphCanvas,
+    RelationshipGraphWindow,
+)
 
 
 class RelationshipsView(QWidget):
@@ -53,16 +43,29 @@ class RelationshipsView(QWidget):
         self._nodes: dict[object, RelationshipNode] = {}
         self._selected: EvidenceRelationship | None = None
         self._detail_dialog: DetailDialog | None = None
+        self._graph_window: RelationshipGraphWindow | None = None
         self._build_ui()
 
     @property
     def row_count(self) -> int:
         return self._table.rowCount()
 
+    @property
+    def graph_node_count(self) -> int:
+        return self._graph_canvas.node_count
+
+    @property
+    def graph_edge_count(self) -> int:
+        return self._graph_canvas.edge_count
+
+    @property
+    def graph_window(self) -> RelationshipGraphWindow | None:
+        return self._graph_window
+
     def _build_ui(self) -> None:
         root = QVBoxLayout(self)
-        root.setContentsMargins(30, 26, 30, 26)
-        root.setSpacing(14)
+        root.setContentsMargins(24, 18, 24, 18)
+        root.setSpacing(10)
         eyebrow = QLabel("EVIDENCE GRAPH")
         eyebrow.setObjectName("SectionEyebrow")
         title = QLabel("Relationships")
@@ -76,17 +79,20 @@ class RelationshipsView(QWidget):
         root.addWidget(title)
         root.addWidget(subtitle)
 
-        controls = QHBoxLayout()
+        filters = QHBoxLayout()
+        filters.setSpacing(10)
         self._type = QComboBox()
+        self._type.setMinimumWidth(135)
         self._type.addItem("All entity types", "")
         for value in TYPE_COLORS:
             self._type.addItem(value.upper(), value)
         self._type.currentIndexChanged.connect(self._apply_filters)
         self._relation = QComboBox()
+        self._relation.setMinimumWidth(170)
         self._relation.addItem("All relationship types", "")
         self._relation.currentIndexChanged.connect(self._apply_filters)
         self._focus = QComboBox()
-        self._focus.setMinimumWidth(230)
+        self._focus.setMinimumWidth(270)
         self._focus.addItem("Automatic one-hop focus", "")
         self._focus.currentIndexChanged.connect(self._draw_graph)
         self._search = QLineEdit()
@@ -95,12 +101,16 @@ class RelationshipsView(QWidget):
         self._pivot = QPushButton("Pivot to Evidence")
         self._pivot.setEnabled(False)
         self._pivot.clicked.connect(self._emit_pivot)
-        controls.addWidget(self._type)
-        controls.addWidget(self._relation)
-        controls.addWidget(self._focus)
-        controls.addWidget(self._search, 1)
-        controls.addWidget(self._pivot)
-        root.addLayout(controls)
+        filters.addWidget(self._type)
+        filters.addWidget(self._relation)
+        filters.addWidget(self._focus, 1)
+        root.addLayout(filters)
+
+        search_actions = QHBoxLayout()
+        search_actions.setSpacing(10)
+        search_actions.addWidget(self._search, 1)
+        search_actions.addWidget(self._pivot)
+        root.addLayout(search_actions)
 
         self._summary = QLabel("No evidence graph is available yet.")
         self._summary.setObjectName("Muted")
@@ -111,17 +121,30 @@ class RelationshipsView(QWidget):
         graph_page = QWidget()
         graph_layout = QVBoxLayout(graph_page)
         graph_layout.setContentsMargins(0, 10, 0, 0)
+        graph_header = QHBoxLayout()
         legend = QLabel(
-            "COLOR KEY  ·  SOURCE cyan  ·  EVENT violet  ·  HOST green  ·  USER amber  ·  IPv4 coral  ·  DOMAIN purple  ·  SHA-256 pink"
+            "TYPE COLORS  ·  SOURCE  ·  EVENT  ·  HOST  ·  USER  ·  IPv4  ·  DOMAIN  ·  SHA-256"
         )
         legend.setObjectName("Muted")
         legend.setWordWrap(True)
-        graph_layout.addWidget(legend)
-        self._scene = QGraphicsScene(self)
-        self._graph = QGraphicsView(self._scene)
-        self._graph.setRenderHint(self._graph.renderHints())
-        self._graph.setMinimumHeight(300)
-        graph_layout.addWidget(self._graph, 1)
+        graph_header.addWidget(legend, 1)
+        self._open_graph = QPushButton("Open graph window")
+        self._open_graph.setObjectName("PrimaryButton")
+        self._open_graph.setToolTip(
+            "Open a larger non-modal graph window with zoom, pan, movable nodes, "
+            "focus navigation, and clickable edges."
+        )
+        self._open_graph.clicked.connect(self.open_graph_window)
+        graph_header.addWidget(self._open_graph)
+        graph_layout.addLayout(graph_header)
+        self._graph_canvas = RelationshipGraphCanvas(
+            self,
+            max_neighbors=10,
+            minimum_height=320,
+        )
+        self._graph_canvas.focus_requested.connect(self._select_graph_focus)
+        self._graph_canvas.edge_activated.connect(self._open_graph_edge)
+        graph_layout.addWidget(self._graph_canvas, 1)
         tabs.addTab(graph_page, "Graph")
 
         self._table = QTableWidget(0, 7)
@@ -168,7 +191,7 @@ class RelationshipsView(QWidget):
         self._focus.setCurrentIndex(max(0, focus_index))
         self._focus.blockSignals(False)
         self._summary.setText(
-            f"{len(snapshot.nodes)} typed entity node(s) · {len(snapshot.edges)} evidence-backed edge(s) · click a table row for citations and rule provenance."
+            f"{len(snapshot.nodes)} typed entity node(s) · {len(snapshot.edges)} evidence-backed edge(s) · graph objects are selectable and every edge exposes citations and rule provenance."
         )
         self._apply_filters()
 
@@ -194,6 +217,9 @@ class RelationshipsView(QWidget):
                 continue
             visible.append(edge)
         self._visible = visible
+        if self._selected not in visible:
+            self._selected = None
+            self._pivot.setEnabled(False)
         self._populate_table()
         self._draw_graph()
 
@@ -224,66 +250,19 @@ class RelationshipsView(QWidget):
                 self._table.setItem(row, column, item)
 
     def _draw_graph(self) -> None:
-        self._scene.clear()
-        available = {value for edge in self._visible for value in (edge.source_id, edge.target_id)}
-        if not available:
-            self._scene.addText("No relationships match the current filters.").setDefaultTextColor(
-                QColor("#A49CB5")
-            )
-            return
         requested = str(self._focus.currentData() or "")
-        requested_id = next((value for value in available if str(value) == requested), None)
-        degrees = {
-            node_id: sum(node_id in {edge.source_id, edge.target_id} for edge in self._visible)
-            for node_id in available
-        }
-        focus = requested_id or max(available, key=lambda value: (degrees[value], str(value)))
-        neighbor_ids = sorted(
-            {
-                edge.target_id if edge.source_id == focus else edge.source_id
-                for edge in self._visible
-                if focus in {edge.source_id, edge.target_id}
-            },
-            key=lambda value: (-degrees[value], str(value)),
-        )[:16]
-        node_ids = [focus, *neighbor_ids]
-        positions: dict[object, tuple[float, float]] = {focus: (0.0, 0.0)}
-        radius = max(170.0, len(neighbor_ids) * 12.0)
-        for index, node_id in enumerate(neighbor_ids):
-            angle = (2 * math.pi * index / max(1, len(neighbor_ids))) - math.pi / 2
-            positions[node_id] = (math.cos(angle) * radius, math.sin(angle) * radius)
-        pen = QPen(QColor("#554869"), 1.2)
-        for edge in self._visible:
-            if edge.source_id in positions and edge.target_id in positions:
-                x1, y1 = positions[edge.source_id]
-                x2, y2 = positions[edge.target_id]
-                self._scene.addLine(x1, y1, x2, y2, pen)
-        for node_id in node_ids:
-            node = self._nodes[node_id]
-            x, y = positions[node_id]
-            color = QColor(TYPE_COLORS[node.entity_type.value])
-            size = 30 if node_id == focus else 20
-            self._scene.addEllipse(
-                x - size / 2,
-                y - size / 2,
-                size,
-                size,
-                QPen(color, 2 if node_id == focus else 1),
-                QBrush(color.darker(220)),
-            )
-            text = self._scene.addText(
-                f"{'FOCUS · ' if node_id == focus else ''}{node.entity_type.value.upper()}\n"
-                f"{_short(node.value)}"
-            )
-            text.setDefaultTextColor(color)
-            text.setPos(x + 13, y - 16)
-            text.setToolTip(node.value)
-        self._scene.setSceneRect(self._scene.itemsBoundingRect().adjusted(-30, -30, 30, 30))
+        nodes = tuple(self._nodes.values())
+        edges = tuple(self._visible)
+        self._graph_canvas.set_relationships(nodes, edges, requested)
+        if self._graph_window is not None and self._graph_window.isVisible():
+            self._graph_window.canvas.set_relationships(nodes, edges, requested)
 
     def _open_detail(self, row: int, _column: int) -> None:
         if not 0 <= row < len(self._visible):
             return
-        edge = self._visible[row]
+        self._present_edge(self._visible[row])
+
+    def _present_edge(self, edge: EvidenceRelationship) -> None:
         self._selected = edge
         self._pivot.setEnabled(True)
         left = self._nodes[edge.source_id]
@@ -304,6 +283,32 @@ class RelationshipsView(QWidget):
             title=f"{left.value}  →  {right.value}",
             text=text,
         )
+
+    def open_graph_window(self) -> None:
+        """Show the filtered graph in a resizable, non-modal interactive window."""
+
+        if self._graph_window is None:
+            self._graph_window = RelationshipGraphWindow(self)
+            self._graph_window.focus_requested.connect(self._select_graph_focus)
+            self._graph_window.edge_activated.connect(self._open_graph_edge)
+        self._graph_window.present(
+            tuple(self._nodes.values()),
+            tuple(self._visible),
+            str(self._focus.currentData() or ""),
+        )
+
+    def _select_graph_focus(self, node_id: str) -> None:
+        index = self._focus.findData(node_id)
+        if index >= 0:
+            self._focus.setCurrentIndex(index)
+
+    def _open_graph_edge(self, relationship_id: str) -> None:
+        edge = next(
+            (item for item in self._snapshot.edges if str(item.relationship_id) == relationship_id),
+            None,
+        )
+        if edge is not None:
+            self._present_edge(edge)
 
     def _emit_pivot(self) -> None:
         if self._selected is not None:

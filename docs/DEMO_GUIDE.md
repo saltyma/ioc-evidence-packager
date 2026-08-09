@@ -237,6 +237,19 @@ Expected summary: 47 typed nodes and 113 evidence-backed edges.
 
 The detail popup must identify From/To types and values, relation, rule ID, explanation, and supporting evidence IDs.
 
+Return to **Graph** and select **Open graph window**. In the separate resizable window:
+
+- use the mouse wheel or `−` / `+` controls to zoom;
+- drag the background to pan and drag a node card to rearrange it;
+- click a node or edge for an exact status summary;
+- double-click a node to make it the new one-hop focus;
+- double-click an edge to open its citations and rule provenance;
+- use **Fit** to frame the graph and **100%** to return to actual size;
+- choose a 10, 20, or 30-neighbor limit depending on the amount of context needed;
+- enable **Include cross-links** only when you need relationships among visible neighbors.
+
+The embedded canvas intentionally shows at most ten neighbors. The separate window defaults to the readable 10-neighbor view, can show up to thirty, and starts with focus-only edges so unrelated cross-links do not turn the graph into an unreadable hairball.
+
 Select **Pivot to Evidence**. The app should open Evidence with the related entity value already filtered.
 
 ### Coverage

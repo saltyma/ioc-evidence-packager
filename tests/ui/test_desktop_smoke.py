@@ -127,6 +127,8 @@ def test_background_import_populates_evidence_and_rejections(tmp_path: Path) -> 
     assert context.window.coverage_view.row_count >= 3
     assert context.window.sources_view.row_count == 1
     assert context.window.relationships_view.row_count > 0
+    assert context.window.relationships_view.graph_node_count > 0
+    assert context.window.relationships_view.graph_edge_count > 0
     assert context.window.recommendations_view.row_count > 0
     evidence_id = str(context.window._records[0].evidence_id)  # noqa: SLF001
     context.window.evidence_view.set_search_filter(evidence_id)
@@ -159,6 +161,25 @@ def test_background_import_populates_evidence_and_rejections(tmp_path: Path) -> 
     assert source_dialog is not None and source_dialog.isVisible()
     assert "SHA-256:" in source_dialog.detail_text
     assert "Mapped/searchable fields:" in source_dialog.detail_text
+
+    relationships = context.window.relationships_view
+    relationships.open_graph_window()
+    app.processEvents()
+    graph_window = relationships.graph_window
+    assert graph_window is not None and graph_window.isVisible()
+    assert graph_window.canvas.node_count > 0
+    assert graph_window.canvas.edge_count > 0
+    graph_window.canvas.reset_zoom()
+    assert graph_window.canvas.zoom_percent == 100
+    graph_window.canvas.zoom_in()
+    assert graph_window.canvas.zoom_percent > 100
+    relationship_id = str(relationships._visible[0].relationship_id)  # noqa: SLF001
+    relationships._open_graph_edge(relationship_id)  # noqa: SLF001
+    app.processEvents()
+    relationship_dialog = relationships._detail_dialog  # noqa: SLF001
+    assert relationship_dialog is not None and relationship_dialog.isVisible()
+    assert "Supporting evidence IDs:" in relationship_dialog.detail_text
+    graph_window.close()
 
     context.window.close()
     app.processEvents()

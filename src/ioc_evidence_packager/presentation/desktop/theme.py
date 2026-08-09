@@ -11,6 +11,10 @@ QDialog#DetailDialog {
     background: #13101B;
 }
 
+QDialog#RelationshipGraphWindow {
+    background: #0D0A12;
+}
+
 QLabel {
     background: transparent;
 }
@@ -64,6 +68,24 @@ QLabel#BrandTitle {
 
 QLabel#Muted, QLabel#FieldHint, QLabel#MetricLabel {
     color: #A49CB5;
+}
+
+QLabel#GraphZoomLabel {
+    color: #D7CBFF;
+    background: #17131E;
+    border: 1px solid #352E44;
+    border-radius: 6px;
+    padding: 5px 7px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+QLabel#GraphSelectionStatus {
+    color: #BBB2CA;
+    background: #15111C;
+    border-left: 3px solid #70D6E8;
+    border-radius: 5px;
+    padding: 7px 10px;
 }
 
 QLabel#SectionEyebrow {
@@ -167,6 +189,29 @@ QPushButton#PrimaryButton:hover {
     border-color: #B29BFF;
 }
 
+QPushButton#GraphToolButton {
+    padding: 5px 9px;
+    min-height: 20px;
+}
+
+QCheckBox {
+    color: #B8B0C6;
+    spacing: 7px;
+}
+
+QCheckBox::indicator {
+    width: 15px;
+    height: 15px;
+    background: #110E17;
+    border: 1px solid #514461;
+    border-radius: 4px;
+}
+
+QCheckBox::indicator:checked {
+    background: #8B6BE8;
+    border-color: #B29BFF;
+}
+
 QPushButton#NavButton {
     background: transparent;
     border: 1px solid transparent;
@@ -221,6 +266,12 @@ QTableWidget {
     gridline-color: #2A2435;
     selection-background-color: #40305F;
     selection-color: #FAF7FF;
+}
+
+QGraphicsView#RelationshipGraphCanvas {
+    background: #0C0911;
+    border: 1px solid #352E44;
+    border-radius: 8px;
 }
 
 QHeaderView::section {

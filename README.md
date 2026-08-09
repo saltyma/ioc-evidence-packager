@@ -117,6 +117,8 @@ Different export profiles can omit or redact sensitive fields. The original loca
 
 The desktop never invents relationships or recommendations: both are regenerated from versioned rules, while analyst decisions and attributed intelligence are persisted separately for auditability.
 
+The Relationships workspace also provides a separate resizable vector explorer with zoom, pan, movable node cards, one-hop focus navigation, optional neighbor cross-links, selectable edges, and direct provenance inspection.
+
 The detailed behavior and guardrails are in [Core and Smart Features](docs/FEATURES.md).
 
 ## Technical foundation
