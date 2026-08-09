@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ioc_evidence_packager.domain.timezones import UTC_DISPLAY, format_case_datetime
 from ioc_evidence_packager.domain.workspace import Recommendation, RecommendationStatus
 from ioc_evidence_packager.presentation.desktop.views.detail_dialog import DetailDialog
 
@@ -42,6 +43,7 @@ class RecommendationsView(QWidget):
         self._visible: list[Recommendation] = []
         self._selected: Recommendation | None = None
         self._detail_dialog: DetailDialog | None = None
+        self._display_timezone = UTC_DISPLAY
         self._build_ui()
 
     @property
@@ -119,6 +121,14 @@ class RecommendationsView(QWidget):
             self._detail_dialog.close()
         self._items = items
         self._selected = None
+        for button in (
+            self._accepted,
+            self._completed,
+            self._dismissed,
+            self._reset,
+            self._pivot,
+        ):
+            button.setEnabled(False)
         counts = {
             status.value: sum(item.status is status for item in items)
             for status in RecommendationStatus
@@ -127,6 +137,9 @@ class RecommendationsView(QWidget):
             f"{len(items)} current action(s) · {counts['Proposed']} proposed · {counts['Accepted']} accepted · {counts['Completed']} completed · {counts['Dismissed']} dismissed. Generated actions may change when evidence changes; analyst states are durable."
         )
         self._apply_filters()
+
+    def set_display_timezone(self, value: str) -> None:
+        self._display_timezone = value
 
     def _apply_filters(self) -> None:
         priority = self._priority.currentText()
@@ -154,6 +167,16 @@ class RecommendationsView(QWidget):
                 continue
             visible.append(item)
         self._visible = visible
+        if self._selected not in visible:
+            self._selected = None
+            for button in (
+                self._accepted,
+                self._completed,
+                self._dismissed,
+                self._reset,
+                self._pivot,
+            ):
+                button.setEnabled(False)
         self._populate()
 
     def _populate(self) -> None:
@@ -191,7 +214,8 @@ class RecommendationsView(QWidget):
             f"Priority: {item.priority.value}\nState: {item.status.value}\nCategory: {item.category}\n"
             f"Rationale: {item.rationale}\nExpected value: {item.expected_value}\nSafety note: {item.safety_note}\n"
             f"Suggested action: {item.action}\nAnalyst note: {item.analyst_note or 'None'}\n"
-            f"Updated at: {item.updated_at.isoformat() if item.updated_at else 'Not yet changed by an analyst'}\n"
+            f"Updated at ({self._display_timezone}): "
+            f"{format_case_datetime(item.updated_at, self._display_timezone) if item.updated_at else 'Not yet changed by an analyst'}\n"
             "Evidence citations:\n"
             + ("\n".join(f"  - {value}" for value in item.evidence_ids) or "  - None")
             + "\n"

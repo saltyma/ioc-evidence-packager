@@ -27,19 +27,21 @@ INSERT_RUN = """
 """
 
 INSERT_EVIDENCE = """
-    INSERT OR IGNORE INTO evidence_record (
+    INSERT INTO evidence_record (
         evidence_id, case_id, source_preview_id, import_run_id, line_number,
         event_id, occurred_at, category, action, host_name, user_name,
         observables_json, declared_source_id, declared_position_kind,
         declared_position_value, warnings_json, raw_json, imported_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(case_id, source_preview_id, line_number) DO NOTHING
 """
 
 INSERT_REJECTION = """
-    INSERT OR IGNORE INTO import_rejection (
+    INSERT INTO import_rejection (
         rejection_id, case_id, source_preview_id, import_run_id, line_number,
         code, message, raw_excerpt, created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(case_id, source_preview_id, line_number, code) DO NOTHING
 """
 
 LIST_EVIDENCE = """

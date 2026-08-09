@@ -161,7 +161,7 @@ The current application guides an analyst from case setup through durable eviden
 - keeps intelligence separate from evidence, flags contradictory claims, and requires a disclosure preview before optional VirusTotal object-report lookups;
 - applies bounded, wrapping, semantically color-coded detail popups across every table-backed workspace;
 - builds capsules on a worker thread, writes the manifest last, verifies every artifact, publishes atomically, and records successful history;
-- applies capsule-local host/user pseudonyms and omits raw source records/paths in Redacted Shareable exports;
+- omits case-identifying metadata, applies capsule-local host/user pseudonyms, and omits raw source records/paths in Redacted Shareable exports;
 - reopens the investigation with the same setup state and an explicit Offline policy.
 
 ![Implemented source-linked Evidence ledger](docs/assets/desktop-shell.png)

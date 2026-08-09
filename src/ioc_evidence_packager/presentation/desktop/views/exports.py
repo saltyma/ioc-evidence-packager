@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
 
 from ioc_evidence_packager.application.services import InvestigationSetup
 from ioc_evidence_packager.domain.analysis import AnalysisSnapshot
+from ioc_evidence_packager.domain.timezones import UTC_DISPLAY, format_case_datetime
 from ioc_evidence_packager.presentation.desktop.views.detail_dialog import DetailDialog
 from ioc_evidence_packager.reporting.models import (
     CapsuleResult,
@@ -42,6 +43,7 @@ class ExportsView(QWidget):
         super().__init__(parent)
         self._setup: InvestigationSetup | None = None
         self._history_records: list[ExportRecord] = []
+        self._display_timezone = UTC_DISPLAY
         self._detail_dialog: DetailDialog | None = None
         self._build_ui()
 
@@ -144,6 +146,7 @@ class ExportsView(QWidget):
         history: list[ExportRecord],
     ) -> None:
         self._setup = setup
+        self._display_timezone = setup.case.display_timezone
         self._export_button.setEnabled(analysis is not None)
         if not self._destination.text().strip():
             self._destination.setText(str(_default_destination(setup.case.title)))
@@ -164,7 +167,7 @@ class ExportsView(QWidget):
         for row, record in enumerate(history):
             self._history.insertRow(row)
             values = (
-                record.created_at.astimezone().strftime("%Y-%m-%d %H:%M:%S"),
+                format_case_datetime(record.created_at, self._display_timezone),
                 record.profile.value,
                 str(record.artifact_count),
                 str(record.destination),
@@ -184,12 +187,16 @@ class ExportsView(QWidget):
         self._detail_dialog.present(
             window_title="Export history details",
             eyebrow="VERIFIED CASE CAPSULE",
-            title=f"{record.profile.value} · {record.created_at.astimezone():%Y-%m-%d %H:%M:%S}",
+            title=(
+                f"{record.profile.value} · "
+                f"{format_case_datetime(record.created_at, self._display_timezone)}"
+            ),
             text=(
                 f"Export ID: {record.export_id}\n"
                 f"Case ID: {record.case_id}\n"
                 f"Profile: {record.profile.value}\n"
-                f"Created: {record.created_at.astimezone().isoformat()}\n"
+                f"Created ({self._display_timezone}): "
+                f"{format_case_datetime(record.created_at, self._display_timezone)}\n"
                 f"Destination: {record.destination}\n"
                 f"Artifacts: {record.artifact_count}\n"
                 f"Manifest SHA-256: {record.manifest_sha256}"
@@ -228,8 +235,9 @@ class ExportsView(QWidget):
     def _profile_changed(self) -> None:
         if self._profile.currentData() == ExportProfile.REDACTED_SHAREABLE.value:
             self._profile_note.setText(
-                "Host and user names receive capsule-local pseudonyms; source paths and raw "
-                "JSON are omitted. Evidence IDs and source digests remain verifiable."
+                "Case-identifying metadata is omitted; host and user names receive capsule-local "
+                "pseudonyms; source paths and raw JSON are omitted. Evidence IDs and source "
+                "digests remain verifiable."
             )
         else:
             self._profile_note.setText(

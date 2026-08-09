@@ -15,7 +15,7 @@ from ioc_evidence_packager.application.services import (
     NewInvestigationRequest,
 )
 from ioc_evidence_packager.domain.analysis import CoverageState
-from ioc_evidence_packager.domain.errors import SchemaVersionError
+from ioc_evidence_packager.domain.errors import SchemaVersionError, ValidationError
 from ioc_evidence_packager.domain.evidence import ImportStatus
 from ioc_evidence_packager.domain.observables import ObservableType
 from ioc_evidence_packager.ingestion.inspection import SourceInspectionService
@@ -136,6 +136,8 @@ def test_demo_import_is_durable_and_idempotent(tmp_path: Path) -> None:
     rejections = evidence_service.list_rejections(setup.case.case_id)
     assert len(rejections) == 1
     assert rejections[0].code == "invalid_json"
+    with pytest.raises(ValidationError, match="between 1 and 50000"):
+        evidence_service.list_evidence(setup.case.case_id, 0)
 
 
 def test_changed_source_is_rejected_before_records_are_read(tmp_path: Path) -> None:
@@ -230,9 +232,23 @@ def test_demo_analysis_is_exact_durable_and_coverage_aware(tmp_path: Path) -> No
         evidence,
         rejections,
     )
+    forced = analysis_service.ensure_analysis(
+        setup.case.case_id,
+        setup.lead,
+        previews,
+        evidence,
+        rejections,
+        force=True,
+    )
 
     assert first.run_id == second.run_id
+    assert forced.run_id != first.run_id
+    assert {item.sighting_id for item in first.sightings}.isdisjoint(
+        item.sighting_id for item in forced.sightings
+    )
+    assert analysis_service.latest_analysis(setup.case.case_id) == forced
     assert len(first.sightings) == 4
+    assert len(forced.sightings) == 4
     matched_event_ids = {
         record.event_id for record in evidence if record.evidence_id in first.direct_evidence_ids
     }

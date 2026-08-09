@@ -1,5 +1,6 @@
 """Canonical JSONL import conversion and rejection tests."""
 
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -42,3 +43,31 @@ def test_wrong_schema_is_never_accepted_as_evidence(tmp_path: Path) -> None:
     assert len(items) == 1
     assert isinstance(items[0], ImportRejection)
     assert items[0].code == "invalid_schema"
+
+
+def test_invalid_canonical_observable_and_adapter_are_rejected(tmp_path: Path) -> None:
+    base = {
+        "schema": "canonical-event/1.0.0",
+        "event_id": "event-invalid",
+        "source": {"source_id": "source", "position": {"kind": "line", "value": 1}},
+        "time": {"original": "2026-08-06T09:12:03Z", "utc": "2026-08-06T09:12:03Z"},
+        "event": {"category": "network", "action": "connection"},
+        "observables": [
+            {
+                "kind": "domain",
+                "field_path": "dns.question",
+                "original": "Example.TEST.",
+                "canonical": "Example.TEST.",
+            }
+        ],
+        "adapter": {"id": "", "version": "1.0.0"},
+    }
+    path = tmp_path / "invalid-canonical.jsonl"
+    path.write_text(json.dumps(base) + "\n", encoding="utf-8")
+    preview = SourceInspectionService().inspect(path)
+
+    items = list(iter_canonical_items(CaseId("case-demo"), preview, datetime.now(UTC)))
+
+    assert len(items) == 1
+    assert isinstance(items[0], ImportRejection)
+    assert items[0].code == "invalid_shape"

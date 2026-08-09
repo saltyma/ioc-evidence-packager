@@ -1,6 +1,7 @@
 """Hostile presentation values and capsule path-integrity boundaries."""
 
 import csv
+import hashlib
 import json
 from pathlib import Path
 
@@ -84,6 +85,29 @@ def test_capsule_escapes_html_protects_csv_and_refuses_overwrite(tmp_path: Path)
         )
     assert report_service.verify(result.destination).valid
 
+    recommendations_path = result.destination / "recommendations.json"
+    recommendations = json.loads(recommendations_path.read_text(encoding="utf-8"))
+    recommendations["recommendations"] = [
+        {
+            "recommendation_id": "recommendation-tampered",
+            "evidence_ids": [],
+            "relationship_ids": [],
+            "coverage_cell_ids": ["coverage-does-not-exist"],
+        }
+    ]
+    recommendations_path.write_text(json.dumps(recommendations), encoding="utf-8")
+    manifest_path = result.destination / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    entry = next(item for item in manifest["artifacts"] if item["path"] == "recommendations.json")
+    raw = recommendations_path.read_bytes()
+    entry["byte_size"] = len(raw)
+    entry["sha256"] = hashlib.sha256(raw).hexdigest()
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    tampered = report_service.verify(result.destination)
+    assert not tampered.valid
+    assert any("missing coverage cell" in message for message in tampered.messages)
+
 
 def test_verifier_rejects_manifest_path_traversal(tmp_path: Path) -> None:
     capsule = tmp_path / "unsafe-capsule"
@@ -108,6 +132,20 @@ def test_verifier_rejects_manifest_path_traversal(tmp_path: Path) -> None:
 
     assert not result.valid
     assert any("Unsafe artifact path" in message for message in result.messages)
+
+
+def test_verifier_requires_the_complete_normative_artifact_set(tmp_path: Path) -> None:
+    capsule = tmp_path / "incomplete-capsule"
+    capsule.mkdir()
+    (capsule / "manifest.json").write_text(
+        json.dumps({"capsule_schema": "1.1.0", "artifacts": []}),
+        encoding="utf-8",
+    )
+
+    result = verify_capsule(capsule)
+
+    assert not result.valid
+    assert sum("Required artifact is missing" in message for message in result.messages) == 8
 
 
 def test_intelligence_reference_launcher_accepts_only_plain_https_urls() -> None:

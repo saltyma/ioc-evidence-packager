@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
 
 from ioc_evidence_packager.domain.analysis import AnalysisSnapshot
 from ioc_evidence_packager.domain.evidence import EvidenceRecord
+from ioc_evidence_packager.domain.timezones import UTC_DISPLAY, format_case_datetime
 from ioc_evidence_packager.presentation.desktop.views.detail_dialog import DetailDialog
 
 
@@ -26,6 +27,7 @@ class TimelineView(QWidget):
         self._records: tuple[EvidenceRecord, ...] = ()
         self._visible: list[EvidenceRecord] = []
         self._analysis: AnalysisSnapshot | None = None
+        self._display_timezone = UTC_DISPLAY
         self._detail_dialog: DetailDialog | None = None
         self._build_ui()
 
@@ -42,8 +44,8 @@ class TimelineView(QWidget):
         title = QLabel("Chronology without invented time")
         title.setObjectName("PageTitle")
         subtitle = QLabel(
-            "Events are ordered by normalized UTC time, source identity, and physical "
-            "position. Records without a trustworthy timestamp stay in the Undated lane."
+            "Events are ordered by normalized UTC time, then shown in the case display timezone. "
+            "Records without a trustworthy timestamp stay in the Undated lane."
         )
         subtitle.setObjectName("PageSubtitle")
         subtitle.setWordWrap(True)
@@ -68,7 +70,7 @@ class TimelineView(QWidget):
         self._table = QTableWidget(0, 8)
         self._table.setHorizontalHeaderLabels(
             [
-                "UTC time",
+                "Time · UTC",
                 "Class",
                 "Category",
                 "Action",
@@ -95,11 +97,16 @@ class TimelineView(QWidget):
         self,
         records: tuple[EvidenceRecord, ...],
         analysis: AnalysisSnapshot | None,
+        display_timezone: str = UTC_DISPLAY,
     ) -> None:
         if self._detail_dialog is not None:
             self._detail_dialog.close()
         self._records = records
         self._analysis = analysis
+        self._display_timezone = display_timezone
+        header = self._table.horizontalHeaderItem(0)
+        if header is not None:
+            header.setText(f"Time · {display_timezone}")
         self._apply_filters()
 
     def _apply_filters(self) -> None:
@@ -136,7 +143,11 @@ class TimelineView(QWidget):
         for row, record in enumerate(self._visible):
             self._table.insertRow(row)
             values = (
-                record.occurred_at.isoformat() if record.occurred_at else "Undated",
+                (
+                    format_case_datetime(record.occurred_at, self._display_timezone)
+                    if record.occurred_at
+                    else "Undated"
+                ),
                 "DIRECT" if record.evidence_id in direct else "CONTEXT",
                 record.category,
                 record.action,

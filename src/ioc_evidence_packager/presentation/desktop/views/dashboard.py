@@ -1,7 +1,5 @@
 """Coverage-aware case orientation dashboard."""
 
-from datetime import UTC
-
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QFrame,
@@ -16,6 +14,7 @@ from ioc_evidence_packager.application.services import InvestigationSetup
 from ioc_evidence_packager.domain.analysis import AnalysisSnapshot, CoverageState
 from ioc_evidence_packager.domain.evidence import EvidenceRecord, ImportRejection
 from ioc_evidence_packager.domain.models import Case
+from ioc_evidence_packager.domain.timezones import UTC_DISPLAY, format_case_datetime
 
 
 class MetricCard(QFrame):
@@ -48,6 +47,7 @@ class DashboardView(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self._display_timezone = UTC_DISPLAY
         self._build_ui()
 
     def _build_ui(self) -> None:
@@ -141,9 +141,13 @@ class DashboardView(QWidget):
 
     def set_investigation(self, setup: InvestigationSetup) -> None:
         case = setup.case
+        self._display_timezone = case.display_timezone
         self._title.setText(case.title)
         self._subtitle.setText(
-            f"Opened {case.last_opened_at.astimezone().strftime('%Y-%m-%d at %H:%M')}"
+            "Opened "
+            + format_case_datetime(
+                case.last_opened_at, self._display_timezone, "%Y-%m-%d at %H:%M %Z"
+            )
         )
         self._status.setText(case.status.value.replace("_", " ").upper())
         self._case_id.setText(str(case.case_id))
@@ -207,8 +211,8 @@ class DashboardView(QWidget):
         hosts = {record.host_name for record in records if record.host_name}
         users = {record.user_name for record in records if record.user_name}
         if timestamps:
-            first = min(timestamps).astimezone(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
-            last = max(timestamps).astimezone(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+            first = format_case_datetime(min(timestamps), self._display_timezone)
+            last = format_case_datetime(max(timestamps), self._display_timezone)
             bounds = f"Timeline {first} → {last}"
         else:
             bounds = "All imported records are undated"

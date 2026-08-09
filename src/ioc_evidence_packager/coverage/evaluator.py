@@ -46,7 +46,15 @@ def _step_cell(
     rejections: tuple[ImportRejection, ...],
     sightings: tuple[Sighting, ...],
 ) -> CoverageCell:
-    compatible = tuple(preview for preview in previews if _preview_supports(preview, step))
+    compatible_ids = {
+        preview.preview_id for preview in previews if _preview_supports(preview, step)
+    }
+    compatible_ids.update(
+        record.source_preview_id
+        for record in evidence
+        if any(step.supports(observable.field_path) for observable in record.observables)
+    )
+    compatible = tuple(preview for preview in previews if preview.preview_id in compatible_ids)
     evidence_for_sources = tuple(
         record
         for record in evidence

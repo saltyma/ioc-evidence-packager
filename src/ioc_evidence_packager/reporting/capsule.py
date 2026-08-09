@@ -139,6 +139,12 @@ def verify_capsule(path: Path) -> VerificationResult:
             continue
         checked += 1
 
+    expected = {name for name, _media_type, _role in ARTIFACTS}
+    for missing in sorted(expected - seen):
+        messages.append(f"Required artifact is missing from manifest: {missing}")
+    for unexpected in sorted(seen - expected):
+        messages.append(f"Unexpected artifact in manifest: {unexpected}")
+
     actual = {
         item.relative_to(root).as_posix()
         for item in root.rglob("*")
@@ -416,10 +422,15 @@ def _render_html(projection: dict[str, Any]) -> str:
     template = environment.from_string(_REPORT_TEMPLATE)
     report: CaseReport = projection["report"]
     lead = report.lead
+    redacted = projection["profile"] == ExportProfile.REDACTED_SHAREABLE.value
     return template.render(
-        title=report.case.title,
-        reference=report.case.external_reference,
-        summary=report.case.summary,
+        title="Redacted IOC Evidence Case" if redacted else report.case.title,
+        reference=None if redacted else report.case.external_reference,
+        summary=(
+            "Case-identifying title, reference, and summary were omitted by the shareable profile."
+            if redacted
+            else report.case.summary
+        ),
         profile=projection["profile"],
         lead=(f"{lead.observable_type.value.upper()} · {lead.canonical_value}" if lead else "None"),
         recipe=f"{report.analysis.recipe_id}/{report.analysis.recipe_version}",
@@ -480,7 +491,11 @@ def _manifest(
     return {
         "capsule_schema": CAPSULE_SCHEMA,
         "capsule_id": str(export_id),
-        "case_id": str(report.case.case_id),
+        "case_id": (
+            _pseudonym("CASE", str(report.case.case_id), str(export_id))
+            if profile is ExportProfile.REDACTED_SHAREABLE
+            else str(report.case.case_id)
+        ),
         "export_profile": profile.value,
         "created_at": created_at.isoformat(),
         "tool": {"name": "ioc-evidence-packager", "version": __version__},
@@ -549,42 +564,64 @@ def _safe_relative_path(value: str) -> bool:
 
 def _verify_evidence_references(root: Path, messages: list[str]) -> None:
     try:
-        evidence_ids = {
-            str(json.loads(line)["evidence_id"])
+        evidence_rows = [
+            json.loads(line)
             for line in (root / "evidence.jsonl").read_text(encoding="utf-8").splitlines()
             if line.strip()
-        }
+        ]
+        if any(
+            not isinstance(row, dict) or not isinstance(row.get("evidence_id"), str)
+            for row in evidence_rows
+        ):
+            raise ValueError("evidence.jsonl contains an invalid evidence record")
+        evidence_ids = {row["evidence_id"] for row in evidence_rows}
         coverage: dict[str, Any] = json.loads((root / "coverage.json").read_text(encoding="utf-8"))
+        coverage_cells = _object_list(coverage, "cells")
         referenced = {
-            str(value)
-            for cell in coverage.get("cells", [])
-            for value in cell.get("evidence_ids", [])
+            str(value) for cell in coverage_cells for value in _string_list(cell, "evidence_ids")
         }
+        coverage_ids = {
+            str(cell["coverage_cell_id"])
+            for cell in coverage_cells
+            if isinstance(cell.get("coverage_cell_id"), str)
+        }
+        if len(coverage_ids) != len(coverage_cells):
+            raise ValueError("coverage.json contains an invalid coverage cell")
         relationships: dict[str, Any] = json.loads(
             (root / "relationships.json").read_text(encoding="utf-8")
         )
+        edges = _object_list(relationships, "edges")
+        nodes = _object_list(relationships, "nodes")
         relationship_evidence = {
-            str(value)
-            for edge in relationships.get("edges", [])
-            for value in edge.get("evidence_ids", [])
+            str(value) for item in (*edges, *nodes) for value in _string_list(item, "evidence_ids")
         }
         relationship_ids = {
-            str(edge.get("relationship_id")) for edge in relationships.get("edges", [])
+            str(edge["relationship_id"])
+            for edge in edges
+            if isinstance(edge.get("relationship_id"), str)
         }
+        if len(relationship_ids) != len(edges):
+            raise ValueError("relationships.json contains an invalid relationship")
         recommendations: dict[str, Any] = json.loads(
             (root / "recommendations.json").read_text(encoding="utf-8")
         )
+        recommendation_items = _object_list(recommendations, "recommendations")
         recommendation_evidence = {
             str(value)
-            for item in recommendations.get("recommendations", [])
-            for value in item.get("evidence_ids", [])
+            for item in recommendation_items
+            for value in _string_list(item, "evidence_ids")
         }
         recommendation_relationships = {
             str(value)
-            for item in recommendations.get("recommendations", [])
-            for value in item.get("relationship_ids", [])
+            for item in recommendation_items
+            for value in _string_list(item, "relationship_ids")
         }
-    except (OSError, json.JSONDecodeError, KeyError, TypeError) as error:
+        recommendation_coverage = {
+            str(value)
+            for item in recommendation_items
+            for value in _string_list(item, "coverage_cell_ids")
+        }
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
         messages.append(f"Machine-readable artifact validation failed: {error}")
         return
     missing = (referenced | relationship_evidence | recommendation_evidence) - evidence_ids
@@ -595,6 +632,25 @@ def _verify_evidence_references(root: Path, messages: list[str]) -> None:
         messages.append(
             f"Recommendations reference {len(missing_relationships)} missing relationship ID(s)."
         )
+    missing_coverage = recommendation_coverage - coverage_ids
+    if missing_coverage:
+        messages.append(
+            f"Recommendations reference {len(missing_coverage)} missing coverage cell ID(s)."
+        )
+
+
+def _object_list(document: dict[str, Any], key: str) -> list[dict[str, Any]]:
+    value = document.get(key)
+    if not isinstance(value, list) or any(not isinstance(item, dict) for item in value):
+        raise ValueError(f"{key} must be a list of objects")
+    return value
+
+
+def _string_list(document: dict[str, Any], key: str) -> list[str]:
+    value = document.get(key)
+    if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+        raise ValueError(f"{key} must be a list of strings")
+    return value
 
 
 def _pseudonym(kind: str, value: str | None, salt: str) -> str | None:

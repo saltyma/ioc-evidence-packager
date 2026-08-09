@@ -376,7 +376,7 @@ intelligence.json
 manifest.json
 ```
 
-Redacted Shareable should omit source paths/raw JSON and replace host/user values and graph IDs with capsule-local pseudonyms.
+Redacted Shareable should omit case title/reference/summary/local case ID, source paths, raw JSON, provider references, and analyst-note text; it replaces host/user values and graph IDs with capsule-local pseudonyms.
 
 Click the export-history row to inspect profile, destination, artifact count, and manifest SHA-256. Then select **Verify existing capsule…**, choose the new capsule directory, and confirm `VERIFIED · 8 artifact(s)`.
 

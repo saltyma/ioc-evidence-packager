@@ -289,15 +289,15 @@ def build_recommendations(
         safety: str,
         action: str,
         *,
+        scope: str = "",
         evidence_ids: tuple[str, ...] = (),
         coverage_ids: tuple[str, ...] = (),
         relationship_ids: tuple[str, ...] = (),
     ) -> None:
+        identity = (rule_id, scope) if scope else (rule_id,)
         values.append(
             Recommendation(
-                recommendation_id=RecommendationId(
-                    f"recommendation-{_stable(rule_id, *evidence_ids, *coverage_ids, *relationship_ids)}"
-                ),
+                recommendation_id=RecommendationId(f"recommendation-{_stable(*identity)}"),
                 rule_id=rule_id,
                 rule_version="1.0.0",
                 priority=priority,
@@ -327,6 +327,7 @@ def build_recommendations(
                     "Preserve the original source and document every retry.",
                     cell.reason.recovery
                     or "Re-export the source with the required fields and import it again.",
+                    scope=cell.step_id,
                     coverage_ids=cid,
                     evidence_ids=tuple(str(value) for value in cell.evidence_ids),
                 )
@@ -340,6 +341,7 @@ def build_recommendations(
                     "Restore a missing search lane.",
                     "Do not overwrite the failed source; retain its diagnostic.",
                     cell.reason.recovery or "Acquire a fresh copy and retry.",
+                    scope=cell.step_id,
                     coverage_ids=cid,
                 )
             elif cell.state is CoverageState.FORMAT_UNSUPPORTED:
@@ -352,6 +354,7 @@ def build_recommendations(
                     "Make the source searchable without altering the original.",
                     "Use an explicit sidecar mapping and verify both file hashes.",
                     cell.reason.recovery or "Convert or map the source, then preview it again.",
+                    scope=cell.step_id,
                     coverage_ids=cid,
                 )
             elif cell.state is CoverageState.SOURCE_NOT_PROVIDED:
@@ -365,6 +368,7 @@ def build_recommendations(
                     "Match the requested collection period to the incident window.",
                     cell.reason.recovery
                     or f"Collect {cell.telemetry} data for the scoped systems.",
+                    scope=cell.step_id,
                     coverage_ids=cid,
                 )
 
@@ -415,6 +419,20 @@ def build_recommendations(
     }
     return tuple(
         sorted(values, key=lambda value: (order[value.priority], value.category, value.title))
+    )
+
+
+def legacy_recommendation_id(recommendation: Recommendation) -> RecommendationId:
+    """Return the pre-v0.8 citation-derived ID for state migration on first read."""
+
+    return RecommendationId(
+        "recommendation-"
+        + _stable(
+            recommendation.rule_id,
+            *recommendation.evidence_ids,
+            *recommendation.coverage_cell_ids,
+            *recommendation.relationship_ids,
+        )
     )
 
 

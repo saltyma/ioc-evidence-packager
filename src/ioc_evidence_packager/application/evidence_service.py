@@ -146,9 +146,11 @@ class EvidenceService:
         return self._finish(run, ImportStatus.COMPLETED, processed_sources, accepted, rejected)
 
     def list_evidence(self, case_id: CaseId, limit: int = 5_000) -> list[EvidenceRecord]:
+        _validate_query_limit(limit)
         return self._repository.list_evidence(case_id, limit)
 
     def list_rejections(self, case_id: CaseId, limit: int = 5_000) -> list[ImportRejection]:
+        _validate_query_limit(limit)
         return self._repository.list_rejections(case_id, limit)
 
     def counts(self, case_id: CaseId) -> EvidenceCounts:
@@ -221,3 +223,8 @@ class EvidenceService:
             stored_evidence_records=counts.evidence,
             stored_rejections=counts.rejections,
         )
+
+
+def _validate_query_limit(limit: int) -> None:
+    if not 1 <= limit <= 50_000:
+        raise ValidationError("Evidence query limit must be between 1 and 50000.")

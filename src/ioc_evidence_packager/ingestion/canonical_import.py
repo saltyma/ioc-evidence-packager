@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from ioc_evidence_packager.domain.errors import ValidationError
 from ioc_evidence_packager.domain.evidence import (
     EvidenceId,
     EvidenceObservable,
@@ -15,6 +16,7 @@ from ioc_evidence_packager.domain.evidence import (
     RejectionId,
 )
 from ioc_evidence_packager.domain.models import CaseId
+from ioc_evidence_packager.domain.observables import ObservableType, parse_observable
 from ioc_evidence_packager.domain.sources import SourcePreview
 from ioc_evidence_packager.ingestion.adapters.common import (
     CANONICAL_SCHEMA_ID,
@@ -143,12 +145,21 @@ def convert_canonical_record(
     time_value = value["time"]
     event = value["event"]
     observables = value["observables"]
+    adapter = value["adapter"]
     if not isinstance(event_id, str) or not event_id.strip():
         return _shape_rejection(case_id, preview, line_number, "event_id", raw_json, imported_at)
-    if not isinstance(source, dict) or not isinstance(source.get("source_id"), str):
+    if (
+        not isinstance(source, dict)
+        or not isinstance(source.get("source_id"), str)
+        or not source["source_id"].strip()
+    ):
         return _shape_rejection(case_id, preview, line_number, "source", raw_json, imported_at)
     position = source.get("position")
-    if not isinstance(position, dict) or not isinstance(position.get("kind"), str):
+    if (
+        not isinstance(position, dict)
+        or not isinstance(position.get("kind"), str)
+        or not position["kind"].strip()
+    ):
         return _shape_rejection(
             case_id, preview, line_number, "source.position", raw_json, imported_at
         )
@@ -158,14 +169,26 @@ def convert_canonical_record(
         )
     if not isinstance(time_value, dict) or not isinstance(time_value.get("original"), str):
         return _shape_rejection(case_id, preview, line_number, "time", raw_json, imported_at)
-    if not isinstance(event, dict) or not isinstance(event.get("category"), str):
+    if (
+        not isinstance(event, dict)
+        or not isinstance(event.get("category"), str)
+        or not event["category"].strip()
+    ):
         return _shape_rejection(
             case_id, preview, line_number, "event.category", raw_json, imported_at
         )
-    if not isinstance(event.get("action"), str):
+    if not isinstance(event.get("action"), str) or not event["action"].strip():
         return _shape_rejection(
             case_id, preview, line_number, "event.action", raw_json, imported_at
         )
+    if (
+        not isinstance(adapter, dict)
+        or not isinstance(adapter.get("id"), str)
+        or not adapter["id"].strip()
+        or not isinstance(adapter.get("version"), str)
+        or not adapter["version"].strip()
+    ):
+        return _shape_rejection(case_id, preview, line_number, "adapter", raw_json, imported_at)
     parsed_observables = _observables(observables)
     if parsed_observables is None:
         return _shape_rejection(case_id, preview, line_number, "observables", raw_json, imported_at)
@@ -225,9 +248,31 @@ def _observables(value: Any) -> tuple[EvidenceObservable, ...] | None:
             or not isinstance(field_path, str)
             or not isinstance(original, str)
             or not isinstance(canonical, str)
+            or not kind.strip()
+            or not field_path.strip()
+            or not original.strip()
+            or not canonical.strip()
         ):
             return None
-        result.append(EvidenceObservable(kind, field_path, original, canonical))
+        normalized_kind = kind.strip().casefold()
+        if normalized_kind in {item.value for item in ObservableType}:
+            try:
+                parsed = parse_observable(canonical)
+            except ValidationError:
+                return None
+            if (
+                parsed.observable_type.value != normalized_kind
+                or parsed.canonical_value != canonical
+            ):
+                return None
+        result.append(
+            EvidenceObservable(
+                normalized_kind,
+                field_path.strip(),
+                original,
+                canonical,
+            )
+        )
     return tuple(result)
 
 

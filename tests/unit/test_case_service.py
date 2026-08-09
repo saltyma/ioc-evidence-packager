@@ -79,6 +79,20 @@ def test_create_case_rejects_an_empty_title(title: str) -> None:
         service.create_case(NewCaseRequest(title=title))
 
 
+def test_case_timezone_is_portable_and_strictly_validated() -> None:
+    service = CaseService(MemoryCaseRepository())
+
+    local = service.create_case(
+        NewCaseRequest(title="Local display", display_timezone=" local SYSTEM time ")
+    )
+    assert local.display_timezone == "Local system time"
+
+    with pytest.raises(ValidationError, match="UTC or Local system time"):
+        service.create_case(
+            NewCaseRequest(title="Unavailable zone", display_timezone="Africa/Casablanca")
+        )
+
+
 def test_open_case_updates_last_opened_time() -> None:
     initial = datetime(2026, 8, 6, 14, 0, tzinfo=UTC)
     clock = FixedClock(initial)

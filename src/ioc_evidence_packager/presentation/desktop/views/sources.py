@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 from ioc_evidence_packager.application.services import InvestigationSetup
 from ioc_evidence_packager.domain.evidence import EvidenceRecord, ImportRejection
 from ioc_evidence_packager.domain.sources import PreviewStatus, SourcePreview
+from ioc_evidence_packager.domain.timezones import UTC_DISPLAY, format_case_datetime
 from ioc_evidence_packager.presentation.desktop.views.detail_dialog import DetailDialog
 
 STATUS_COLORS = {
@@ -40,6 +41,7 @@ class SourcesView(QWidget):
         self._visible: list[SourcePreview] = []
         self._records: tuple[EvidenceRecord, ...] = ()
         self._rejections: tuple[ImportRejection, ...] = ()
+        self._display_timezone = UTC_DISPLAY
         self._detail_dialog: DetailDialog | None = None
         self._build_ui()
 
@@ -97,7 +99,7 @@ class SourcesView(QWidget):
                 "Sampled",
                 "Evidence",
                 "Rejected",
-                "UTC range",
+                "Time range",
             ]
         )
         self._table.setAlternatingRowColors(True)
@@ -123,6 +125,7 @@ class SourcesView(QWidget):
         if self._detail_dialog is not None:
             self._detail_dialog.close()
         self._previews = setup.source_previews
+        self._display_timezone = setup.case.display_timezone
         self._records = records
         self._rejections = rejections
         supported = sum(
@@ -183,7 +186,7 @@ class SourcesView(QWidget):
                 str(preview.sample_records),
                 str(evidence_counts[preview.preview_id]),
                 str(rejection_counts[preview.preview_id]),
-                _time_range_short(preview),
+                _time_range_short(preview, self._display_timezone),
             )
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
@@ -228,7 +231,8 @@ class SourcesView(QWidget):
                 f"Format: {preview.format_name or 'Unrecognized'}\n"
                 f"Adapter: {_adapter_label(preview)}\n"
                 f"Sampled records: {preview.sample_records}\n"
-                f"UTC range: {_time_range(preview)}\n"
+                f"Time range ({self._display_timezone}): "
+                f"{_time_range(preview, self._display_timezone)}\n"
                 f"Durable evidence: {len(records)}\n"
                 f"Rejected records: {len(rejections)}\n"
                 f"Capabilities:\n{capabilities}\n"
@@ -253,22 +257,31 @@ def _format_size(value: int) -> str:
     return f"{value / (1024 * 1024):.1f} MiB"
 
 
-def _time_range(preview: SourcePreview) -> str:
+def _time_range(preview: SourcePreview, display_timezone: str) -> str:
     if preview.earliest_time is None and preview.latest_time is None:
         return "Undated / unavailable"
-    earliest = preview.earliest_time.isoformat() if preview.earliest_time else "Unknown"
-    latest = preview.latest_time.isoformat() if preview.latest_time else "Unknown"
+    earliest = (
+        format_case_datetime(preview.earliest_time, display_timezone)
+        if preview.earliest_time
+        else "Unknown"
+    )
+    latest = (
+        format_case_datetime(preview.latest_time, display_timezone)
+        if preview.latest_time
+        else "Unknown"
+    )
     return f"{earliest} → {latest}"
 
 
-def _time_range_short(preview: SourcePreview) -> str:
+def _time_range_short(preview: SourcePreview, display_timezone: str) -> str:
     earliest = preview.earliest_time
     latest = preview.latest_time
     if earliest is None and latest is None:
         return "Undated / unavailable"
     if earliest is None or latest is None:
         value = earliest or latest
-        return value.strftime("%Y-%m-%d %H:%M:%S %Z") if value is not None else "Unknown"
-    if earliest.date() == latest.date():
-        return f"{earliest:%Y-%m-%d %H:%M:%S} → {latest:%H:%M:%S} {latest.tzname() or 'UTC'}"
-    return f"{earliest:%Y-%m-%d %H:%M} → {latest:%Y-%m-%d %H:%M} UTC"
+        return format_case_datetime(value, display_timezone) if value is not None else "Unknown"
+    return (
+        f"{format_case_datetime(earliest, display_timezone)} → "
+        f"{format_case_datetime(latest, display_timezone)}"
+    )

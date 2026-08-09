@@ -58,9 +58,15 @@ class SQLiteWorkspaceRepository:
             )
             connection.commit()
 
-    def add_assertion(self, assertion: IntelligenceAssertion) -> None:
+    def add_assertion(self, assertion: IntelligenceAssertion) -> bool:
+        return self.add_assertions((assertion,)) == 1
+
+    def add_assertions(self, assertions: tuple[IntelligenceAssertion, ...]) -> int:
+        if not assertions:
+            return 0
         with self._database.connection() as connection:
-            connection.execute(
+            before = connection.total_changes
+            connection.executemany(
                 """INSERT INTO intelligence_assertion(
                        assertion_id, case_id, provider, provider_version,
                        observable_type, observable_value, claim, confidence_label,
@@ -68,26 +74,10 @@ class SQLiteWorkspaceRepository:
                        source_reference, raw_response_sha256, origin, archived
                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                    ON CONFLICT(assertion_id) DO NOTHING""",
-                (
-                    str(assertion.assertion_id),
-                    str(assertion.case_id),
-                    assertion.provider,
-                    assertion.provider_version,
-                    assertion.observable_type,
-                    assertion.observable_value,
-                    assertion.claim.value,
-                    assertion.confidence_label,
-                    assertion.summary,
-                    assertion.retrieved_at.isoformat(),
-                    assertion.data_timestamp.isoformat() if assertion.data_timestamp else None,
-                    assertion.expires_at.isoformat() if assertion.expires_at else None,
-                    assertion.source_reference,
-                    assertion.raw_response_sha256,
-                    assertion.origin,
-                    int(assertion.archived),
-                ),
+                tuple(_assertion_values(assertion) for assertion in assertions),
             )
             connection.commit()
+            return connection.total_changes - before
 
     def list_assertions(
         self, case_id: CaseId, *, include_archived: bool = False
@@ -133,3 +123,24 @@ class SQLiteWorkspaceRepository:
                 (str(case_id), str(assertion_id)),
             )
             connection.commit()
+
+
+def _assertion_values(assertion: IntelligenceAssertion) -> tuple[object, ...]:
+    return (
+        str(assertion.assertion_id),
+        str(assertion.case_id),
+        assertion.provider,
+        assertion.provider_version,
+        assertion.observable_type,
+        assertion.observable_value,
+        assertion.claim.value,
+        assertion.confidence_label,
+        assertion.summary,
+        assertion.retrieved_at.isoformat(),
+        assertion.data_timestamp.isoformat() if assertion.data_timestamp else None,
+        assertion.expires_at.isoformat() if assertion.expires_at else None,
+        assertion.source_reference,
+        assertion.raw_response_sha256,
+        assertion.origin,
+        int(assertion.archived),
+    )

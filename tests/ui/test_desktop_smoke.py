@@ -6,6 +6,7 @@ from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+from PySide6.QtCore import QSettings  # noqa: E402
 from PySide6.QtGui import QImage  # noqa: E402
 from PySide6.QtWidgets import QApplication, QPlainTextEdit  # noqa: E402
 
@@ -20,6 +21,9 @@ from ioc_evidence_packager.presentation.desktop.app import (  # noqa: E402
 from ioc_evidence_packager.presentation.desktop.branding import (  # noqa: E402
     APP_ICON_PATH,
     application_icon,
+)
+from ioc_evidence_packager.presentation.desktop.settings_store import (  # noqa: E402
+    DesktopSettingsStore,
 )
 from ioc_evidence_packager.presentation.desktop.views.new_case import (  # noqa: E402
     NewCaseDialog,
@@ -94,6 +98,18 @@ def test_packaged_branding_uses_generated_raster_icon() -> None:
     assert not application_icon().pixmap(32, 32).isNull()
 
 
+def test_corrupt_device_preferences_fall_back_to_safe_values(tmp_path: Path) -> None:
+    settings = QSettings(str(tmp_path / "settings.ini"), QSettings.Format.IniFormat)
+    settings.setValue("appearance/density", "Microscopic")
+    settings.setValue("privacy/default_mode", "send-everything")
+    settings.sync()
+
+    preferences = DesktopSettingsStore(settings).load()
+
+    assert preferences.density == "Comfortable"
+    assert preferences.default_privacy_mode == "offline"
+
+
 def test_background_import_populates_evidence_and_rejections(tmp_path: Path) -> None:
     app = create_qapplication(["ioc-evidence-packager-import-test"])
     context = build_desktop(tmp_path / "import.sqlite3")
@@ -121,6 +137,7 @@ def test_background_import_populates_evidence_and_rejections(tmp_path: Path) -> 
         app.processEvents()
 
     assert context.window._import_worker is None  # noqa: SLF001
+    assert context.window._jobs_button.text() == "Jobs  0"  # noqa: SLF001
     assert context.window.evidence_view.evidence_row_count == 1
     assert context.window.evidence_view.rejection_row_count == 1
     assert context.window.timeline_view.row_count == 1
@@ -130,6 +147,33 @@ def test_background_import_populates_evidence_and_rejections(tmp_path: Path) -> 
     assert context.window.relationships_view.graph_node_count > 0
     assert context.window.relationships_view.graph_edge_count > 0
     assert context.window.recommendations_view.row_count > 0
+    recommendations = context.window.recommendations_view
+    recommendations._open_detail(0, 0)  # noqa: SLF001
+    assert recommendations._accepted.isEnabled()  # noqa: SLF001
+    recommendations.set_recommendations(recommendations._items)  # noqa: SLF001
+    assert not recommendations._accepted.isEnabled()  # noqa: SLF001
+    assert not recommendations._pivot.isEnabled()  # noqa: SLF001
+    context.window._save_settings(  # noqa: SLF001
+        "offline",
+        "Local system time",
+        context.window._preferences,  # noqa: SLF001
+    )
+    assert context.window.current_case is not None
+    assert context.window.current_case.display_timezone == "Local system time"
+    assert (
+        context.window.timeline_view._table.horizontalHeaderItem(0).text()  # noqa: SLF001
+        == "Time · Local system time"
+    )
+    original_run = context.window._analysis  # noqa: SLF001
+    assert original_run is not None
+    context.window.coverage_view._rerun_button.click()  # noqa: SLF001
+    app.processEvents()
+    first_rerun = context.window._analysis  # noqa: SLF001
+    assert first_rerun is not None and first_rerun.run_id != original_run.run_id
+    context.window.coverage_view._rerun_button.click()  # noqa: SLF001
+    app.processEvents()
+    second_rerun = context.window._analysis  # noqa: SLF001
+    assert second_rerun is not None and second_rerun.run_id != first_rerun.run_id
     evidence_id = str(context.window._records[0].evidence_id)  # noqa: SLF001
     context.window.evidence_view.set_search_filter(evidence_id)
     assert context.window.evidence_view.evidence_row_count == 1
@@ -207,6 +251,7 @@ def test_background_capsule_export_updates_verified_history(tmp_path: Path) -> N
         app.processEvents()
 
     assert context.window._export_worker is None  # noqa: SLF001
+    assert context.window._jobs_button.text() == "Jobs  0"  # noqa: SLF001
     assert (destination / "manifest.json").is_file()
     assert context.report_service.verify(destination).valid
     assert context.window.exports_view.history_row_count == 1

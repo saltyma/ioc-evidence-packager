@@ -18,6 +18,7 @@ from ioc_evidence_packager.domain.analysis import AnalysisSnapshot
 from ioc_evidence_packager.domain.errors import ValidationError
 from ioc_evidence_packager.domain.evidence import EvidenceRecord
 from ioc_evidence_packager.domain.models import Case, CaseId, PrivacyMode
+from ioc_evidence_packager.domain.observables import parse_observable
 from ioc_evidence_packager.domain.workspace import (
     AssertionId,
     IntelligenceAssertion,
@@ -28,6 +29,7 @@ from ioc_evidence_packager.domain.workspace import (
     RelationshipSnapshot,
     build_recommendations,
     build_relationships,
+    legacy_recommendation_id,
 )
 
 INTELLIGENCE_SCHEMA = "ioc-intelligence-assertions/1.0.0"
@@ -51,12 +53,18 @@ class WorkspaceService:
         relationships: RelationshipSnapshot,
     ) -> tuple[Recommendation, ...]:
         states = self._repository.recommendation_states(case_id)
-        return tuple(
-            item.with_state(*states[item.recommendation_id])
-            if item.recommendation_id in states
-            else item
-            for item in build_recommendations(analysis, relationships)
-        )
+        values: list[Recommendation] = []
+        for item in build_recommendations(analysis, relationships):
+            state = states.get(item.recommendation_id)
+            if state is None:
+                legacy_id = legacy_recommendation_id(item)
+                state = states.get(legacy_id)
+                if state is not None and legacy_id != item.recommendation_id:
+                    self._repository.set_recommendation_state(
+                        case_id, item.recommendation_id, state[0], state[1], state[2]
+                    )
+            values.append(item.with_state(*state) if state is not None else item)
+        return tuple(values)
 
     def set_recommendation_state(
         self,
@@ -90,13 +98,14 @@ class WorkspaceService:
         values = [provider, observable_type, observable_value, confidence_label, summary]
         if any(not value.strip() for value in values):
             raise ValidationError("Provider, observable, confidence, and summary are required.")
+        canonical_type, canonical_value = _canonical_observable(observable_type, observable_value)
         assertion = IntelligenceAssertion(
             assertion_id=AssertionId(f"assertion-{uuid4()}"),
             case_id=case_id,
             provider=provider.strip()[:120],
             provider_version="analyst-entry/1.0.0",
-            observable_type=observable_type.strip().casefold()[:40],
-            observable_value=observable_value.strip()[:2048],
+            observable_type=canonical_type,
+            observable_value=canonical_value,
             claim=claim,
             confidence_label=confidence_label.strip()[:120],
             summary=summary.strip()[:4000],
@@ -120,26 +129,31 @@ class WorkspaceService:
         values = document.get("assertions")
         if not isinstance(values, list) or len(values) > 500:
             raise ValidationError("Assertions must be a JSON list with at most 500 entries.")
-        added = 0
         digest = hashlib.sha256(raw).hexdigest()
+        assertions: list[IntelligenceAssertion] = []
         for index, item in enumerate(values):
             if not isinstance(item, dict):
                 raise ValidationError(f"Assertion {index + 1} must be an object.")
             try:
                 retrieved = _parse_time(item.get("retrieved_at")) or datetime.now(UTC)
+                observable_type, observable_value = _canonical_observable(
+                    _required(item, "observable_type", index, 40),
+                    _required(item, "observable_value", index, 2048),
+                )
+                raw_response_sha256 = _optional_sha256(item.get("raw_response_sha256"), digest)
                 assertion = IntelligenceAssertion(
                     assertion_id=AssertionId(
                         "assertion-import-"
-                        + hashlib.sha256(f"{digest}:{index}".encode()).hexdigest()[:24]
+                        + hashlib.sha256(f"{case_id}:{digest}:{index}".encode()).hexdigest()[:24]
                     ),
                     case_id=case_id,
-                    provider=_required(item, "provider", index),
+                    provider=_required(item, "provider", index, 120),
                     provider_version=str(item.get("provider_version") or "import/1.0.0")[:120],
-                    observable_type=_required(item, "observable_type", index).casefold(),
-                    observable_value=_required(item, "observable_value", index),
-                    claim=IntelligenceClaim(_required(item, "claim", index)),
-                    confidence_label=_required(item, "confidence_label", index),
-                    summary=_required(item, "summary", index)[:4000],
+                    observable_type=observable_type,
+                    observable_value=observable_value,
+                    claim=IntelligenceClaim(_required(item, "claim", index, 40)),
+                    confidence_label=_required(item, "confidence_label", index, 120),
+                    summary=_required(item, "summary", index, 4000),
                     retrieved_at=retrieved,
                     data_timestamp=_parse_time(item.get("data_timestamp")),
                     expires_at=_parse_time(item.get("expires_at")),
@@ -148,18 +162,13 @@ class WorkspaceService:
                         if item.get("source_reference")
                         else None
                     ),
-                    raw_response_sha256=(
-                        str(item["raw_response_sha256"])[:64]
-                        if item.get("raw_response_sha256")
-                        else digest
-                    ),
+                    raw_response_sha256=raw_response_sha256,
                     origin="import",
                 )
             except (KeyError, TypeError, ValueError) as error:
                 raise ValidationError(f"Assertion {index + 1} is invalid: {error}") from error
-            self._repository.add_assertion(assertion)
-            added += 1
-        return added
+            assertions.append(assertion)
+        return self._repository.add_assertions(tuple(assertions))
 
     def archive_assertion(self, case_id: CaseId, assertion_id: AssertionId) -> None:
         self._repository.archive_assertion(case_id, assertion_id)
@@ -178,6 +187,7 @@ class WorkspaceService:
             raise ValidationError(
                 "Remote lookups require Safe enrichment or Enterprise privacy mode."
             )
+        observable_type, value = _canonical_observable(observable_type, value)
         now = datetime.now(UTC)
         cached = next(
             (
@@ -251,10 +261,9 @@ class WorkspaceService:
             retrieved_at=retrieved,
             data_timestamp=_unix_time(attributes.get("last_analysis_date")),
             expires_at=retrieved + timedelta(hours=max(1, min(168, cache_hours))),
-            source_reference=(
-                "https://www.virustotal.com/gui/"
-                f"{'file' if collection == 'files' else observable_type}/{encoded}"
-            ),
+            source_reference="https://www.virustotal.com/gui/"
+            + {"files": "file", "ip_addresses": "ip-address", "domains": "domain"}[collection]
+            + f"/{encoded}",
             raw_response_sha256=hashlib.sha256(raw).hexdigest(),
             origin="virustotal",
         )
@@ -262,11 +271,37 @@ class WorkspaceService:
         return assertion
 
 
-def _required(item: dict[str, Any], key: str, index: int) -> str:
+def _required(item: dict[str, Any], key: str, index: int, max_length: int) -> str:
     value = item.get(key)
     if not isinstance(value, str) or not value.strip():
         raise ValidationError(f"Assertion {index + 1} requires {key}.")
-    return value.strip()[:2048]
+    normalized = value.strip()
+    if len(normalized) > max_length:
+        raise ValidationError(f"Assertion {index + 1} field {key} exceeds {max_length} characters.")
+    return normalized
+
+
+def _canonical_observable(observable_type: str, value: str) -> tuple[str, str]:
+    declared = observable_type.strip().casefold()
+    parsed = parse_observable(value)
+    if parsed.observable_type.value != declared:
+        raise ValidationError(
+            f"Observable type {declared or '(empty)'} does not match "
+            f"the validated {parsed.observable_type.value} value."
+        )
+    return parsed.observable_type.value, parsed.canonical_value
+
+
+def _optional_sha256(value: Any, default: str) -> str:
+    if value in (None, ""):
+        return default
+    if not isinstance(value, str) or len(value) != 64:
+        raise ValidationError("raw_response_sha256 must be 64 hexadecimal characters.")
+    try:
+        int(value, 16)
+    except ValueError as error:
+        raise ValidationError("raw_response_sha256 must be 64 hexadecimal characters.") from error
+    return value.casefold()
 
 
 def _parse_time(value: Any) -> datetime | None:

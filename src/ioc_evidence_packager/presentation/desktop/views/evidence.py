@@ -1,7 +1,5 @@
 """Source-linked evidence ledger and structured import diagnostics."""
 
-from datetime import UTC
-
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -30,6 +28,7 @@ from ioc_evidence_packager.domain.evidence import (
 )
 from ioc_evidence_packager.domain.models import CaseId
 from ioc_evidence_packager.domain.sources import PreviewStatus, SourcePreview
+from ioc_evidence_packager.domain.timezones import UTC_DISPLAY, format_case_datetime
 from ioc_evidence_packager.presentation.desktop.views.detail_dialog import DetailDialog
 
 
@@ -47,6 +46,7 @@ class EvidenceView(QWidget):
         self._visible_records: list[EvidenceRecord] = []
         self._rejections: list[ImportRejection] = []
         self._analysis: AnalysisSnapshot | None = None
+        self._display_timezone = UTC_DISPLAY
         self._detail_dialog: DetailDialog | None = None
         self._build_ui()
 
@@ -181,6 +181,10 @@ class EvidenceView(QWidget):
         if self._detail_dialog is not None:
             self._detail_dialog.close()
         self._case_id = setup.case.case_id
+        self._display_timezone = setup.case.display_timezone
+        header = self._evidence_table.horizontalHeaderItem(0)
+        if header is not None:
+            header.setText(f"Time · {self._display_timezone}")
         self._previews = setup.source_previews
         self._analysis = None
         self.set_records(records, rejections)
@@ -288,7 +292,7 @@ class EvidenceView(QWidget):
         for row, record in enumerate(self._visible_records):
             self._evidence_table.insertRow(row)
             timestamp = (
-                record.occurred_at.astimezone(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+                format_case_datetime(record.occurred_at, self._display_timezone)
                 if record.occurred_at
                 else "Undated"
             )

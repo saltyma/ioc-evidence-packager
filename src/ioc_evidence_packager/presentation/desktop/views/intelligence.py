@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
 )
 
 from ioc_evidence_packager.domain.models import Case
+from ioc_evidence_packager.domain.timezones import UTC_DISPLAY, format_case_datetime
 from ioc_evidence_packager.domain.workspace import (
     IntelligenceAssertion,
     IntelligenceClaim,
@@ -60,6 +61,7 @@ class IntelligenceView(QWidget):
         self._detail_dialog: DetailDialog | None = None
         self._provider_enabled = False
         self._confirm_external_links = True
+        self._display_timezone = UTC_DISPLAY
         self._build_ui()
 
     @property
@@ -164,7 +166,11 @@ class IntelligenceView(QWidget):
     ) -> None:
         if self._detail_dialog is not None:
             self._detail_dialog.close()
+        self._selected = None
+        self._archive.setEnabled(False)
+        self._open_reference.setEnabled(False)
         self._case = case
+        self._display_timezone = case.display_timezone
         self._assertions = assertions
         self._conflicts = intelligence_conflicts(assertions)
         self._provider_enabled = provider_enabled
@@ -210,6 +216,10 @@ class IntelligenceView(QWidget):
                 continue
             visible.append(item)
         self._visible = visible
+        if self._selected not in visible:
+            self._selected = None
+            self._archive.setEnabled(False)
+            self._open_reference.setEnabled(False)
         self._populate()
 
     def _populate(self) -> None:
@@ -223,7 +233,7 @@ class IntelligenceView(QWidget):
                 item.observable_value,
                 item.claim.value,
                 item.confidence_label,
-                item.retrieved_at.isoformat(timespec="seconds"),
+                format_case_datetime(item.retrieved_at, self._display_timezone),
                 item.cache_state,
                 item.origin.upper(),
                 conflict,
@@ -251,8 +261,13 @@ class IntelligenceView(QWidget):
             f"Assertion ID: {item.assertion_id}\nProvider: {item.provider}\nProvider version: {item.provider_version}\n"
             f"Origin: {item.origin.upper()}\nObservable type: {item.observable_type.upper()}\nObservable value: {item.observable_value}\n"
             f"Claim: {item.claim.value}\nProvider confidence: {item.confidence_label}\nConflict state: {'CONFLICT — inspect other assertions for this observable' if conflict else 'No active contradictory claim'}\n"
-            f"Summary: {item.summary}\nRetrieved at: {item.retrieved_at.isoformat()}\n"
-            f"Provider data timestamp: {item.data_timestamp.isoformat() if item.data_timestamp else 'Not supplied'}\nExpires at: {item.expires_at.isoformat() if item.expires_at else 'Not supplied'}\nCache state: {item.cache_state}\n"
+            f"Summary: {item.summary}\nRetrieved at ({self._display_timezone}): "
+            f"{format_case_datetime(item.retrieved_at, self._display_timezone)}\n"
+            f"Provider data timestamp ({self._display_timezone}): "
+            f"{format_case_datetime(item.data_timestamp, self._display_timezone) if item.data_timestamp else 'Not supplied'}\n"
+            f"Expires at ({self._display_timezone}): "
+            f"{format_case_datetime(item.expires_at, self._display_timezone) if item.expires_at else 'Not supplied'}\n"
+            f"Cache state: {item.cache_state}\n"
             f"Source reference: {item.source_reference or 'Not supplied'}\nRaw response SHA-256: {item.raw_response_sha256 or 'Not supplied'}\n"
             "Interpretation: This is an attributed provider/analyst assertion. It does not change evidence classification and is not proof of compromise."
         )

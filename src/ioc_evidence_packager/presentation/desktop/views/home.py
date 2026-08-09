@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 )
 
 from ioc_evidence_packager.domain.models import Case
+from ioc_evidence_packager.domain.timezones import format_case_datetime
 
 
 class HomeView(QWidget):
@@ -122,7 +123,9 @@ class HomeView(QWidget):
             self._table.setItem(row, 0, title_item)
             self._table.setItem(row, 1, QTableWidgetItem(_display_enum(case.status.value)))
             self._table.setItem(row, 2, QTableWidgetItem(_display_enum(case.privacy_mode.value)))
-            opened = case.last_opened_at.astimezone().strftime("%Y-%m-%d  %H:%M")
+            opened = format_case_datetime(
+                case.last_opened_at, case.display_timezone, "%Y-%m-%d  %H:%M %Z"
+            )
             self._table.setItem(row, 3, QTableWidgetItem(opened))
             self._table.setRowHeight(row, 42)
         has_cases = bool(cases)

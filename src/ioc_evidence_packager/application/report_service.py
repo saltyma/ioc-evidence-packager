@@ -77,4 +77,6 @@ class ReportService:
         return verify_capsule(path)
 
     def list_exports(self, case_id: CaseId, limit: int = 50) -> list[ExportRecord]:
+        if not 1 <= limit <= 500:
+            raise ValidationError("Export history limit must be between 1 and 500.")
         return self._repository.list_exports(case_id, limit)

@@ -33,6 +33,7 @@ def find_direct_sightings(
                 continue
             identity = "|".join(
                 (
+                    str(run_id),
                     str(record.case_id),
                     str(record.evidence_id),
                     str(lead.observable_id),
@@ -64,12 +65,25 @@ def find_direct_sightings(
                             f"The normalized {lead.observable_type.value} value exactly matches "
                             f"the case lead in declared field {observable.field_path}."
                         ),
-                        parameters=(
-                            ("lead", lead.canonical_value),
-                            ("field_path", observable.field_path),
-                            ("comparison", "exact-normalized"),
+                        parameters=tuple(
+                            sorted(
+                                (
+                                    ("lead", lead.canonical_value),
+                                    ("field_path", observable.field_path),
+                                    ("comparison", "exact-normalized"),
+                                )
+                            )
                         ),
                     ),
                 )
             )
-    return tuple(sightings)
+    return tuple(
+        sorted(
+            sightings,
+            key=lambda item: (
+                str(item.evidence_id),
+                item.field_path,
+                str(item.sighting_id),
+            ),
+        )
+    )

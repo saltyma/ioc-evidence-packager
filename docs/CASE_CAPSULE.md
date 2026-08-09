@@ -51,7 +51,7 @@ Includes all analyst-selected evidence, source references, notes, assessments, i
 
 ### Redacted Shareable
 
-Applies a named, versioned redaction policy. Typical transformations include pseudonymizing host/user identifiers, removing internal paths or query parameters, excluding raw provider responses, and shortening notes.
+Applies a named, versioned redaction policy. The current profile omits case title, external reference, summary, and local case ID; pseudonymizes host/user identifiers; removes source paths and raw canonical JSON; removes provider references and analyst-note text; and keeps evidence IDs and source digests verifiable.
 
 The report and manifest disclose which policy and transformations were used. Redaction creates a derived export; it never changes the local case.
 
@@ -121,7 +121,7 @@ Export sequence:
 7. atomically publish or rename the completed directory/ZIP when supported;
 8. record the successful export in the local case.
 
-The verifier checks schema support, safe relative paths, missing/extra files, byte sizes, hashes, duplicate paths, evidence IDs referenced by coverage/relationships/recommendations, and recommendation relationship IDs. A future detached signature can authenticate a manifest, but signatures do not replace acquisition and custody procedures.
+The verifier checks schema support, the exact eight-artifact contract, safe relative paths, missing/extra files, byte sizes, hashes, duplicate paths, evidence IDs referenced by coverage/relationship nodes/edges/recommendations, and recommendation relationship and coverage-cell IDs. A future detached signature can authenticate a manifest, but signatures do not replace acquisition and custody procedures.
 
 ## Determinism
 

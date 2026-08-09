@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 )
 
 from ioc_evidence_packager.domain.models import Case, PrivacyMode
+from ioc_evidence_packager.domain.timezones import SUPPORTED_DISPLAY_TIMEZONES
 from ioc_evidence_packager.presentation.desktop.settings_store import DesktopPreferences
 
 
@@ -82,8 +83,8 @@ class SettingsView(QWidget):
         note.setWordWrap(True)
         layout.addWidget(note)
         form = QFormLayout()
-        self._timezone = QLineEdit("UTC")
-        self._timezone.setPlaceholderText("IANA/UTC label used for display, e.g. UTC")
+        self._timezone = QComboBox()
+        self._timezone.addItems(SUPPORTED_DISPLAY_TIMEZONES)
         self._privacy = QComboBox()
         for mode in PrivacyMode:
             self._privacy.addItem(mode.value.replace("_", " ").title(), mode.value)
@@ -167,7 +168,7 @@ class SettingsView(QWidget):
 
     def set_settings(self, case: Case, preferences: DesktopPreferences) -> None:
         self._case = case
-        self._timezone.setText(case.display_timezone)
+        self._timezone.setCurrentIndex(max(0, self._timezone.findText(case.display_timezone)))
         self._privacy.setCurrentIndex(max(0, self._privacy.findData(case.privacy_mode.value)))
         self._density.setCurrentText(preferences.density)
         self._detail_width.setValue(preferences.detail_width)
@@ -204,5 +205,5 @@ class SettingsView(QWidget):
             default_privacy_mode=str(self._default_privacy.currentData()),
         )
         self.save_requested.emit(
-            str(self._privacy.currentData()), self._timezone.text(), preferences
+            str(self._privacy.currentData()), self._timezone.currentText(), preferences
         )

@@ -4,6 +4,8 @@ from dataclasses import dataclass
 
 from PySide6.QtCore import QSettings
 
+from ioc_evidence_packager.domain.models import PrivacyMode
+
 
 @dataclass(frozen=True, slots=True)
 class DesktopPreferences:
@@ -21,8 +23,10 @@ class DesktopSettingsStore:
         self._settings = settings or QSettings()
 
     def load(self) -> DesktopPreferences:
+        density = str(self._settings.value("appearance/density", "Comfortable"))
+        default_privacy = str(self._settings.value("privacy/default_mode", "offline"))
         return DesktopPreferences(
-            density=str(self._settings.value("appearance/density", "Comfortable")),
+            density=density if density in {"Comfortable", "Compact"} else "Comfortable",
             detail_width=_integer(
                 self._settings.value("appearance/detail_width", 760), 760, 620, 900
             ),
@@ -34,7 +38,11 @@ class DesktopSettingsStore:
             confirm_external_links=_boolean(
                 self._settings.value("privacy/confirm_external_links", True)
             ),
-            default_privacy_mode=str(self._settings.value("privacy/default_mode", "offline")),
+            default_privacy_mode=(
+                default_privacy
+                if default_privacy in {mode.value for mode in PrivacyMode}
+                else PrivacyMode.OFFLINE.value
+            ),
         )
 
     def save(self, value: DesktopPreferences) -> None:

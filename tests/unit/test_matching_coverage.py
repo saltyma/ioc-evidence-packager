@@ -96,6 +96,27 @@ def test_coverage_evaluator_exercises_all_six_normative_states() -> None:
     assert states == set(CoverageState)
 
 
+def test_imported_field_beyond_preview_sample_still_counts_as_compatible() -> None:
+    recipe = recipe_for(LEAD.observable_type)
+    preview = _preview("late-field", PreviewStatus.READY, ("event.action",))
+    evidence = (_record("late-network", "203.0.113.42", "network.destination_ip", "late-field"),)
+    sightings = find_direct_sightings(RUN_ID, LEAD, evidence, recipe)
+
+    coverage = evaluate_coverage(
+        RUN_ID,
+        CASE_ID,
+        recipe,
+        (preview,),
+        evidence,
+        (),
+        sightings,
+    )
+    network = next(cell for cell in coverage if cell.step_id == "network_endpoint")
+
+    assert network.state is CoverageState.MATCH_FOUND
+    assert network.source_preview_ids == (preview.preview_id,)
+
+
 def _record(
     identity: str,
     canonical: str,

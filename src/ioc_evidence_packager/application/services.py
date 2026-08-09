@@ -9,6 +9,7 @@ from ioc_evidence_packager.domain.errors import CaseNotFoundError, ValidationErr
 from ioc_evidence_packager.domain.models import Case, CaseId, CaseStatus, PrivacyMode
 from ioc_evidence_packager.domain.observables import Observable, ObservableId, parse_observable
 from ioc_evidence_packager.domain.sources import PreviewStatus, SourcePreview
+from ioc_evidence_packager.domain.timezones import normalize_display_timezone
 
 MAX_TITLE_LENGTH = 120
 MAX_REFERENCE_LENGTH = 120
@@ -112,10 +113,8 @@ class CaseService:
             MAX_REFERENCE_LENGTH,
         )
         summary = _optional_text(request.summary, "Summary", MAX_SUMMARY_LENGTH)
-        display_timezone = _required_text(
-            request.display_timezone,
-            "Display timezone",
-            MAX_TIMEZONE_LENGTH,
+        display_timezone = normalize_display_timezone(
+            _required_text(request.display_timezone, "Display timezone", MAX_TIMEZONE_LENGTH)
         )
         now = self._clock.now()
         case = Case(
@@ -158,7 +157,9 @@ class CaseService:
         display_timezone: str,
         privacy_mode: PrivacyMode,
     ) -> Case:
-        timezone = _required_text(display_timezone, "Display timezone", MAX_TIMEZONE_LENGTH)
+        timezone = normalize_display_timezone(
+            _required_text(display_timezone, "Display timezone", MAX_TIMEZONE_LENGTH)
+        )
         case = self._repository.update_preferences(
             case_id,
             display_timezone=timezone,

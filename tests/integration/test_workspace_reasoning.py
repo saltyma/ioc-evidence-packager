@@ -67,6 +67,42 @@ def test_relationships_and_recommendation_state_are_evidence_backed(tmp_path: Pa
     context.window.close()
 
 
+def test_coverage_recommendation_state_survives_forced_analysis_rerun(
+    tmp_path: Path,
+) -> None:
+    context, setup = _loaded_context(tmp_path)
+    graph = context.workspace_service.relationships(context.window._records)  # noqa: SLF001
+    before = context.workspace_service.recommendations(
+        setup.case.case_id,
+        context.window._analysis,  # noqa: SLF001
+        graph,
+    )
+    selected = next(item for item in before if item.coverage_cell_ids)
+    context.workspace_service.set_recommendation_state(
+        setup.case.case_id,
+        selected.recommendation_id,
+        RecommendationStatus.ACCEPTED,
+        "Collection owner assigned.",
+    )
+
+    rerun = context.analysis_service.ensure_analysis(
+        setup.case.case_id,
+        setup.lead,
+        setup.source_previews,
+        context.window._records,  # noqa: SLF001
+        context.window._rejections,  # noqa: SLF001
+        force=True,
+    )
+    after = context.workspace_service.recommendations(setup.case.case_id, rerun, graph)
+    persisted = next(item for item in after if item.rule_id == selected.rule_id)
+
+    assert persisted.recommendation_id == selected.recommendation_id
+    assert persisted.status is RecommendationStatus.ACCEPTED
+    assert persisted.analyst_note == "Collection owner assigned."
+    assert persisted.coverage_cell_ids != selected.coverage_cell_ids
+    context.window.close()
+
+
 def test_imported_intelligence_preserves_conflict_and_attribution(tmp_path: Path) -> None:
     context, setup = _loaded_context(tmp_path)
     fixture = (
@@ -78,6 +114,7 @@ def test_imported_intelligence_preserves_conflict_and_attribution(tmp_path: Path
     )
 
     assert context.workspace_service.import_assertions(setup.case.case_id, fixture) == 2
+    assert context.workspace_service.import_assertions(setup.case.case_id, fixture) == 0
     assertions = context.workspace_service.assertions(setup.case.case_id)
     assert {item.claim for item in assertions} == {
         IntelligenceClaim.MALICIOUS,
@@ -85,6 +122,52 @@ def test_imported_intelligence_preserves_conflict_and_attribution(tmp_path: Path
     }
     assert len(intelligence_conflicts(assertions)) == 2
     assert all(item.provider.startswith("Synthetic TI") for item in assertions)
+    second_case = context.case_service.create_case(NewCaseRequest(title="Second intelligence case"))
+    assert context.workspace_service.import_assertions(second_case.case_id, fixture) == 2
+    assert len(context.workspace_service.assertions(second_case.case_id)) == 2
+    context.window._reload_intelligence()  # noqa: SLF001
+    context.window.intelligence_view._open_detail(0, 0)  # noqa: SLF001
+    assert context.window.intelligence_view._archive.isEnabled()  # noqa: SLF001
+    context.window._reload_intelligence()  # noqa: SLF001
+    assert not context.window.intelligence_view._archive.isEnabled()  # noqa: SLF001
+    assert not context.window.intelligence_view._open_reference.isEnabled()  # noqa: SLF001
+    context.window.close()
+
+
+def test_invalid_intelligence_file_is_rejected_atomically(tmp_path: Path) -> None:
+    context, setup = _loaded_context(tmp_path)
+    fixture = tmp_path / "invalid-intelligence.json"
+    fixture.write_text(
+        json.dumps(
+            {
+                "schema": "ioc-intelligence-assertions/1.0.0",
+                "assertions": [
+                    {
+                        "provider": "Valid first item",
+                        "observable_type": "domain",
+                        "observable_value": "Example.TEST.",
+                        "claim": "Suspicious",
+                        "confidence_label": "analyst supplied",
+                        "summary": "This must not be committed if a later item is invalid.",
+                    },
+                    {
+                        "provider": "Invalid second item",
+                        "observable_type": "domain",
+                        "observable_value": "203.0.113.42",
+                        "claim": "Malicious",
+                        "confidence_label": "bad type declaration",
+                        "summary": "The declared type and value do not match.",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(Exception, match="does not match"):
+        context.workspace_service.import_assertions(setup.case.case_id, fixture)
+
+    assert context.workspace_service.assertions(setup.case.case_id) == ()
     context.window.close()
 
 
@@ -147,6 +230,7 @@ def test_virustotal_lookup_is_policy_gated_cached_and_does_not_store_key(
     assert calls == [1]
     assert first.claim is IntelligenceClaim.MALICIOUS
     assert first.raw_response_sha256 is not None
+    assert first.source_reference == ("https://www.virustotal.com/gui/ip-address/203.0.113.42")
     assert secret.encode() not in (tmp_path / "workspace.sqlite3").read_bytes()
     context.window.close()
 
@@ -209,4 +293,11 @@ def test_redacted_graph_remaps_sensitive_values_and_entity_ids(tmp_path: Path) -
     serialized = json.dumps(exported)
     assert "FIN-WS-014" not in serialized
     assert "analyst-demo" not in serialized
+    all_exported_text = "\n".join(
+        path.read_text(encoding="utf-8", errors="replace")
+        for path in result.destination.iterdir()
+        if path.is_file()
+    )
+    assert setup.case.title not in all_exported_text
+    assert str(setup.case.case_id) not in all_exported_text
     context.window.close()

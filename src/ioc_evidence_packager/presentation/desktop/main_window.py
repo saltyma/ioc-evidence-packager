@@ -117,7 +117,9 @@ class MainWindow(QMainWindow):
         self._import_worker: EvidenceImportWorker | None = None
         self._import_case_id: CaseId | None = None
         self._export_worker: CapsuleExportWorker | None = None
+        self._export_case_id: CaseId | None = None
         self._intelligence_worker: IntelligenceLookupWorker | None = None
+        self._intelligence_case_id: CaseId | None = None
         self._records: tuple[EvidenceRecord, ...] = ()
         self._rejections: tuple[ImportRejection, ...] = ()
         self._analysis: AnalysisSnapshot | None = None
@@ -317,6 +319,14 @@ class MainWindow(QMainWindow):
         self.home_view.set_cases(self._case_service.list_recent_cases())
 
     def open_case_by_id(self, case_id: str) -> None:
+        if self._background_job_count() and (
+            self._current_case is None or str(self._current_case.case_id) != case_id
+        ):
+            self._show_error(
+                "Work in progress",
+                "Wait for the active import, lookup, or export before switching cases.",
+            )
+            return
         try:
             setup = self._case_service.open_investigation(CaseId(case_id))
         except IOCEvidencePackagerError as error:
@@ -328,6 +338,14 @@ class MainWindow(QMainWindow):
         self.open_investigation(InvestigationSetup(case=case, lead=None, source_previews=()))
 
     def open_investigation(self, setup: InvestigationSetup) -> None:
+        if self._background_job_count() and (
+            self._current_case is None or self._current_case.case_id != setup.case.case_id
+        ):
+            self._show_error(
+                "Work in progress",
+                "Wait for the active import, lookup, or export before switching cases.",
+            )
+            return
         case = setup.case
         self._current_case = case
         self._current_setup = setup
@@ -345,6 +363,12 @@ class MainWindow(QMainWindow):
         self.show_page("Dashboard")
 
     def _create_case(self) -> None:
+        if self._background_job_count():
+            self._show_error(
+                "Work in progress",
+                "Wait for the active import, lookup, or export before creating another case.",
+            )
+            return
         dialog = NewCaseDialog(self._source_inspection_service, self)
         if dialog.exec() != NewCaseDialog.DialogCode.Accepted:
             return
@@ -386,9 +410,10 @@ class MainWindow(QMainWindow):
         self.evidence_view.set_investigation(active, list(records), list(rejections))
         self.evidence_view.set_analysis(analysis)
         self.coverage_view.set_analysis(analysis)
-        self.timeline_view.set_records(records, analysis)
+        self.timeline_view.set_records(records, analysis, active.case.display_timezone)
         self.sources_view.set_investigation(active, records, rejections)
         self.relationships_view.set_relationships(self._relationships)
+        self.recommendations_view.set_display_timezone(active.case.display_timezone)
         self.recommendations_view.set_recommendations(
             self._workspace_service.recommendations(
                 active.case.case_id, analysis, self._relationships
@@ -403,13 +428,18 @@ class MainWindow(QMainWindow):
         self._export_button.setEnabled(analysis is not None)
 
     def _start_import(self, case_value: object, previews_value: object) -> None:
-        if self._import_worker is not None or not isinstance(case_value, str):
+        if self._background_job_count() or not isinstance(case_value, str):
             return
         if not isinstance(previews_value, tuple) or not all(
             isinstance(preview, SourcePreview) for preview in previews_value
         ):
             return
         case_id = CaseId(case_value)
+        if self._current_case is None or self._current_case.case_id != case_id:
+            self._show_error(
+                "Could not import evidence", "The import request belongs to another case."
+            )
+            return
         worker = EvidenceImportWorker(self._evidence_service, case_id, previews_value)
         worker.signals.progress.connect(self._import_progress)
         worker.signals.completed.connect(self._import_completed)
@@ -417,8 +447,7 @@ class MainWindow(QMainWindow):
         self._import_worker = worker
         self._import_case_id = case_id
         self.evidence_view.set_import_running()
-        self._jobs_button.setText("Jobs  1")
-        self._jobs_button.setEnabled(True)
+        self._sync_jobs()
         self._status_text.setText("Import running · Source integrity verification active")
         self._thread_pool.start(worker)
 
@@ -428,7 +457,11 @@ class MainWindow(QMainWindow):
             self._status_text.setText("Cancelling import after the current safe boundary…")
 
     def _import_progress(self, value: object) -> None:
-        if isinstance(value, ImportProgress):
+        if (
+            isinstance(value, ImportProgress)
+            and self._current_case is not None
+            and self._current_case.case_id == self._import_case_id
+        ):
             self.evidence_view.set_import_progress(value)
 
     def _import_completed(self, value: object) -> None:
@@ -438,14 +471,13 @@ class MainWindow(QMainWindow):
         imported_case = self._import_case_id
         self._import_worker = None
         self._import_case_id = None
-        self._jobs_button.setText("Jobs  0")
-        self._jobs_button.setEnabled(False)
-        self.evidence_view.set_import_finished(value)
+        self._sync_jobs()
         if (
             imported_case is not None
             and self._current_setup is not None
             and imported_case == self._current_setup.case.case_id
         ):
+            self.evidence_view.set_import_finished(value)
             self._reload_evidence()
             self.show_page("Evidence")
         self._status_text.setText(
@@ -453,15 +485,21 @@ class MainWindow(QMainWindow):
         )
 
     def _import_failed(self, message: str) -> None:
+        imported_case = self._import_case_id
         self._import_worker = None
         self._import_case_id = None
-        self._jobs_button.setText("Jobs  0")
-        self._jobs_button.setEnabled(False)
-        self.evidence_view.set_import_finished()
+        self._sync_jobs()
+        if self._current_case is not None and self._current_case.case_id == imported_case:
+            self.evidence_view.set_import_finished()
         self._status_text.setText("Import failed · Review diagnostics and retry")
         self._show_error("Evidence import failed", message)
 
     def _rerun_analysis(self) -> None:
+        if self._background_job_count():
+            self._status_text.setText(
+                "Analysis not started · wait for the active background job to finish"
+            )
+            return
         setup = self._current_setup
         if setup is None or setup.lead is None or not (self._records or self._rejections):
             return
@@ -479,7 +517,7 @@ class MainWindow(QMainWindow):
             return
         self.evidence_view.set_analysis(self._analysis)
         self.coverage_view.set_analysis(self._analysis)
-        self.timeline_view.set_records(self._records, self._analysis)
+        self.timeline_view.set_records(self._records, self._analysis, setup.case.display_timezone)
         self.dashboard_view.set_analysis(self._analysis, self._records, self._rejections)
         self.exports_view.set_investigation(
             setup,
@@ -497,6 +535,7 @@ class MainWindow(QMainWindow):
             return
         self._relationships = self._workspace_service.relationships(self._records)
         self.relationships_view.set_relationships(self._relationships)
+        self.recommendations_view.set_display_timezone(self._current_setup.case.display_timezone)
         self.recommendations_view.set_recommendations(
             self._workspace_service.recommendations(
                 self._current_setup.case.case_id, self._analysis, self._relationships
@@ -586,14 +625,18 @@ class MainWindow(QMainWindow):
     def _archive_intelligence(self, assertion_id: str) -> None:
         if self._current_case is None:
             return
-        self._workspace_service.archive_assertion(
-            self._current_case.case_id, AssertionId(assertion_id)
-        )
+        try:
+            self._workspace_service.archive_assertion(
+                self._current_case.case_id, AssertionId(assertion_id)
+            )
+        except IOCEvidencePackagerError as error:
+            self._show_error("Could not archive assertion", str(error))
+            return
         self._reload_intelligence()
         self._status_text.setText("Assertion archived · audit row retained in SQLite")
 
     def _query_intelligence(self, observable_type: str, value: str) -> None:
-        if self._current_case is None or self._intelligence_worker is not None:
+        if self._current_case is None or self._background_job_count():
             return
         worker = IntelligenceLookupWorker(
             self._workspace_service,
@@ -605,24 +648,26 @@ class MainWindow(QMainWindow):
         worker.signals.completed.connect(self._intelligence_completed)
         worker.signals.failed.connect(self._intelligence_failed)
         self._intelligence_worker = worker
-        self._jobs_button.setText("Jobs  1")
-        self._jobs_button.setEnabled(True)
+        self._intelligence_case_id = self._current_case.case_id
+        self._sync_jobs()
         self._status_text.setText("VirusTotal object lookup running · selected IOC disclosed")
         self._thread_pool.start(worker)
 
     def _intelligence_completed(self, _value: object) -> None:
+        queried_case = self._intelligence_case_id
         self._intelligence_worker = None
-        self._jobs_button.setText("Jobs  0")
-        self._jobs_button.setEnabled(False)
-        self._reload_intelligence()
+        self._intelligence_case_id = None
+        self._sync_jobs()
+        if self._current_case is not None and self._current_case.case_id == queried_case:
+            self._reload_intelligence()
         self._status_text.setText(
             "Provider assertion saved · attribution and response digest retained"
         )
 
     def _intelligence_failed(self, message: str) -> None:
         self._intelligence_worker = None
-        self._jobs_button.setText("Jobs  0")
-        self._jobs_button.setEnabled(False)
+        self._intelligence_case_id = None
+        self._sync_jobs()
         self._status_text.setText("Provider lookup failed safely · no evidence changed")
         self._show_error("Intelligence lookup failed", message)
 
@@ -650,8 +695,12 @@ class MainWindow(QMainWindow):
                 source_previews=self._current_setup.source_previews,
             )
         self._update_privacy_badge(updated)
-        self._reload_intelligence(updated)
-        self.settings_view.set_settings(updated, preferences)
+        if self._current_setup is not None:
+            self.dashboard_view.set_investigation(self._current_setup)
+            self._reload_evidence(self._current_setup)
+        else:
+            self._reload_intelligence(updated)
+            self.settings_view.set_settings(updated, preferences)
         self.settings_view.mark_saved()
         self._status_text.setText("Settings saved · case policy and device preferences applied")
 
@@ -679,10 +728,13 @@ class MainWindow(QMainWindow):
             )
 
     def _start_export(self, profile_value: str, destination_value: str) -> None:
-        if self._export_worker is not None or self._import_worker is not None:
+        if self._background_job_count():
             return
         setup = self._current_setup
-        if setup is None:
+        if setup is None or self._analysis is None:
+            self._show_error(
+                "Could not export capsule", "Import and analyze evidence before exporting."
+            )
             return
         try:
             profile = ExportProfile(profile_value)
@@ -706,21 +758,31 @@ class MainWindow(QMainWindow):
         worker.signals.completed.connect(self._export_completed)
         worker.signals.failed.connect(self._export_failed)
         self._export_worker = worker
+        self._export_case_id = setup.case.case_id
         self.exports_view.set_export_running()
-        self._jobs_button.setText("Jobs  1")
-        self._jobs_button.setEnabled(True)
+        self._sync_jobs()
         self._status_text.setText("Building Case Capsule · Offline verification active")
         self._thread_pool.start(worker)
 
     def _export_completed(self, value: object) -> None:
+        exported_case = self._export_case_id
         self._export_worker = None
-        self._jobs_button.setText("Jobs  0")
-        self._jobs_button.setEnabled(False)
+        self._export_case_id = None
+        self._sync_jobs()
         if not isinstance(value, CapsuleResult):
-            self._export_failed("Export worker returned an invalid result.")
+            self.exports_view.set_export_failed("Export worker returned an invalid result.")
+            self._status_text.setText(
+                "Capsule export failed safely · No completed handoff published"
+            )
+            self._show_error(
+                "Case Capsule export failed", "Export worker returned an invalid result."
+            )
             return
-        self.exports_view.set_export_result(value)
-        if self._current_setup is not None:
+        if (
+            self._current_setup is not None
+            and exported_case == value.case_id == self._current_setup.case.case_id
+        ):
+            self.exports_view.set_export_result(value)
             self.exports_view.set_history(
                 self._report_service.list_exports(self._current_setup.case.case_id)
             )
@@ -729,20 +791,41 @@ class MainWindow(QMainWindow):
         )
 
     def _export_failed(self, message: str) -> None:
+        exported_case = self._export_case_id
         self._export_worker = None
-        self._jobs_button.setText("Jobs  0")
-        self._jobs_button.setEnabled(False)
-        self.exports_view.set_export_failed(message)
+        self._export_case_id = None
+        self._sync_jobs()
+        if self._current_case is not None and self._current_case.case_id == exported_case:
+            self.exports_view.set_export_failed(message)
         self._status_text.setText("Capsule export failed safely · No completed handoff published")
         self._show_error("Case Capsule export failed", message)
 
     def _verify_capsule(self, path_value: str) -> None:
-        result = self._report_service.verify(Path(path_value))
+        try:
+            result = self._report_service.verify(Path(path_value))
+        except Exception as error:  # noqa: BLE001 - filesystem failures stay inside the GUI
+            self._show_error("Could not verify capsule", str(error))
+            return
         self.exports_view.set_verification(result)
         self._status_text.setText(
             f"Capsule {'verified' if result.valid else 'failed verification'} · "
             f"{result.checked_artifacts} artifact(s) checked"
         )
+
+    def _background_job_count(self) -> int:
+        return sum(
+            worker is not None
+            for worker in (
+                self._import_worker,
+                self._export_worker,
+                self._intelligence_worker,
+            )
+        )
+
+    def _sync_jobs(self) -> None:
+        count = self._background_job_count()
+        self._jobs_button.setText(f"Jobs  {count}")
+        self._jobs_button.setEnabled(count > 0)
 
     def _show_error(self, title: str, message: str) -> None:
         box = QMessageBox(self)
