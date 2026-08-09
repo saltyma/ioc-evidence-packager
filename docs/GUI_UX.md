@@ -176,7 +176,16 @@ Required interaction:
 - right-click or action menu to pivot an observable, copy a safe value, or open provenance;
 - no direct editing of normalized fact cells.
 
-### Evidence detail drawer
+### Table detail windows
+
+Single-clicking a detail-bearing row opens a reusable non-modal window instead of inserting a
+drawer beneath the table. This rule applies to Evidence, Rejections, Timeline, Coverage,
+source previews, and export history. The main table therefore keeps the full workspace height,
+while analysts can leave a detail window open, move it to another monitor, copy its contents,
+or click another row to reuse it. Navigation tables such as Recent cases retain their native
+open/select behavior.
+
+Evidence detail tabs planned for later iterations:
 
 Tabs:
 
@@ -318,7 +327,7 @@ Prefer:
 1. Application shell and recent-cases Home.
 2. New Investigation wizard with offline policy.
 3. Background canonical JSONL import with progress/cancel.
-4. Evidence table and provenance/raw drawer.
+4. Evidence table and non-modal provenance/raw detail window.
 5. Coverage matrix with all six states.
 6. Dashboard and basic timeline.
 7. Export review and deterministic HTML/JSONL output.

@@ -7,6 +7,10 @@ QWidget {
     font-size: 13px;
 }
 
+QDialog#DetailDialog {
+    background: #13101B;
+}
+
 QLabel {
     background: transparent;
 }
@@ -72,6 +76,12 @@ QLabel#PageTitle {
     color: #F7F3FC;
     font-size: 27px;
     font-weight: 750;
+}
+
+QLabel#DetailTitle {
+    color: #F7F3FC;
+    font-size: 20px;
+    font-weight: 700;
 }
 
 QLabel#PageSubtitle {
@@ -189,6 +199,13 @@ QLineEdit, QTextEdit, QPlainTextEdit, QComboBox {
 
 QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, QComboBox:focus {
     border-color: #A78BFA;
+}
+
+QPlainTextEdit#DetailContent {
+    background: #0E0B14;
+    border-color: #4B3F60;
+    padding: 12px;
+    font-family: "Cascadia Mono", "Consolas", monospace;
 }
 
 QTableWidget {

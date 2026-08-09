@@ -7,7 +7,6 @@ from PySide6.QtWidgets import (
     QHeaderView,
     QLabel,
     QLineEdit,
-    QPlainTextEdit,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -16,6 +15,7 @@ from PySide6.QtWidgets import (
 
 from ioc_evidence_packager.domain.analysis import AnalysisSnapshot
 from ioc_evidence_packager.domain.evidence import EvidenceRecord
+from ioc_evidence_packager.presentation.desktop.views.detail_dialog import DetailDialog
 
 
 class TimelineView(QWidget):
@@ -26,6 +26,7 @@ class TimelineView(QWidget):
         self._records: tuple[EvidenceRecord, ...] = ()
         self._visible: list[EvidenceRecord] = []
         self._analysis: AnalysisSnapshot | None = None
+        self._detail_dialog: DetailDialog | None = None
         self._build_ui()
 
     @property
@@ -78,22 +79,16 @@ class TimelineView(QWidget):
                 column, QHeaderView.ResizeMode.ResizeToContents
             )
         self._table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
-        self._table.itemSelectionChanged.connect(self._selection_changed)
+        self._table.cellClicked.connect(self._open_detail)
         root.addWidget(self._table, 1)
-
-        detail_label = QLabel("SELECTED EVENT · SOURCE-LINKED DETAIL")
-        detail_label.setObjectName("SectionEyebrow")
-        root.addWidget(detail_label)
-        self._detail = QPlainTextEdit()
-        self._detail.setReadOnly(True)
-        self._detail.setMaximumHeight(150)
-        root.addWidget(self._detail)
 
     def set_records(
         self,
         records: tuple[EvidenceRecord, ...],
         analysis: AnalysisSnapshot | None,
     ) -> None:
+        if self._detail_dialog is not None:
+            self._detail_dialog.close()
         self._records = records
         self._analysis = analysis
         self._apply_filters()
@@ -148,17 +143,22 @@ class TimelineView(QWidget):
         undated = sum(record.occurred_at is None for record in self._records)
         self._summary.setText(f"{len(self._visible)} shown · {undated} undated")
 
-    def _selection_changed(self) -> None:
-        selected = self._table.selectionModel().selectedRows()
-        if not selected:
-            self._detail.clear()
+    def _open_detail(self, row: int, _column: int) -> None:
+        if not 0 <= row < len(self._visible):
             return
-        record = self._visible[selected[0].row()]
-        self._detail.setPlainText(
-            f"Evidence ID: {record.evidence_id}\n"
-            f"Event ID: {record.event_id}\n"
-            f"Source: {record.source_path}\n"
-            f"SHA-256: {record.source_sha256 or 'Unavailable'}\n"
-            f"Position: line {record.line_number}\n\n"
-            f"Raw canonical JSON:\n{record.raw_json}"
+        record = self._visible[row]
+        if self._detail_dialog is None:
+            self._detail_dialog = DetailDialog(self)
+        self._detail_dialog.present(
+            window_title="Timeline event details",
+            eyebrow="SOURCE-LINKED TIMELINE EVENT",
+            title=f"{record.event_id} · {record.category}/{record.action}",
+            text=(
+                f"Evidence ID: {record.evidence_id}\n"
+                f"Event ID: {record.event_id}\n"
+                f"Source: {record.source_path}\n"
+                f"SHA-256: {record.source_sha256 or 'Unavailable'}\n"
+                f"Position: line {record.line_number}\n\n"
+                f"Raw canonical JSON:\n{record.raw_json}"
+            ),
         )

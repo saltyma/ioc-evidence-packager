@@ -32,6 +32,7 @@ from ioc_evidence_packager.domain.observables import ParsedObservable, parse_obs
 from ioc_evidence_packager.domain.sources import PreviewStatus, SourcePreview
 from ioc_evidence_packager.ingestion import SourceInspectionService
 from ioc_evidence_packager.presentation.desktop.jobs import SourcePreviewWorker
+from ioc_evidence_packager.presentation.desktop.views.detail_dialog import DetailDialog
 
 
 class NewCaseDialog(QDialog):
@@ -47,8 +48,10 @@ class NewCaseDialog(QDialog):
         self._thread_pool = QThreadPool.globalInstance()
         self._parsed_observable: ParsedObservable | None = None
         self._previews: dict[str, SourcePreview] = {}
+        self._preview_failures: dict[str, str] = {}
         self._pending_paths: set[str] = set()
         self._workers: dict[str, SourcePreviewWorker] = {}
+        self._detail_dialog: DetailDialog | None = None
         self.setWindowTitle("New investigation")
         self.setModal(True)
         self.resize(820, 640)
@@ -206,14 +209,8 @@ class NewCaseDialog(QDialog):
                 column, QHeaderView.ResizeMode.ResizeToContents
             )
         self._source_table.itemSelectionChanged.connect(self._source_selection_changed)
+        self._source_table.cellClicked.connect(self._open_source_detail)
         layout.addWidget(self._source_table, 1)
-
-        self._preview_detail = QLabel(
-            "Select a completed source to see its adapter and preview limitations."
-        )
-        self._preview_detail.setObjectName("Muted")
-        self._preview_detail.setWordWrap(True)
-        layout.addWidget(self._preview_detail)
         return page
 
     def _build_review_page(self) -> QWidget:
@@ -339,6 +336,7 @@ class NewCaseDialog(QDialog):
         if not isinstance(value, SourcePreview) or self._row_for_path(path_key) is None:
             self._update_controls()
             return
+        self._preview_failures.pop(path_key, None)
         self._previews[path_key] = value
         self._update_source_row(path_key, value)
         self._update_controls()
@@ -346,6 +344,7 @@ class NewCaseDialog(QDialog):
     def _preview_failed(self, path_key: str, message: str) -> None:
         self._pending_paths.discard(path_key)
         self._workers.pop(path_key, None)
+        self._preview_failures[path_key] = message
         row = self._row_for_path(path_key)
         if row is not None:
             self._source_table.setItem(row, 4, QTableWidgetItem("Failed"))
@@ -375,20 +374,52 @@ class NewCaseDialog(QDialog):
     def _source_selection_changed(self) -> None:
         selected = self._source_table.selectionModel().selectedRows()
         self._remove_button.setEnabled(bool(selected))
-        if not selected:
-            return
-        source_item = self._source_table.item(selected[0].row(), 0)
+
+    def _open_source_detail(self, row: int, _column: int) -> None:
+        source_item = self._source_table.item(row, 0)
         if source_item is None:
             return
         path_key = str(source_item.data(Qt.ItemDataRole.UserRole))
         preview = self._previews.get(path_key)
+        if self._detail_dialog is None:
+            self._detail_dialog = DetailDialog(self)
         if preview is None:
-            self._preview_detail.setText("Hashing and adapter detection are still running.")
+            failure = self._preview_failures.get(path_key)
+            state = "Failed" if failure else "Inspection in progress"
+            message = failure or "Hashing and adapter detection are still running."
+            self._detail_dialog.present(
+                window_title="Source preview details",
+                eyebrow="PRE-INGESTION SOURCE PREVIEW",
+                title=f"{Path(path_key).name} · {state}",
+                text=f"Selected path: {path_key}\nStatus: {state}\n\n{message}",
+            )
             return
         time_range = _preview_time_range(preview)
-        warning = " ".join(preview.warnings) if preview.warnings else "No preview warnings."
-        fields = f"{len(preview.fields)} distinct sampled field paths"
-        self._preview_detail.setText(f"{time_range} · {fields} · {warning}")
+        warning_lines = (
+            "\n".join(f"  - {warning}" for warning in preview.warnings)
+            or "  - No preview warnings."
+        )
+        field_lines = "\n".join(f"  - {field}" for field in preview.fields) or "  - None detected"
+        self._detail_dialog.present(
+            window_title="Source preview details",
+            eyebrow="PRE-INGESTION SOURCE PREVIEW",
+            title=f"{preview.display_name} · {preview.status.value.title()}",
+            text=(
+                f"Selected path: {preview.path}\n"
+                f"Preview ID: {preview.preview_id}\n"
+                f"Status: {preview.status.value}\n"
+                f"Format: {preview.format_name or 'Unsupported'}\n"
+                f"Adapter: {preview.adapter_id or 'None'}"
+                f"/{preview.adapter_version or 'Unavailable'}\n"
+                f"Size: {_format_size(preview.byte_size)} ({preview.byte_size} bytes)\n"
+                f"SHA-256: {preview.sha256 or 'Unavailable'}\n"
+                f"Sampled records: {preview.sample_records}\n"
+                f"Capabilities: {', '.join(preview.capabilities) or 'None'}\n"
+                f"Time range: {time_range}\n"
+                f"Sampled field paths ({len(preview.fields)}):\n{field_lines}\n"
+                f"Warnings:\n{warning_lines}"
+            ),
+        )
 
     def _remove_selected_source(self) -> None:
         selected = self._source_table.selectionModel().selectedRows()
@@ -400,11 +431,11 @@ class NewCaseDialog(QDialog):
             return
         path_key = str(item.data(Qt.ItemDataRole.UserRole))
         self._previews.pop(path_key, None)
+        self._preview_failures.pop(path_key, None)
         self._pending_paths.discard(path_key)
         self._source_table.removeRow(row)
-        self._preview_detail.setText(
-            "Select a completed source to see its adapter and preview limitations."
-        )
+        if self._detail_dialog is not None:
+            self._detail_dialog.close()
         self._update_controls()
 
     def _row_for_path(self, path_key: str) -> int | None:

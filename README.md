@@ -141,7 +141,7 @@ The current application guides an analyst from case setup through durable eviden
 - streams canonical JSONL in bounded background batches without freezing the desktop;
 - exposes monotonic progress, cooperative cancellation, safe retry, and structured per-line rejections;
 - keeps accepted evidence separate from rejected input and prevents duplicate durable records on retry;
-- shows source path, digest, physical line, declared provenance, observables, warnings, and preserved raw JSON in the Evidence ledger;
+- opens source path, digest, physical line, declared provenance, observables, warnings, and preserved raw JSON in a non-modal Evidence detail window without shrinking the ledger;
 - runs the matching recipe automatically, records structured explanations, and labels non-matches as context;
 - evaluates all six coverage states from capabilities, results, warnings, rejections, and source diagnostics;
 - presents deterministic UTC ordering in Timeline and case-level findings/limitations on Dashboard;

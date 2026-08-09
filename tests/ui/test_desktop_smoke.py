@@ -7,7 +7,7 @@ from pathlib import Path
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtGui import QImage  # noqa: E402
-from PySide6.QtWidgets import QApplication  # noqa: E402
+from PySide6.QtWidgets import QApplication, QPlainTextEdit  # noqa: E402
 
 from ioc_evidence_packager.application.services import (  # noqa: E402
     NewCaseRequest,
@@ -73,6 +73,12 @@ def test_new_investigation_dialog_builds_previewed_request(tmp_path: Path) -> No
     assert len(request.source_previews) == 1
     assert request.source_previews[0].adapter_id == "canonical-jsonl"
 
+    dialog._open_source_detail(0, 0)  # noqa: SLF001
+    app.processEvents()
+    assert dialog._detail_dialog is not None  # noqa: SLF001
+    assert dialog._detail_dialog.isVisible()  # noqa: SLF001
+    assert "SHA-256:" in dialog._detail_dialog.detail_text  # noqa: SLF001
+
     dialog.close()
     context.window.close()
     app.processEvents()
@@ -107,6 +113,7 @@ def test_background_import_populates_evidence_and_rejections(tmp_path: Path) -> 
         )
     )
     context.window.open_investigation(setup)
+    context.window.show()
 
     context.window._start_import(setup.case.case_id, setup.source_previews)  # noqa: SLF001
     deadline = time.monotonic() + 5
@@ -118,6 +125,27 @@ def test_background_import_populates_evidence_and_rejections(tmp_path: Path) -> 
     assert context.window.evidence_view.rejection_row_count == 1
     assert context.window.timeline_view.row_count == 1
     assert context.window.coverage_view.row_count >= 3
+    assert not context.window.evidence_view.findChildren(QPlainTextEdit)
+    assert not context.window.timeline_view.findChildren(QPlainTextEdit)
+    assert not context.window.coverage_view.findChildren(QPlainTextEdit)
+
+    context.window.evidence_view._open_evidence_detail(0, 0)  # noqa: SLF001
+    app.processEvents()
+    evidence_dialog = context.window.evidence_view._detail_dialog  # noqa: SLF001
+    assert evidence_dialog is not None and evidence_dialog.isVisible()
+    assert "Evidence ID:" in evidence_dialog.detail_text
+
+    context.window.evidence_view._open_rejection_detail(0, 0)  # noqa: SLF001
+    context.window.timeline_view._open_detail(0, 0)  # noqa: SLF001
+    context.window.coverage_view._open_detail(0, 0)  # noqa: SLF001
+    app.processEvents()
+    timeline_dialog = context.window.timeline_view._detail_dialog  # noqa: SLF001
+    coverage_dialog = context.window.coverage_view._detail_dialog  # noqa: SLF001
+    assert "Bounded source excerpt:" in evidence_dialog.detail_text
+    assert timeline_dialog is not None and timeline_dialog.isVisible()
+    assert "Raw canonical JSON:" in timeline_dialog.detail_text
+    assert coverage_dialog is not None and coverage_dialog.isVisible()
+    assert "Reason code:" in coverage_dialog.detail_text
 
     context.window.close()
     app.processEvents()
@@ -148,6 +176,13 @@ def test_background_capsule_export_updates_verified_history(tmp_path: Path) -> N
     assert (destination / "manifest.json").is_file()
     assert context.report_service.verify(destination).valid
     assert context.window.exports_view.history_row_count == 1
+
+    context.window.show()
+    context.window.exports_view._open_history_detail(0, 0)  # noqa: SLF001
+    app.processEvents()
+    export_dialog = context.window.exports_view._detail_dialog  # noqa: SLF001
+    assert export_dialog is not None and export_dialog.isVisible()
+    assert "Manifest SHA-256:" in export_dialog.detail_text
 
     context.window.close()
     app.processEvents()

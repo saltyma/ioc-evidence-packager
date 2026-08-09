@@ -10,7 +10,6 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
-    QPlainTextEdit,
     QPushButton,
     QTableWidget,
     QTableWidgetItem,
@@ -19,6 +18,7 @@ from PySide6.QtWidgets import (
 )
 
 from ioc_evidence_packager.domain.analysis import AnalysisSnapshot, CoverageState
+from ioc_evidence_packager.presentation.desktop.views.detail_dialog import DetailDialog
 
 STATE_COLORS = {
     CoverageState.MATCH_FOUND: "#67D7A4",
@@ -38,6 +38,7 @@ class CoverageView(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._analysis: AnalysisSnapshot | None = None
+        self._detail_dialog: DetailDialog | None = None
         self._build_ui()
 
     @property
@@ -96,22 +97,14 @@ class CoverageView(QWidget):
                 column, QHeaderView.ResizeMode.ResizeToContents
             )
         self._table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
-        self._table.itemSelectionChanged.connect(self._selection_changed)
+        self._table.cellClicked.connect(self._open_detail)
         root.addWidget(self._table, 1)
-
-        detail_label = QLabel("SELECTED COVERAGE CELL · CALCULATION")
-        detail_label.setObjectName("SectionEyebrow")
-        root.addWidget(detail_label)
-        self._detail = QPlainTextEdit()
-        self._detail.setReadOnly(True)
-        self._detail.setMaximumHeight(170)
-        self._detail.setPlaceholderText("Select a row to inspect its reason and recovery action.")
-        root.addWidget(self._detail)
 
     def set_analysis(self, analysis: AnalysisSnapshot | None) -> None:
         self._analysis = analysis
         self._table.setRowCount(0)
-        self._detail.clear()
+        if self._detail_dialog is not None:
+            self._detail_dialog.close()
         self._rerun_button.setEnabled(analysis is not None)
         if analysis is None:
             self._summary.setText("Import evidence to calculate coverage.")
@@ -141,21 +134,28 @@ class CoverageView(QWidget):
                     item.setData(Qt.ItemDataRole.UserRole, cell.state.value)
                 self._table.setItem(row, column, item)
 
-    def _selection_changed(self) -> None:
-        selected = self._table.selectionModel().selectedRows()
-        if not selected or self._analysis is None:
-            self._detail.clear()
+    def _open_detail(self, row: int, _column: int) -> None:
+        if self._analysis is None or not 0 <= row < len(self._analysis.coverage):
             return
-        cell = self._analysis.coverage[selected[0].row()]
+        cell = self._analysis.coverage[row]
         sources = ", ".join(str(value) for value in cell.source_preview_ids) or "None"
         evidence = ", ".join(str(value) for value in cell.evidence_ids) or "None"
-        self._detail.setPlainText(
-            f"Coverage cell: {cell.cell_id}\n"
-            f"Recipe step: {cell.step_label} ({cell.step_id})\n"
-            f"State: {cell.state.value}\n"
-            f"Reason code: {cell.reason.code}\n"
-            f"Calculation: {cell.reason.message}\n"
-            f"Recovery: {cell.reason.recovery or 'No recovery action required.'}\n"
-            f"Supporting sources: {sources}\n"
-            f"Supporting evidence: {evidence}"
+        if self._detail_dialog is None:
+            self._detail_dialog = DetailDialog(self)
+        self._detail_dialog.present(
+            window_title="Coverage calculation details",
+            eyebrow="INSPECTABLE COVERAGE CALCULATION",
+            title=f"{cell.step_label} · {cell.state.value.replace('_', ' ')}",
+            text=(
+                f"Coverage cell: {cell.cell_id}\n"
+                f"Recipe step: {cell.step_label} ({cell.step_id})\n"
+                f"Telemetry: {cell.telemetry}\n"
+                f"State: {cell.state.value}\n"
+                f"Matches: {cell.match_count}\n"
+                f"Reason code: {cell.reason.code}\n"
+                f"Calculation: {cell.reason.message}\n"
+                f"Recovery: {cell.reason.recovery or 'No recovery action required.'}\n"
+                f"Supporting sources: {sources}\n"
+                f"Supporting evidence: {evidence}"
+            ),
         )

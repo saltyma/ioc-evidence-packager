@@ -11,7 +11,6 @@ from PySide6.QtWidgets import (
     QHeaderView,
     QLabel,
     QLineEdit,
-    QPlainTextEdit,
     QProgressBar,
     QPushButton,
     QTableWidget,
@@ -31,6 +30,7 @@ from ioc_evidence_packager.domain.evidence import (
 )
 from ioc_evidence_packager.domain.models import CaseId
 from ioc_evidence_packager.domain.sources import PreviewStatus, SourcePreview
+from ioc_evidence_packager.presentation.desktop.views.detail_dialog import DetailDialog
 
 
 class EvidenceView(QWidget):
@@ -47,6 +47,7 @@ class EvidenceView(QWidget):
         self._visible_records: list[EvidenceRecord] = []
         self._rejections: list[ImportRejection] = []
         self._analysis: AnalysisSnapshot | None = None
+        self._detail_dialog: DetailDialog | None = None
         self._build_ui()
 
     @property
@@ -124,14 +125,6 @@ class EvidenceView(QWidget):
         evidence_layout = QVBoxLayout(evidence_page)
         evidence_layout.setContentsMargins(0, 10, 0, 0)
         evidence_layout.addWidget(self._evidence_table, 1)
-        detail_label = QLabel("SELECTED RECORD · PROVENANCE AND RAW CANONICAL JSON")
-        detail_label.setObjectName("SectionEyebrow")
-        evidence_layout.addWidget(detail_label)
-        self._detail = QPlainTextEdit()
-        self._detail.setReadOnly(True)
-        self._detail.setMaximumHeight(190)
-        self._detail.setPlaceholderText("Select an evidence row to inspect its provenance.")
-        evidence_layout.addWidget(self._detail)
         self._tabs.addTab(evidence_page, "Evidence · 0")
 
         self._rejection_table = self._build_rejection_table()
@@ -167,7 +160,7 @@ class EvidenceView(QWidget):
         )
         _configure_table(table)
         table.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeMode.Stretch)
-        table.itemSelectionChanged.connect(self._evidence_selection_changed)
+        table.cellClicked.connect(self._open_evidence_detail)
         return table
 
     def _build_rejection_table(self) -> QTableWidget:
@@ -176,6 +169,7 @@ class EvidenceView(QWidget):
         _configure_table(table)
         table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
+        table.cellClicked.connect(self._open_rejection_detail)
         return table
 
     def set_investigation(
@@ -184,6 +178,8 @@ class EvidenceView(QWidget):
         records: list[EvidenceRecord],
         rejections: list[ImportRejection],
     ) -> None:
+        if self._detail_dialog is not None:
+            self._detail_dialog.close()
         self._case_id = setup.case.case_id
         self._previews = setup.source_previews
         self._analysis = None
@@ -327,12 +323,10 @@ class EvidenceView(QWidget):
                 item.setToolTip(value)
                 self._rejection_table.setItem(row, column, item)
 
-    def _evidence_selection_changed(self) -> None:
-        selected = self._evidence_table.selectionModel().selectedRows()
-        if not selected:
-            self._detail.clear()
+    def _open_evidence_detail(self, row: int, _column: int) -> None:
+        if not 0 <= row < len(self._visible_records):
             return
-        record = self._visible_records[selected[0].row()]
+        record = self._visible_records[row]
         matching = tuple(
             sighting
             for sighting in (self._analysis.sightings if self._analysis else ())
@@ -346,19 +340,59 @@ class EvidenceView(QWidget):
             or "  - None declared"
         )
         match_lines = _match_detail(matching)
-        self._detail.setPlainText(
-            f"Evidence ID: {record.evidence_id}\n"
-            f"Classification: {'DIRECT MATCH' if matching else 'CONTEXT'}\n"
-            f"Event ID: {record.event_id}\n"
-            f"Selected source: {record.source_path}\n"
-            f"Selected source SHA-256: {record.source_sha256 or 'Unavailable'}\n"
-            f"Physical position: line {record.line_number}\n"
-            f"Declared source: {record.declared_source_id}\n"
-            f"Declared position: {record.declared_position_kind} "
-            f"{record.declared_position_value}\n"
-            f"Observables:\n{observable_lines}\n"
-            f"Match explanation:\n{match_lines}\n\n"
-            f"Raw canonical JSON (preserved):\n{record.raw_json}"
+        self._show_detail(
+            window_title="Evidence record details",
+            eyebrow="SOURCE-LINKED EVIDENCE",
+            title=f"{record.event_id} · {record.source_name}:{record.line_number}",
+            text=(
+                f"Evidence ID: {record.evidence_id}\n"
+                f"Classification: {'DIRECT MATCH' if matching else 'CONTEXT'}\n"
+                f"Event ID: {record.event_id}\n"
+                f"Selected source: {record.source_path}\n"
+                f"Selected source SHA-256: {record.source_sha256 or 'Unavailable'}\n"
+                f"Physical position: line {record.line_number}\n"
+                f"Declared source: {record.declared_source_id}\n"
+                f"Declared position: {record.declared_position_kind} "
+                f"{record.declared_position_value}\n"
+                f"Observables:\n{observable_lines}\n"
+                f"Match explanation:\n{match_lines}\n\n"
+                f"Raw canonical JSON (preserved):\n{record.raw_json}"
+            ),
+        )
+
+    def _open_rejection_detail(self, row: int, _column: int) -> None:
+        if not 0 <= row < len(self._rejections):
+            return
+        rejection = self._rejections[row]
+        position = f"line {rejection.line_number}" if rejection.line_number else "source level"
+        self._show_detail(
+            window_title="Rejected source line details",
+            eyebrow="STRUCTURED IMPORT DIAGNOSTIC",
+            title=f"{rejection.code} · {rejection.source_name}",
+            text=(
+                f"Source: {rejection.source_name}\n"
+                f"Position: {position}\n"
+                f"Code: {rejection.code}\n"
+                f"Message: {rejection.message}\n\n"
+                f"Bounded source excerpt:\n{rejection.raw_excerpt or 'Unavailable'}"
+            ),
+        )
+
+    def _show_detail(
+        self,
+        *,
+        window_title: str,
+        eyebrow: str,
+        title: str,
+        text: str,
+    ) -> None:
+        if self._detail_dialog is None:
+            self._detail_dialog = DetailDialog(self)
+        self._detail_dialog.present(
+            window_title=window_title,
+            eyebrow=eyebrow,
+            title=title,
+            text=text,
         )
 
 

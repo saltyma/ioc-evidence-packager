@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
 
 from ioc_evidence_packager.application.services import InvestigationSetup
 from ioc_evidence_packager.domain.analysis import AnalysisSnapshot
+from ioc_evidence_packager.presentation.desktop.views.detail_dialog import DetailDialog
 from ioc_evidence_packager.reporting.models import (
     CapsuleResult,
     ExportProfile,
@@ -40,6 +41,8 @@ class ExportsView(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._setup: InvestigationSetup | None = None
+        self._history_records: list[ExportRecord] = []
+        self._detail_dialog: DetailDialog | None = None
         self._build_ui()
 
     @property
@@ -121,6 +124,7 @@ class ExportsView(QWidget):
         self._history.setAlternatingRowColors(True)
         self._history.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self._history.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self._history.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self._history.verticalHeader().setVisible(False)
         for column in (0, 1, 2):
             self._history.horizontalHeader().setSectionResizeMode(
@@ -130,6 +134,7 @@ class ExportsView(QWidget):
             self._history.horizontalHeader().setSectionResizeMode(
                 column, QHeaderView.ResizeMode.Stretch
             )
+        self._history.cellClicked.connect(self._open_history_detail)
         root.addWidget(self._history, 1)
 
     def set_investigation(
@@ -152,6 +157,9 @@ class ExportsView(QWidget):
         self.set_history(history)
 
     def set_history(self, history: list[ExportRecord]) -> None:
+        if self._detail_dialog is not None:
+            self._detail_dialog.close()
+        self._history_records = history
         self._history.setRowCount(0)
         for row, record in enumerate(history):
             self._history.insertRow(row)
@@ -166,6 +174,27 @@ class ExportsView(QWidget):
                 item = QTableWidgetItem(value)
                 item.setToolTip(value)
                 self._history.setItem(row, column, item)
+
+    def _open_history_detail(self, row: int, _column: int) -> None:
+        if not 0 <= row < len(self._history_records):
+            return
+        record = self._history_records[row]
+        if self._detail_dialog is None:
+            self._detail_dialog = DetailDialog(self)
+        self._detail_dialog.present(
+            window_title="Export history details",
+            eyebrow="VERIFIED CASE CAPSULE",
+            title=f"{record.profile.value} · {record.created_at.astimezone():%Y-%m-%d %H:%M:%S}",
+            text=(
+                f"Export ID: {record.export_id}\n"
+                f"Case ID: {record.case_id}\n"
+                f"Profile: {record.profile.value}\n"
+                f"Created: {record.created_at.astimezone().isoformat()}\n"
+                f"Destination: {record.destination}\n"
+                f"Artifacts: {record.artifact_count}\n"
+                f"Manifest SHA-256: {record.manifest_sha256}"
+            ),
+        )
 
     def set_export_running(self) -> None:
         self._export_button.setEnabled(False)
