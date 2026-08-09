@@ -1,5 +1,7 @@
 # Workstation download demo investigation
 
+For the complete click-by-click application run, use the [Complete Manual Demo Guide](../../../docs/DEMO_GUIDE.md). This file remains the compact fixture reference.
+
 This directory is a safe, fully synthetic incident pack for exercising the **New Investigation** wizard. It contains no production telemetry, credentials, malware, or live infrastructure.
 
 ## Suggested case setup

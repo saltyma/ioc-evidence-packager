@@ -182,6 +182,10 @@ python -m ioc_evidence_packager --smoke-test
 
 ### Try the bundled evidence demo
 
+Follow the [Complete Manual Demo Guide](docs/DEMO_GUIDE.md) for a clean database, exact clicks, expected counts on every workspace, intelligence conflict import, recommendation lifecycle, export verification, checksums, and troubleshooting.
+
+Verify every fixture and end-to-end expected result offline with `python tools/verify_demo.py`.
+
 Open **New investigation** and use these values:
 
 - Case title: `Suspicious download on FIN-WS-014`

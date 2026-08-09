@@ -265,6 +265,7 @@ class EvidenceView(QWidget):
             observable_text = " ".join(item.canonical for item in record.observables)
             haystack = " ".join(
                 (
+                    str(record.evidence_id),
                     record.event_id,
                     record.category,
                     record.action,
