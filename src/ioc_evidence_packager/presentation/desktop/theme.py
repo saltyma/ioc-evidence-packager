@@ -1,5 +1,9 @@
 """Obsidian, violet, and amber visual system for the desktop workspace."""
 
+from pathlib import Path
+
+_COMBO_ARROW = (Path(__file__).parent / "assets" / "chevron-down.svg").as_posix()
+
 APP_STYLESHEET = """
 QWidget {
     color: #EEEAF6;
@@ -26,13 +30,13 @@ QToolTip {
     padding: 6px;
 }
 
-QFrame#TopBar, QFrame#StatusBar {
+QFrame#StatusBar {
     background: #13101B;
     border: none;
 }
 
-QFrame#TopBar {
-    border-bottom: 1px solid #2B2538;
+QFrame#WorkspaceSurface {
+    background: #0D0A12;
 }
 
 QFrame#StatusBar {
@@ -40,8 +44,18 @@ QFrame#StatusBar {
 }
 
 QFrame#Sidebar {
-    background: #13101B;
+    background: #12101A;
     border-right: 1px solid #2B2538;
+}
+
+QWidget#SidebarGap {
+    background: transparent;
+}
+
+QFrame#FloatingActions {
+    background: #191522;
+    border: 1px solid #3E3550;
+    border-radius: 12px;
 }
 
 QFrame#Panel, QFrame#HeroPanel, QFrame#MetricCard, QFrame#NoticeCard {
@@ -80,14 +94,6 @@ QLabel#GraphZoomLabel {
     font-weight: 700;
 }
 
-QLabel#GraphSelectionStatus {
-    color: #BBB2CA;
-    background: #15111C;
-    border-left: 3px solid #70D6E8;
-    border-radius: 5px;
-    padding: 7px 10px;
-}
-
 QLabel#SectionEyebrow {
     color: #E3B760;
     font-size: 11px;
@@ -117,13 +123,29 @@ QLabel#MetricValue {
     font-weight: 750;
 }
 
-QLabel#PrivacyBadge {
-    color: #D7CBFF;
-    background: #241C3B;
-    border: 1px solid #604B91;
+QLabel#CaseBadge {
+    color: #B9F4D6;
+    background: #14261E;
+    border: 1px solid #35624E;
     border-radius: 10px;
-    padding: 5px 10px;
+    padding: 6px 11px;
+    font-weight: 700;
+}
+
+QLabel#JobBadge {
+    color: #9E96AC;
+    background: #121019;
+    border: 1px solid #302A3B;
+    border-radius: 9px;
+    padding: 5px 9px;
+    font-size: 11px;
     font-weight: 650;
+}
+
+QLabel#JobBadge[active="true"] {
+    color: #82E7B5;
+    background: #12231E;
+    border-color: #315D4C;
 }
 
 QLabel#StatusPill {
@@ -144,6 +166,49 @@ QLabel#StepPill {
     padding: 5px 9px;
     font-size: 11px;
     font-weight: 700;
+}
+
+QLabel#MissionStep {
+    color: #AAA2B8;
+    background: #15121C;
+    border: 1px solid #302A3C;
+    border-radius: 8px;
+    padding: 6px 8px;
+    min-height: 20px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+QLabel#MissionStep[state="done"] {
+    color: #8EE7D9;
+    background: #122521;
+    border-color: #2F645B;
+}
+
+QLabel#MissionStep[state="current"] {
+    color: #F8F3FF;
+    background: #3A2B60;
+    border-color: #8B6BE8;
+}
+
+QLabel#GraphLegendChip {
+    color: #BDB4CB;
+    background: #17131F;
+    border: 1px solid #30293D;
+    border-radius: 7px;
+    padding: 5px 6px;
+    font-size: 10px;
+    font-weight: 650;
+}
+
+QFrame#GraphToolbar, QFrame#GraphLegendPanel {
+    background: #15111C;
+    border: 1px solid #30293D;
+    border-radius: 9px;
+}
+
+QFrame#GraphLegendPanel {
+    background: #121019;
 }
 
 QLabel#ValidationGood {
@@ -190,8 +255,21 @@ QPushButton#PrimaryButton:hover {
 }
 
 QPushButton#GraphToolButton {
-    padding: 5px 9px;
-    min-height: 20px;
+    padding: 6px 10px;
+    min-height: 22px;
+}
+
+QPushButton#GraphOpenButton {
+    color: #DCD1FF;
+    background: #211A31;
+    border-color: #554371;
+    padding: 5px 11px;
+}
+
+QPushButton#GraphOpenButton:hover {
+    color: #FFFFFF;
+    background: #34264F;
+    border-color: #8A6FBC;
 }
 
 QCheckBox {
@@ -217,9 +295,15 @@ QPushButton#NavButton {
     border: 1px solid transparent;
     border-radius: 7px;
     color: #B0A8BE;
-    padding: 9px 12px;
+    padding: 9px 10px;
     text-align: left;
     font-weight: 550;
+    min-height: 20px;
+}
+
+QPushButton#NavButton[collapsed="true"] {
+    padding: 9px 0;
+    text-align: center;
 }
 
 QPushButton#NavButton:hover {
@@ -233,6 +317,17 @@ QPushButton#NavButton:checked {
     border-color: #5D498E;
 }
 
+QPushButton#SidebarToggle {
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 6px;
+}
+
+QPushButton#SidebarToggle:hover {
+    background: #211B2E;
+    border-color: #443A56;
+}
+
 QLineEdit, QTextEdit, QPlainTextEdit, QTextBrowser, QComboBox, QSpinBox {
     color: #EFEAF6;
     background: #110E17;
@@ -240,6 +335,41 @@ QLineEdit, QTextEdit, QPlainTextEdit, QTextBrowser, QComboBox, QSpinBox {
     border-radius: 7px;
     padding: 8px;
     selection-background-color: #584187;
+}
+
+QComboBox {
+    padding-right: 34px;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 30px;
+    border: none;
+    border-left: 1px solid #352E44;
+    border-top-right-radius: 7px;
+    border-bottom-right-radius: 7px;
+    background: #17131F;
+}
+
+QComboBox::drop-down:hover {
+    background: #241D32;
+}
+
+QComboBox::down-arrow {
+    image: url("__COMBO_ARROW__");
+    width: 12px;
+    height: 12px;
+}
+
+QComboBox QAbstractItemView {
+    color: #F0EAF7;
+    background: #17131F;
+    border: 1px solid #514363;
+    selection-background-color: #443364;
+    selection-color: #FFFFFF;
+    outline: 0;
+    padding: 4px;
 }
 
 QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, QComboBox:focus {
@@ -268,10 +398,14 @@ QTableWidget {
     selection-color: #FAF7FF;
 }
 
+QTableWidget::item {
+    padding: 4px;
+}
+
 QGraphicsView#RelationshipGraphCanvas {
     background: #0C0911;
-    border: 1px solid #352E44;
-    border-radius: 8px;
+    border: 1px solid #2D2738;
+    border-radius: 10px;
 }
 
 QHeaderView::section {
@@ -289,12 +423,23 @@ QTabWidget::pane {
     background: #100D16;
 }
 
+QTabWidget#RelationshipTabs::pane {
+    border: none;
+    background: transparent;
+}
+
+QWidget#RelationshipGraphPage {
+    background: transparent;
+}
+
 QTabBar::tab {
     color: #AFA6BF;
     background: #17131E;
     border: 1px solid #352E44;
     padding: 8px 14px;
-    margin-right: 3px;
+    margin-right: 4px;
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
 }
 
 QTabBar::tab:selected {
@@ -332,7 +477,25 @@ QScrollBar::handle:vertical {
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
     height: 0;
 }
+
+QScrollBar:horizontal {
+    background: #13101B;
+    height: 10px;
+    margin: 0;
+}
+
+QScrollBar::handle:horizontal {
+    background: #4B405E;
+    border-radius: 5px;
+    min-width: 28px;
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0;
+}
 """
+
+APP_STYLESHEET = APP_STYLESHEET.replace("__COMBO_ARROW__", _COMBO_ARROW)
 
 
 def desktop_stylesheet(*, compact: bool, high_contrast: bool) -> str:

@@ -42,7 +42,7 @@ class HomeView(QWidget):
         title.setObjectName("PageTitle")
         subtitle = QLabel(
             "Create a case, bring the telemetry you are authorized to use, and preserve "
-            "what was found—along with what could not be searched."
+            "what was found, together with what could not be searched."
         )
         subtitle.setObjectName("PageSubtitle")
         subtitle.setWordWrap(True)

@@ -3,7 +3,8 @@
 from dataclasses import replace
 from pathlib import Path
 
-from PySide6.QtCore import QSize, Qt, QThreadPool
+from PySide6.QtCore import QSize, Qt, QThreadPool, QTimer
+from PySide6.QtGui import QCloseEvent, QResizeEvent
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
@@ -42,6 +43,7 @@ from ioc_evidence_packager.domain.workspace import (
 )
 from ioc_evidence_packager.ingestion import SourceInspectionService
 from ioc_evidence_packager.presentation.desktop.branding import application_icon
+from ioc_evidence_packager.presentation.desktop.icons import navigation_icon
 from ioc_evidence_packager.presentation.desktop.jobs import (
     CapsuleExportWorker,
     EvidenceImportWorker,
@@ -71,20 +73,28 @@ from ioc_evidence_packager.reporting.models import (
 )
 
 NAVIGATION = (
-    ("Dashboard", "Case summary, findings, limitations, and next actions.", "Slice 1"),
-    ("Evidence", "Source-linked facts, exact matches, provenance, and raw records.", "Slice 4"),
-    ("Timeline", "A deterministic chronology with direct, context, and undated lanes.", "Slice 5"),
-    ("Relationships", "Bounded typed relationships with evidence-backed edges.", "v0.7"),
+    ("Dashboard", "dashboard", "Case summary, findings, limitations, and next actions."),
+    ("Evidence", "evidence", "Source-linked facts, exact matches, provenance, and raw records."),
+    ("Timeline", "timeline", "A deterministic chronology with direct, context, and undated lanes."),
+    ("Relationships", "relationships", "Bounded typed relationships with evidence-backed edges."),
     (
         "Coverage",
+        "coverage",
         "Matched, searched, partial, missing, failed, and unsupported evidence.",
-        "Slice 4",
     ),
-    ("Intelligence", "Attributed provider assertions under the active privacy policy.", "v0.7"),
-    ("Recommendations", "Deterministic next actions citing evidence and coverage gaps.", "v0.7"),
-    ("Sources", "Input inventory, hashes, adapters, jobs, and diagnostics.", "Phase 5"),
-    ("Exports", "Reviewed Case Capsule profiles and artifact verification.", "Slice 5"),
-    ("Settings", "Case display, storage, privacy, and mapping preferences.", "v0.7"),
+    (
+        "Intelligence",
+        "intelligence",
+        "Attributed provider assertions under the active privacy policy.",
+    ),
+    (
+        "Recommendations",
+        "recommendations",
+        "Deterministic next actions citing evidence and coverage gaps.",
+    ),
+    ("Sources", "sources", "Input inventory, hashes, adapters, jobs, and diagnostics."),
+    ("Exports", "exports", "Reviewed Case Capsule profiles and artifact verification."),
+    ("Settings", "settings", "Case display, storage, privacy, and device preferences."),
 )
 
 
@@ -127,6 +137,8 @@ class MainWindow(QMainWindow):
         self._thread_pool = QThreadPool.globalInstance()
         self._page_indices: dict[str, int] = {}
         self._nav_buttons: dict[str, QPushButton] = {}
+        self._sidebar_collapsed = False
+        self._closing = False
         self.setWindowTitle("IOC Evidence Packager")
         self.setWindowIcon(application_icon())
         self.resize(1280, 820)
@@ -134,6 +146,8 @@ class MainWindow(QMainWindow):
         DetailDialog.set_preferred_width(self._preferences.detail_width)
         self._apply_device_preferences()
         self._build_ui()
+        self.settings_view.set_device_settings(self._preferences)
+        self._set_sidebar_collapsed(self._preferences.sidebar_collapsed, persist=False)
         self.show_home()
 
     @property
@@ -149,102 +163,118 @@ class MainWindow(QMainWindow):
         root = QVBoxLayout(central)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
-        root.addWidget(self._build_top_bar())
 
         body = QHBoxLayout()
         body.setContentsMargins(0, 0, 0, 0)
         body.setSpacing(0)
         body.addWidget(self._build_sidebar())
+        self._workspace_surface = QFrame()
+        self._workspace_surface.setObjectName("WorkspaceSurface")
+        workspace_layout = QVBoxLayout(self._workspace_surface)
+        workspace_layout.setContentsMargins(0, 0, 0, 0)
+        workspace_layout.setSpacing(0)
         self._pages = QStackedWidget()
+        self._pages.setContentsMargins(0, 0, 0, 0)
         self._build_pages()
-        body.addWidget(self._pages, 1)
+        workspace_layout.addWidget(self._pages, 1)
+        self._floating_actions = self._build_floating_actions(self._workspace_surface)
+        self._floating_position_timer = QTimer(self)
+        self._floating_position_timer.setSingleShot(True)
+        self._floating_position_timer.timeout.connect(self._position_floating_actions)
+        self._schedule_floating_action_position()
+        body.addWidget(self._workspace_surface, 1)
         root.addLayout(body, 1)
         root.addWidget(self._build_status_bar())
         self.setCentralWidget(central)
 
-    def _build_top_bar(self) -> QFrame:
-        bar = QFrame()
-        bar.setObjectName("TopBar")
-        bar.setFixedHeight(66)
+    def _build_floating_actions(self, parent: QWidget) -> QFrame:
+        bar = QFrame(parent)
+        bar.setObjectName("FloatingActions")
         layout = QHBoxLayout(bar)
-        layout.setContentsMargins(18, 10, 18, 10)
-        layout.setSpacing(12)
+        layout.setContentsMargins(9, 7, 9, 7)
+        layout.setSpacing(8)
+        self._case_badge = QLabel("No case open")
+        self._case_badge.setObjectName("CaseBadge")
+        self._case_badge.setMaximumWidth(360)
+        self._case_badge.setToolTip("No investigation is currently open.")
+        layout.addWidget(self._case_badge)
 
-        mark = QLabel()
-        mark.setObjectName("BrandIcon")
-        mark.setFixedSize(42, 42)
-        mark.setPixmap(application_icon().pixmap(QSize(42, 42)))
-        mark.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title = QLabel("IOC Evidence Packager")
-        title.setObjectName("BrandTitle")
-        layout.addWidget(mark)
-        layout.addWidget(title)
-
-        divider = QFrame()
-        divider.setFrameShape(QFrame.Shape.VLine)
-        divider.setStyleSheet("color: #3D334D;")
-        layout.addWidget(divider)
-        self._case_context = QLabel("No case open")
-        self._case_context.setObjectName("Muted")
-        layout.addWidget(self._case_context)
-        layout.addStretch(1)
-
-        self._privacy_badge = QLabel("●  Offline")
-        self._privacy_badge.setObjectName("PrivacyBadge")
-        self._privacy_badge.setToolTip("The active case policy controls remote disclosure.")
-        layout.addWidget(self._privacy_badge)
-
-        self._jobs_button = QPushButton("Jobs  0")
-        self._jobs_button.setEnabled(False)
+        self._jobs_button = QLabel("Idle")
+        self._jobs_button.setObjectName("JobBadge")
+        self._jobs_button.setToolTip("Number of active background jobs")
         layout.addWidget(self._jobs_button)
-        self._export_button = QPushButton("Export")
-        self._export_button.setEnabled(False)
-        self._export_button.clicked.connect(lambda: self.show_page("Exports"))
-        layout.addWidget(self._export_button)
+        bar.adjustSize()
+        bar.raise_()
         return bar
 
     def _build_sidebar(self) -> QFrame:
-        sidebar = QFrame()
-        sidebar.setObjectName("Sidebar")
-        sidebar.setFixedWidth(218)
-        layout = QVBoxLayout(sidebar)
-        layout.setContentsMargins(12, 16, 12, 14)
+        self._sidebar = QFrame()
+        self._sidebar.setObjectName("Sidebar")
+        self._sidebar.setFixedWidth(226)
+        layout = QVBoxLayout(self._sidebar)
+        layout.setContentsMargins(12, 13, 12, 14)
         layout.setSpacing(4)
+
+        brand = QHBoxLayout()
+        brand.setSpacing(9)
+        self._sidebar_logo = QLabel()
+        self._sidebar_logo.setFixedSize(38, 38)
+        self._sidebar_logo.setPixmap(application_icon().pixmap(QSize(34, 34)))
+        self._sidebar_logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._sidebar_brand = QLabel("IOC Evidence\nPackager")
+        self._sidebar_brand.setObjectName("BrandTitle")
+        self._sidebar_toggle = QPushButton()
+        self._sidebar_toggle.setObjectName("SidebarToggle")
+        self._sidebar_toggle.setFixedSize(34, 34)
+        self._sidebar_toggle.setToolTip("Minimize navigation")
+        self._sidebar_toggle.clicked.connect(self._toggle_sidebar)
+        brand.addWidget(self._sidebar_logo)
+        brand.addWidget(self._sidebar_brand, 1)
+        brand.addWidget(self._sidebar_toggle)
+        layout.addLayout(brand)
+        self._brand_gap = QWidget()
+        self._brand_gap.setObjectName("SidebarGap")
+        self._brand_gap.setFixedHeight(4)
+        layout.addWidget(self._brand_gap)
 
         self._nav_group = QButtonGroup(self)
         self._nav_group.setExclusive(True)
 
-        cases_button = self._make_nav_button("Cases")
+        cases_button = self._make_nav_button("Cases", "cases")
         cases_button.clicked.connect(self.show_home)
         self._nav_group.addButton(cases_button)
         layout.addWidget(cases_button)
         self._nav_buttons["Cases"] = cases_button
 
-        section = QLabel("INVESTIGATION")
-        section.setObjectName("SectionEyebrow")
-        section.setContentsMargins(10, 16, 0, 5)
-        layout.addWidget(section)
+        self._sidebar_section = QLabel("INVESTIGATION")
+        self._sidebar_section.setObjectName("SectionEyebrow")
+        self._sidebar_section.setContentsMargins(10, 14, 0, 5)
+        layout.addWidget(self._sidebar_section)
 
-        for name, _description, _milestone in NAVIGATION:
-            button = self._make_nav_button(name)
-            button.setEnabled(False)
+        for name, icon_name, description in NAVIGATION:
+            button = self._make_nav_button(name, icon_name)
+            button.setEnabled(name == "Settings")
+            button.setToolTip(f"{name}\n{description}")
             button.clicked.connect(lambda _checked=False, page=name: self.show_page(page))
             self._nav_group.addButton(button)
             self._nav_buttons[name] = button
             layout.addWidget(button)
 
         layout.addStretch(1)
-        version = QLabel("v0.7.0  ·  Analyst reasoning")
-        version.setObjectName("Muted")
-        version.setContentsMargins(10, 0, 0, 2)
-        layout.addWidget(version)
-        return sidebar
+        self._sidebar_version = QLabel("v0.7.0  ·  Analyst reasoning")
+        self._sidebar_version.setObjectName("Muted")
+        self._sidebar_version.setContentsMargins(10, 0, 0, 2)
+        layout.addWidget(self._sidebar_version)
+        return self._sidebar
 
     @staticmethod
-    def _make_nav_button(text: str) -> QPushButton:
+    def _make_nav_button(text: str, icon_name: str) -> QPushButton:
         button = QPushButton(text)
         button.setObjectName("NavButton")
         button.setCheckable(True)
+        button.setIcon(navigation_icon(icon_name))
+        button.setIconSize(QSize(19, 19))
+        button.setProperty("expandedText", text)
         button.setCursor(Qt.CursorShape.PointingHandCursor)
         return button
 
@@ -310,10 +340,64 @@ class MainWindow(QMainWindow):
         self._nav_buttons["Cases"].setChecked(True)
 
     def show_page(self, name: str) -> None:
-        if self._current_case is None or name not in self._page_indices:
+        if name not in self._page_indices:
+            return
+        if self._current_case is None and name != "Settings":
             return
         self._pages.setCurrentIndex(self._page_indices[name])
         self._nav_buttons[name].setChecked(True)
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        super().resizeEvent(event)
+        self._schedule_floating_action_position()
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        self._closing = True
+        if hasattr(self, "_floating_position_timer"):
+            self._floating_position_timer.stop()
+        super().closeEvent(event)
+
+    def _schedule_floating_action_position(self) -> None:
+        if self._closing or not hasattr(self, "_floating_position_timer"):
+            return
+        self._floating_position_timer.start(0)
+
+    def _position_floating_actions(self) -> None:
+        if self._closing or not hasattr(self, "_floating_actions"):
+            return
+        self._floating_actions.adjustSize()
+        x = max(12, self._workspace_surface.width() - self._floating_actions.width() - 18)
+        self._floating_actions.move(x, 10)
+        self._floating_actions.raise_()
+
+    def _toggle_sidebar(self) -> None:
+        self._set_sidebar_collapsed(not self._sidebar_collapsed)
+
+    def _set_sidebar_collapsed(self, collapsed: bool, *, persist: bool = True) -> None:
+        self._sidebar_collapsed = collapsed
+        self._sidebar.setFixedWidth(72 if collapsed else 226)
+        self._sidebar_logo.setVisible(not collapsed)
+        self._sidebar_brand.setVisible(not collapsed)
+        self._sidebar_section.setVisible(not collapsed)
+        self._sidebar_version.setVisible(not collapsed)
+        self._brand_gap.setFixedHeight(16 if collapsed else 4)
+        self._sidebar_toggle.setIcon(
+            application_icon() if collapsed else navigation_icon("collapse", 18)
+        )
+        self._sidebar_toggle.setIconSize(QSize(28, 28) if collapsed else QSize(18, 18))
+        self._sidebar_toggle.setToolTip(
+            "IOC Evidence Packager · expand navigation" if collapsed else "Minimize navigation"
+        )
+        for name, button in self._nav_buttons.items():
+            button.setText("" if collapsed else name)
+            button.setProperty("collapsed", collapsed)
+            button.setFixedWidth(48 if collapsed else 202)
+            button.style().unpolish(button)
+            button.style().polish(button)
+        self._schedule_floating_action_position()
+        if persist:
+            self._preferences = replace(self._preferences, sidebar_collapsed=collapsed)
+            self._settings_store.save(self._preferences)
 
     def refresh_cases(self) -> None:
         self.home_view.set_cases(self._case_service.list_recent_cases())
@@ -351,11 +435,9 @@ class MainWindow(QMainWindow):
         self._current_setup = setup
         self.dashboard_view.set_investigation(setup)
         self._reload_evidence(setup)
-        self._case_context.setText(case.title)
-        self._update_privacy_badge(case)
-        self._export_button.setEnabled(self._analysis is not None)
+        self._update_case_badge(case)
         for name, button in self._nav_buttons.items():
-            button.setEnabled(name == "Cases" or self._current_case is not None)
+            button.setEnabled(name in {"Cases", "Settings"} or self._current_case is not None)
         self._status_text.setText(
             "Ready · Case saved locally · "
             f"{case.privacy_mode.value.replace('_', ' ').title()} policy active"
@@ -425,7 +507,6 @@ class MainWindow(QMainWindow):
         self.dashboard_view.set_analysis(analysis, records, rejections)
         history = self._report_service.list_exports(active.case.case_id)
         self.exports_view.set_investigation(active, analysis, history)
-        self._export_button.setEnabled(analysis is not None)
 
     def _start_import(self, case_value: object, previews_value: object) -> None:
         if self._background_job_count() or not isinstance(case_value, str):
@@ -524,7 +605,6 @@ class MainWindow(QMainWindow):
             self._analysis,
             self._report_service.list_exports(setup.case.case_id),
         )
-        self._export_button.setEnabled(True)
         self._status_text.setText(
             f"Analysis complete · {len(self._analysis.sightings)} direct sighting(s)"
         )
@@ -672,50 +752,74 @@ class MainWindow(QMainWindow):
         self._show_error("Intelligence lookup failed", message)
 
     def _save_settings(self, privacy_mode: str, timezone: str, preferences: object) -> None:
-        if self._current_case is None or not isinstance(preferences, DesktopPreferences):
+        if not isinstance(preferences, DesktopPreferences):
             return
-        try:
-            updated = self._case_service.update_preferences(
-                self._current_case.case_id,
-                display_timezone=timezone,
-                privacy_mode=PrivacyMode(privacy_mode),
-            )
-        except (ValueError, IOCEvidencePackagerError) as error:
-            self._show_error("Could not save settings", str(error))
-            return
+        updated: Case | None = None
+        if self._current_case is not None:
+            try:
+                updated = self._case_service.update_preferences(
+                    self._current_case.case_id,
+                    display_timezone=timezone,
+                    privacy_mode=PrivacyMode(privacy_mode),
+                )
+            except (ValueError, IOCEvidencePackagerError) as error:
+                self._show_error("Could not save settings", str(error))
+                return
         self._settings_store.save(preferences)
         self._preferences = preferences
         DetailDialog.set_preferred_width(preferences.detail_width)
         self._apply_device_preferences()
-        self._current_case = updated
-        if self._current_setup is not None:
+        self._set_sidebar_collapsed(preferences.sidebar_collapsed, persist=False)
+        if updated is not None:
+            self._current_case = updated
+        if updated is not None and self._current_setup is not None:
             self._current_setup = InvestigationSetup(
                 case=updated,
                 lead=self._current_setup.lead,
                 source_previews=self._current_setup.source_previews,
             )
-        self._update_privacy_badge(updated)
-        if self._current_setup is not None:
+        if updated is not None:
+            self._update_case_badge(updated)
+        if updated is not None and self._current_setup is not None:
             self.dashboard_view.set_investigation(self._current_setup)
             self._reload_evidence(self._current_setup)
-        else:
+        elif updated is not None:
             self._reload_intelligence(updated)
             self.settings_view.set_settings(updated, preferences)
-        self.settings_view.mark_saved()
-        self._status_text.setText("Settings saved · case policy and device preferences applied")
+        else:
+            self.settings_view.set_device_settings(preferences)
+        self.settings_view.mark_saved(
+            "Settings saved and applied."
+            if updated is not None
+            else "Device preferences saved; open a case to edit case policy."
+        )
+        self._status_text.setText(
+            "Settings saved · "
+            + (
+                "case policy and device preferences applied"
+                if updated
+                else "device preferences applied"
+            )
+        )
 
     def _reset_settings(self) -> None:
         self._preferences = self._settings_store.reset()
         DetailDialog.set_preferred_width(self._preferences.detail_width)
         self._apply_device_preferences()
+        self._set_sidebar_collapsed(self._preferences.sidebar_collapsed, persist=False)
         if self._current_case is not None:
             self.settings_view.set_settings(self._current_case, self._preferences)
             self._reload_intelligence()
+        else:
+            self.settings_view.set_device_settings(self._preferences)
         self.settings_view.mark_saved("Device preferences reset; case policy was not changed.")
 
-    def _update_privacy_badge(self, case: Case) -> None:
-        label = case.privacy_mode.value.replace("_", " ").title()
-        self._privacy_badge.setText(f"●  {label}")
+    def _update_case_badge(self, case: Case) -> None:
+        title = case.title if len(case.title) <= 48 else case.title[:45] + "..."
+        self._case_badge.setText(f"●  {title}")
+        policy = case.privacy_mode.value.replace("_", " ").title()
+        self._case_badge.setToolTip(f"Open case: {case.title}\nPrivacy policy: {policy}")
+        self._schedule_floating_action_position()
 
     def _apply_device_preferences(self) -> None:
         app = QApplication.instance()
@@ -824,8 +928,11 @@ class MainWindow(QMainWindow):
 
     def _sync_jobs(self) -> None:
         count = self._background_job_count()
-        self._jobs_button.setText(f"Jobs  {count}")
-        self._jobs_button.setEnabled(count > 0)
+        self._jobs_button.setText(f"{count} active" if count else "Idle")
+        self._jobs_button.setProperty("active", count > 0)
+        self._jobs_button.style().unpolish(self._jobs_button)
+        self._jobs_button.style().polish(self._jobs_button)
+        self._schedule_floating_action_position()
 
     def _show_error(self, title: str, message: str) -> None:
         box = QMessageBox(self)

@@ -28,6 +28,12 @@ output/
 *.sqlite3
 *.db
 
+# Local investigation-game material (kept on the workstation, not published)
+docs/GAME_DEMO.md
+docs/EVIDENCE_ACQUISITION_FIELD_GUIDE.md
+docs/GLOSSARY_AR.md
+samples/training/
+
 # Secrets and local configuration
 .env
 .env.*

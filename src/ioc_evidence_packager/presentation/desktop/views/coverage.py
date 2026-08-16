@@ -54,7 +54,7 @@ class CoverageView(QWidget):
         heading_text = QVBoxLayout()
         eyebrow = QLabel("EVIDENCE COVERAGE MATRIX")
         eyebrow.setObjectName("SectionEyebrow")
-        title = QLabel("What was searched—and what was not")
+        title = QLabel("What was searched and what was not")
         title.setObjectName("PageTitle")
         subtitle = QLabel(
             "Coverage is calculated from declared source capabilities, import outcomes, "
@@ -70,7 +70,6 @@ class CoverageView(QWidget):
         self._rerun_button.setObjectName("PrimaryButton")
         self._rerun_button.clicked.connect(self.analysis_requested)
         self._rerun_button.setEnabled(False)
-        heading.addWidget(self._rerun_button, 0, Qt.AlignmentFlag.AlignTop)
         root.addLayout(heading)
 
         notice = QFrame()
@@ -80,7 +79,8 @@ class CoverageView(QWidget):
         self._summary = QLabel("Import evidence to calculate coverage.")
         self._summary.setObjectName("Muted")
         self._summary.setWordWrap(True)
-        notice_layout.addWidget(self._summary)
+        notice_layout.addWidget(self._summary, 1)
+        notice_layout.addWidget(self._rerun_button)
         root.addWidget(notice)
 
         self._table = QTableWidget(0, 6)

@@ -9,6 +9,7 @@ from PySide6.QtGui import (
     QBrush,
     QColor,
     QFont,
+    QMouseEvent,
     QPainter,
     QPainterPath,
     QPainterPathStroker,
@@ -63,6 +64,7 @@ class InteractiveGraphicsView(QGraphicsView):
     """A high-quality graphics view with bounded cursor-centred zoom and panning."""
 
     zoom_changed = Signal(int)
+    background_double_clicked = Signal()
 
     def __init__(self, scene: QGraphicsScene, parent: QWidget | None = None) -> None:
         super().__init__(scene, parent)
@@ -82,7 +84,8 @@ class InteractiveGraphicsView(QGraphicsView):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setToolTip(
             "Mouse wheel: zoom · drag background: pan · drag node: rearrange · "
-            "double-click node: focus · double-click edge: inspect"
+            "double-click node: focus · double-click edge: inspect · "
+            "double-click empty space: expand"
         )
 
     @property
@@ -92,6 +95,13 @@ class InteractiveGraphicsView(QGraphicsView):
     def wheelEvent(self, event: QWheelEvent) -> None:
         self.zoom_by(1.18 if event.angleDelta().y() > 0 else 1 / 1.18)
         event.accept()
+
+    def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:  # noqa: N802 - Qt API
+        if self.itemAt(event.position().toPoint()) is None:
+            self.background_double_clicked.emit()
+            event.accept()
+            return
+        super().mouseDoubleClickEvent(event)
 
     def zoom_by(self, factor: float) -> None:
         current = self.transform().m11()
@@ -114,6 +124,10 @@ class InteractiveGraphicsView(QGraphicsView):
             self.zoom_changed.emit(100)
             return
         self.fitInView(bounds.adjusted(-54, -54, 54, 54), Qt.AspectRatioMode.KeepAspectRatio)
+        if self.transform().m11() < 0.55:
+            self.resetTransform()
+            self.scale(0.55, 0.55)
+            self.centerOn(bounds.center())
         if self.transform().m11() > 1.15:
             self.resetTransform()
             self.centerOn(bounds.center())
@@ -130,12 +144,14 @@ class GraphNodeItem(QGraphicsObject):
         is_focus: bool,
         activated: Callable[[str], None],
         moved: Callable[[], None],
+        move_finished: Callable[[], None],
     ) -> None:
         super().__init__()
         self.node = node
         self.is_focus = is_focus
         self._activated = activated
         self._moved = moved
+        self._move_finished = move_finished
         self._hovered = False
         self._width = _FOCUS_WIDTH if is_focus else _CARD_WIDTH
         self._height = _FOCUS_HEIGHT if is_focus else _CARD_HEIGHT
@@ -225,6 +241,10 @@ class GraphNodeItem(QGraphicsObject):
         self._activated(str(self.node.entity_id))
         event.accept()
 
+    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        super().mouseReleaseEvent(event)
+        self._move_finished()
+
 
 class GraphEdgeItem(QGraphicsPathItem):
     """Broad-hit-target curved edge with selection, hover, arrow, and provenance tooltip."""
@@ -255,7 +275,6 @@ class GraphEdgeItem(QGraphicsPathItem):
             f"{len(edge.evidence_ids)} supporting evidence record(s)\n"
             "Double-click to inspect citations and rule provenance"
         )
-        self.update_path()
 
     def shape(self) -> QPainterPath:
         stroker = QPainterPathStroker()
@@ -283,6 +302,9 @@ class GraphEdgeItem(QGraphicsPathItem):
         painter.drawPolygon(self._arrow)
 
     def update_path(self) -> None:
+        scene = self.scene()
+        if scene is None or self.source.scene() is not scene or self.target.scene() is not scene:
+            return
         source_center = self.source.scenePos()
         target_center = self.target.scenePos()
         start = _card_port(self.source, target_center)
@@ -344,6 +366,8 @@ class RelationshipGraphCanvas(QWidget):
 
     focus_requested = Signal(str)
     edge_activated = Signal(str)
+    background_double_clicked = Signal()
+    expand_requested = Signal()
 
     def __init__(
         self,
@@ -352,6 +376,7 @@ class RelationshipGraphCanvas(QWidget):
         max_neighbors: int = 12,
         minimum_height: int = 390,
         neighbor_limits: tuple[int, ...] = (),
+        allow_expand: bool = False,
     ) -> None:
         super().__init__(parent)
         self._max_neighbors = max_neighbors
@@ -360,16 +385,28 @@ class RelationshipGraphCanvas(QWidget):
         self._focus_id: EntityId | None = None
         self._node_items: dict[EntityId, GraphNodeItem] = {}
         self._edge_items: list[GraphEdgeItem] = []
+        self._rendering = False
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
-        root.setSpacing(8)
-        tools = QHBoxLayout()
+        root.setSpacing(10)
+        toolbar = QFrame()
+        toolbar.setObjectName("GraphToolbar")
+        tools = QHBoxLayout(toolbar)
+        tools.setContentsMargins(10, 6, 10, 6)
         tools.setSpacing(7)
         self._graph_count = QLabel("No graph")
         self._graph_count.setObjectName("Muted")
         tools.addWidget(self._graph_count)
         tools.addStretch(1)
+        if allow_expand:
+            expand = _tool_button(
+                "Open large view",
+                "Open this graph in a separate resizable window.",
+            )
+            expand.setObjectName("GraphOpenButton")
+            expand.clicked.connect(self.expand_requested.emit)
+            tools.addWidget(expand)
         self._neighbor_limit: QComboBox | None = None
         if neighbor_limits:
             self._neighbor_limit = QComboBox()
@@ -389,9 +426,9 @@ class RelationshipGraphCanvas(QWidget):
         )
         self._cross_links.toggled.connect(self._render)
         tools.addWidget(self._cross_links)
-        fit = _tool_button("Fit", "Fit the whole bounded graph in the viewport")
-        minus = _tool_button("−", "Zoom out")
-        reset = _tool_button("100%", "Reset to actual size")
+        fit = _tool_button("Fit graph", "Fit the whole bounded graph in the viewport")
+        minus = _tool_button("-", "Zoom out")
+        reset = _tool_button("Reset", "Reset to actual size")
         plus = _tool_button("+", "Zoom in")
         fit.clicked.connect(self.fit_graph)
         minus.clicked.connect(self.zoom_out)
@@ -404,24 +441,29 @@ class RelationshipGraphCanvas(QWidget):
         self._zoom_label.setMinimumWidth(43)
         self._zoom_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         tools.addWidget(self._zoom_label)
-        tools.addWidget(reset)
         tools.addWidget(plus)
-        root.addLayout(tools)
+        tools.addWidget(reset)
+        root.addWidget(toolbar)
 
         self._scene = QGraphicsScene(self)
         self._scene.setBackgroundBrush(QBrush(QColor("#0C0911")))
         self._scene.selectionChanged.connect(self._describe_selection)
+        self._geometry_timer = QTimer(self)
+        self._geometry_timer.setSingleShot(True)
+        self._geometry_timer.setInterval(16)
+        self._geometry_timer.timeout.connect(self._flush_geometry_update)
+        self._fit_timer = QTimer(self)
+        self._fit_timer.setSingleShot(True)
+        self._fit_timer.timeout.connect(self.fit_graph)
+        self._rerender_timer = QTimer(self)
+        self._rerender_timer.setSingleShot(True)
+        self._rerender_timer.setInterval(16)
+        self._rerender_timer.timeout.connect(self._render)
         self.view = InteractiveGraphicsView(self._scene, self)
         self.view.setMinimumHeight(minimum_height)
         self.view.zoom_changed.connect(lambda value: self._zoom_label.setText(f"{value}%"))
+        self.view.background_double_clicked.connect(self.background_double_clicked.emit)
         root.addWidget(self.view, 1)
-
-        self._selection = QLabel(
-            "Wheel: zoom · drag: pan or rearrange · double-click: focus or inspect"
-        )
-        self._selection.setObjectName("GraphSelectionStatus")
-        self._selection.setWordWrap(True)
-        root.addWidget(self._selection)
 
     @property
     def node_count(self) -> int:
@@ -477,16 +519,37 @@ class RelationshipGraphCanvas(QWidget):
             self._render()
 
     def _render(self, _checked: bool = False) -> None:
-        self._scene.clear()
-        self._node_items = {}
+        if self._scene.mouseGrabberItem() is not None:
+            self._rerender_timer.start()
+            return
+        self._rerender_timer.stop()
+        self._rendering = True
+        self._geometry_timer.stop()
+        self._fit_timer.stop()
+        self.view.setUpdatesEnabled(False)
         self._edge_items = []
+        self._node_items = {}
+        signals_were_blocked = self._scene.blockSignals(True)
+        try:
+            self._scene.clear()
+        finally:
+            self._scene.blockSignals(signals_were_blocked)
+
+        try:
+            self._render_scene()
+        finally:
+            self._rendering = False
+            self.view.setUpdatesEnabled(True)
+            self.view.viewport().update()
+        self._fit_timer.start(0)
+
+    def _render_scene(self) -> None:
         focus = self._focus_id
         if focus is None or focus not in self._nodes:
             empty = self._scene.addText("No relationships match the current filters.")
             empty.setDefaultTextColor(QColor("#A49CB5"))
             self._graph_count.setText("No graph")
-            self._selection.setText("Adjust the entity, relationship, or search filters.")
-            QTimer.singleShot(0, self.fit_graph)
+            self.view.setToolTip("Adjust the entity, relationship, or search filters.")
             return
 
         adjacent = [edge for edge in self._edges if focus in {edge.source_id, edge.target_id}]
@@ -543,7 +606,8 @@ class RelationshipGraphCanvas(QWidget):
                 self._nodes[node_id],
                 is_focus=node_id == focus,
                 activated=self.focus_requested.emit,
-                moved=self._update_edge_paths,
+                moved=self._schedule_geometry_update,
+                move_finished=self._finish_node_move,
             )
             self._scene.addItem(node_item)
             node_item.setPos(positions[node_id])
@@ -567,43 +631,70 @@ class RelationshipGraphCanvas(QWidget):
                 activated=self.edge_activated.emit,
             )
             self._scene.addItem(edge_item)
+            edge_item.update_path()
             self._edge_items.append(edge_item)
 
         bounds = self._scene.itemsBoundingRect().adjusted(-70, -70, 70, 70)
         self._scene.setSceneRect(bounds)
         omitted = total_neighbors - len(neighbors)
         suffix = f" · {omitted} more available by changing focus" if omitted else ""
-        cross_link_text = (
-            "with cross-links" if self._cross_links.isChecked() else "focus edges only"
-        )
+        hidden = f" · {omitted} hidden" if omitted else ""
         self._graph_count.setText(
-            f"{len(self._node_items)} nodes · {len(self._edge_items)} edges · "
-            f"{cross_link_text}{suffix}"
+            f"{len(self._node_items)} nodes · {len(self._edge_items)} edges{hidden}"
         )
-        self._selection.setText(
-            "Wheel: zoom · drag: pan or rearrange · double-click: focus or inspect"
+        cross_link_text = (
+            "Cross-links included" if self._cross_links.isChecked() else "Focus edges only"
         )
-        QTimer.singleShot(0, self.fit_graph)
+        self._graph_count.setToolTip(
+            f"{cross_link_text}{suffix}. Change focus or open the large view to explore."
+        )
+        self.view.setToolTip(
+            "Mouse wheel: zoom · drag background: pan · drag node: rearrange · "
+            "double-click node: focus · double-click edge: inspect · "
+            "double-click empty space: expand"
+        )
 
-    def _update_edge_paths(self) -> None:
-        for edge in self._edge_items:
-            edge.update_path()
-        self._scene.setSceneRect(self._scene.itemsBoundingRect().adjusted(-70, -70, 70, 70))
+    def _schedule_geometry_update(self) -> None:
+        """Coalesce drag updates outside QGraphicsItem.itemChange callbacks."""
+
+        if self._rendering or not self._edge_items or self._geometry_timer.isActive():
+            return
+        self._geometry_timer.start()
+
+    def _finish_node_move(self) -> None:
+        """Flush final drag geometry after Qt releases the scene mouse grabber."""
+
+        if self._rendering:
+            return
+        self._geometry_timer.stop()
+        self._flush_geometry_update()
+
+    def _flush_geometry_update(self) -> None:
+        if self._rendering:
+            return
+        for edge in tuple(self._edge_items):
+            if edge.scene() is self._scene:
+                edge.update_path()
+        bounds = self._scene.itemsBoundingRect()
+        if not bounds.isEmpty():
+            self._scene.setSceneRect(bounds.adjusted(-70, -70, 70, 70))
 
     def _describe_selection(self) -> None:
+        if self._rendering:
+            return
         selected = self._scene.selectedItems()
         if not selected:
             return
         item = selected[0]
         if isinstance(item, GraphNodeItem):
             node = item.node
-            self._selection.setText(
+            self.view.setToolTip(
                 f"NODE · {node.entity_type.value.upper()} · {node.value} · "
                 f"{len(node.evidence_ids)} evidence record(s) · double-click to focus"
             )
         elif isinstance(item, GraphEdgeItem):
             edge = item.edge
-            self._selection.setText(
+            self.view.setToolTip(
                 f"EDGE · {item.source.node.value} → {item.target.node.value} · "
                 f"{edge.relation} · {len(edge.evidence_ids)} citation(s) · "
                 "double-click for provenance"
@@ -642,9 +733,9 @@ class RelationshipGraphWindow(QDialog):
         root.addWidget(explanation)
         self.canvas = RelationshipGraphCanvas(
             self,
-            max_neighbors=10,
+            max_neighbors=16,
             minimum_height=440,
-            neighbor_limits=(10, 20, 30),
+            neighbor_limits=(10, 16, 24, 30),
         )
         self.canvas.focus_requested.connect(self.focus_requested.emit)
         self.canvas.edge_activated.connect(self.edge_activated.emit)
@@ -660,7 +751,6 @@ class RelationshipGraphWindow(QDialog):
         self.show()
         self.raise_()
         self.activateWindow()
-        QTimer.singleShot(0, self.canvas.fit_graph)
 
 
 def _column_positions(node_ids: list[EntityId], x: float) -> dict[EntityId, QPointF]:

@@ -35,6 +35,7 @@ where = ["src"]
 "ioc_evidence_packager.presentation.desktop" = [
   "assets/*.png",
   "assets/*.ico",
+  "assets/*.svg",
 ]
 
 [tool.setuptools.exclude-package-data]

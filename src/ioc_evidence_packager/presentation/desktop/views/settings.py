@@ -53,12 +53,12 @@ class SettingsView(QWidget):
         root.addWidget(title)
         root.addWidget(subtitle)
 
-        tabs = QTabWidget()
-        tabs.addTab(self._case_page(), "Case")
-        tabs.addTab(self._appearance_page(), "Appearance")
-        tabs.addTab(self._intelligence_page(), "Intelligence & privacy")
-        tabs.addTab(self._storage_page(), "Storage & versions")
-        root.addWidget(tabs, 1)
+        self._tabs = QTabWidget()
+        self._tabs.addTab(self._case_page(), "Case")
+        self._tabs.addTab(self._appearance_page(), "Appearance")
+        self._tabs.addTab(self._intelligence_page(), "Intelligence and privacy")
+        self._tabs.addTab(self._storage_page(), "Storage and versions")
+        root.addWidget(self._tabs, 1)
 
         self._feedback = QLabel("Changes have not been saved.")
         self._feedback.setObjectName("Muted")
@@ -110,9 +110,11 @@ class SettingsView(QWidget):
         self._detail_width.setSingleStep(20)
         self._detail_width.setSuffix(" px")
         self._contrast = QCheckBox("Use stronger semantic value colors")
+        self._sidebar_collapsed = QCheckBox("Start with the navigation sidebar minimized")
         form.addRow("Table/form density", self._density)
         form.addRow("Detail popup width", self._detail_width)
         form.addRow("Accessible semantics", self._contrast)
+        form.addRow("Navigation", self._sidebar_collapsed)
         help_label = QLabel(
             "Detail text always wraps inside a bounded reading column. Color reinforces labels and states; it never replaces text."
         )
@@ -168,11 +170,29 @@ class SettingsView(QWidget):
 
     def set_settings(self, case: Case, preferences: DesktopPreferences) -> None:
         self._case = case
+        self._tabs.setTabEnabled(0, True)
         self._timezone.setCurrentIndex(max(0, self._timezone.findText(case.display_timezone)))
         self._privacy.setCurrentIndex(max(0, self._privacy.findData(case.privacy_mode.value)))
+        self._set_device_preferences(preferences)
+        self._feedback.setText("Loaded durable case policy and device preferences.")
+
+    def set_device_settings(self, preferences: DesktopPreferences) -> None:
+        """Expose device settings before a case exists; case policy stays unavailable."""
+
+        self._case = None
+        self._tabs.setTabEnabled(0, False)
+        if self._tabs.currentIndex() == 0:
+            self._tabs.setCurrentIndex(1)
+        self._set_device_preferences(preferences)
+        self._feedback.setText(
+            "No case is open. Appearance, navigation, and provider defaults can still be saved."
+        )
+
+    def _set_device_preferences(self, preferences: DesktopPreferences) -> None:
         self._density.setCurrentText(preferences.density)
         self._detail_width.setValue(preferences.detail_width)
         self._contrast.setChecked(preferences.high_contrast)
+        self._sidebar_collapsed.setChecked(preferences.sidebar_collapsed)
         self._vt.setChecked(preferences.virustotal_enabled)
         self._cache.setValue(preferences.cache_hours)
         self._external.setChecked(preferences.confirm_external_links)
@@ -184,7 +204,6 @@ class SettingsView(QWidget):
             "Configured in launch environment" if configured else "Not configured"
         )
         self._key_state.setObjectName("SemanticGood" if configured else "SemanticWarn")
-        self._feedback.setText("Loaded durable case policy and device preferences.")
 
     def mark_saved(self, message: str = "Settings saved and applied.") -> None:
         self._feedback.setText(message)
@@ -193,8 +212,6 @@ class SettingsView(QWidget):
         self._feedback.style().polish(self._feedback)
 
     def _save(self) -> None:
-        if self._case is None:
-            return
         preferences = DesktopPreferences(
             density=self._density.currentText(),
             detail_width=self._detail_width.value(),
@@ -203,7 +220,14 @@ class SettingsView(QWidget):
             cache_hours=self._cache.value(),
             confirm_external_links=self._external.isChecked(),
             default_privacy_mode=str(self._default_privacy.currentData()),
+            sidebar_collapsed=self._sidebar_collapsed.isChecked(),
         )
         self.save_requested.emit(
-            str(self._privacy.currentData()), self._timezone.currentText(), preferences
+            (
+                str(self._privacy.currentData())
+                if self._case is not None
+                else PrivacyMode.OFFLINE.value
+            ),
+            self._timezone.currentText() if self._case is not None else "UTC",
+            preferences,
         )

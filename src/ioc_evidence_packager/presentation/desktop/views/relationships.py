@@ -6,6 +6,7 @@ from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
+    QFrame,
     QHBoxLayout,
     QHeaderView,
     QLabel,
@@ -71,7 +72,8 @@ class RelationshipsView(QWidget):
         title = QLabel("Relationships")
         title.setObjectName("PageTitle")
         subtitle = QLabel(
-            "Every edge is deterministic, typed, bounded to this case, and cites the exact supporting evidence. A relationship is context—not proof of causation."
+            "Every edge is deterministic, typed, bounded to this case, and cites the exact "
+            "supporting evidence. A relationship is context, not proof of causation."
         )
         subtitle.setObjectName("PageSubtitle")
         subtitle.setWordWrap(True)
@@ -118,33 +120,28 @@ class RelationshipsView(QWidget):
         root.addWidget(self._summary)
 
         tabs = QTabWidget()
+        tabs.setObjectName("RelationshipTabs")
         graph_page = QWidget()
+        graph_page.setObjectName("RelationshipGraphPage")
         graph_layout = QVBoxLayout(graph_page)
-        graph_layout.setContentsMargins(0, 10, 0, 0)
-        graph_header = QHBoxLayout()
-        legend = QLabel(
-            "TYPE COLORS  ·  SOURCE  ·  EVENT  ·  HOST  ·  USER  ·  IPv4  ·  DOMAIN  ·  SHA-256"
-        )
-        legend.setObjectName("Muted")
-        legend.setWordWrap(True)
-        graph_header.addWidget(legend, 1)
-        self._open_graph = QPushButton("Open graph window")
-        self._open_graph.setObjectName("PrimaryButton")
-        self._open_graph.setToolTip(
-            "Open a larger non-modal graph window with zoom, pan, movable nodes, "
-            "focus navigation, and clickable edges."
-        )
-        self._open_graph.clicked.connect(self.open_graph_window)
-        graph_header.addWidget(self._open_graph)
-        graph_layout.addLayout(graph_header)
+        graph_layout.setContentsMargins(0, 12, 0, 0)
+        graph_layout.setSpacing(0)
+        graph_body = QHBoxLayout()
+        graph_body.setContentsMargins(0, 0, 0, 0)
+        graph_body.setSpacing(12)
         self._graph_canvas = RelationshipGraphCanvas(
             self,
-            max_neighbors=10,
-            minimum_height=320,
+            max_neighbors=6,
+            minimum_height=410,
+            allow_expand=True,
         )
         self._graph_canvas.focus_requested.connect(self._select_graph_focus)
         self._graph_canvas.edge_activated.connect(self._open_graph_edge)
-        graph_layout.addWidget(self._graph_canvas, 1)
+        self._graph_canvas.background_double_clicked.connect(self.open_graph_window)
+        self._graph_canvas.expand_requested.connect(self.open_graph_window)
+        graph_body.addWidget(self._graph_canvas, 1)
+        graph_body.addWidget(_graph_legend())
+        graph_layout.addLayout(graph_body, 1)
         tabs.addTab(graph_page, "Graph")
 
         self._table = QTableWidget(0, 7)
@@ -322,3 +319,28 @@ class RelationshipsView(QWidget):
 
 def _short(value: str, limit: int = 30) -> str:
     return value if len(value) <= limit else value[:27] + "…"
+
+
+def _legend_chip(entity_type: str) -> QLabel:
+    label = QLabel(
+        f'<span style="color:{TYPE_COLORS[entity_type]};">●</span>&nbsp;{entity_type.upper()}'
+    )
+    label.setObjectName("GraphLegendChip")
+    label.setToolTip(f"{entity_type.upper()} entities use this color in the graph")
+    return label
+
+
+def _graph_legend() -> QFrame:
+    legend = QFrame()
+    legend.setObjectName("GraphLegendPanel")
+    legend.setFixedWidth(112)
+    layout = QVBoxLayout(legend)
+    layout.setContentsMargins(10, 12, 10, 12)
+    layout.setSpacing(7)
+    title = QLabel("ENTITY\nCOLORS")
+    title.setObjectName("SectionEyebrow")
+    layout.addWidget(title)
+    for entity_type in ("source", "event", "host", "user", "ipv4", "domain", "sha256"):
+        layout.addWidget(_legend_chip(entity_type))
+    layout.addStretch(1)
+    return legend

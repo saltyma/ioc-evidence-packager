@@ -1,6 +1,6 @@
 """Source-linked evidence ledger and structured import diagnostics."""
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -85,8 +85,6 @@ class EvidenceView(QWidget):
         self._cancel_button = QPushButton("Cancel import")
         self._cancel_button.clicked.connect(self.cancel_requested)
         self._cancel_button.setVisible(False)
-        heading.addWidget(self._cancel_button, 0, Qt.AlignmentFlag.AlignTop)
-        heading.addWidget(self._import_button, 0, Qt.AlignmentFlag.AlignTop)
         root.addLayout(heading)
 
         summary = QFrame()
@@ -102,6 +100,8 @@ class EvidenceView(QWidget):
         self._progress.setMinimumWidth(240)
         self._progress.setVisible(False)
         summary_layout.addWidget(self._progress)
+        summary_layout.addWidget(self._cancel_button)
+        summary_layout.addWidget(self._import_button)
         root.addWidget(summary)
 
         filters = QHBoxLayout()
@@ -307,10 +307,10 @@ class EvidenceView(QWidget):
                 "DIRECT" if record.evidence_id in direct else "CONTEXT",
                 record.category,
                 record.action,
-                record.host_name or "—",
-                record.user_name or "—",
+                record.host_name or "None",
+                record.user_name or "None",
                 observable_text,
-                sightings.get(record.evidence_id, "—"),
+                sightings.get(record.evidence_id, "No match"),
                 record.source_name,
                 f"{record.declared_position_kind} {record.declared_position_value}",
             )
@@ -328,7 +328,7 @@ class EvidenceView(QWidget):
                 str(rejection.line_number) if rejection.line_number else "Source",
                 rejection.code,
                 rejection.message,
-                rejection.raw_excerpt or "—",
+                rejection.raw_excerpt or "Not retained",
             )
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)

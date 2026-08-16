@@ -1,10 +1,17 @@
 """Integration coverage for durable analyst reasoning and local intelligence."""
 
 import json
+import os
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
 import pytest
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+from PySide6.QtCore import QCoreApplication, QEvent  # noqa: E402
+from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from ioc_evidence_packager.application.services import NewCaseRequest, NewInvestigationRequest
 from ioc_evidence_packager.domain.models import PrivacyMode
@@ -16,9 +23,21 @@ from ioc_evidence_packager.domain.workspace import (
 from ioc_evidence_packager.presentation.desktop.app import build_desktop, create_qapplication
 from ioc_evidence_packager.reporting.models import ExportProfile
 
+_QT_APP = create_qapplication(["workspace-reasoning-test"])
+
+
+@pytest.fixture(autouse=True)
+def _drain_qt_events() -> Iterator[None]:
+    yield
+    for widget in QApplication.topLevelWidgets():
+        widget.close()
+        widget.deleteLater()
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    _QT_APP.processEvents()
+
 
 def _loaded_context(tmp_path: Path):  # type: ignore[no-untyped-def]
-    create_qapplication(["workspace-reasoning-test"])
+    _QT_APP.processEvents()
     context = build_desktop(tmp_path / "workspace.sqlite3")
     source = Path(__file__).parents[2] / "samples" / "input" / "canonical-demo.jsonl"
     preview = context.source_inspection_service.inspect(source)

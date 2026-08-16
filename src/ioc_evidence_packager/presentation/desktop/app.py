@@ -22,6 +22,7 @@ from ioc_evidence_packager.application.workspace_service import WorkspaceService
 from ioc_evidence_packager.ingestion import SourceInspectionService
 from ioc_evidence_packager.ingestion.registry import AdapterRegistry
 from ioc_evidence_packager.presentation.desktop.branding import application_icon
+from ioc_evidence_packager.presentation.desktop.diagnostics import install_crash_diagnostics
 from ioc_evidence_packager.presentation.desktop.main_window import MainWindow
 from ioc_evidence_packager.presentation.desktop.settings_store import DesktopSettingsStore
 from ioc_evidence_packager.presentation.desktop.theme import APP_STYLESHEET
@@ -194,6 +195,9 @@ def main(argv: list[str] | None = None) -> int:
         database_path = Path(temporary_directory.name) / "cases.sqlite3"
     else:
         database_path = args.database or default_database_path()
+
+    if not args.smoke_test:
+        install_crash_diagnostics(default_database_path().parent)
 
     try:
         context = build_desktop(database_path)

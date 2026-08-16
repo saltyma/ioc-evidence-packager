@@ -16,6 +16,7 @@ class DesktopPreferences:
     cache_hours: int = 24
     confirm_external_links: bool = True
     default_privacy_mode: str = "offline"
+    sidebar_collapsed: bool = False
 
 
 class DesktopSettingsStore:
@@ -43,6 +44,7 @@ class DesktopSettingsStore:
                 if default_privacy in {mode.value for mode in PrivacyMode}
                 else PrivacyMode.OFFLINE.value
             ),
+            sidebar_collapsed=_boolean(self._settings.value("appearance/sidebar_collapsed", False)),
         )
 
     def save(self, value: DesktopPreferences) -> None:
@@ -53,6 +55,7 @@ class DesktopSettingsStore:
         self._settings.setValue("intelligence/cache_hours", value.cache_hours)
         self._settings.setValue("privacy/confirm_external_links", value.confirm_external_links)
         self._settings.setValue("privacy/default_mode", value.default_privacy_mode)
+        self._settings.setValue("appearance/sidebar_collapsed", value.sidebar_collapsed)
         self._settings.sync()
 
     def reset(self) -> DesktopPreferences:

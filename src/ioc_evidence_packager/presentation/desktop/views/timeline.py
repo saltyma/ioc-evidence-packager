@@ -151,8 +151,8 @@ class TimelineView(QWidget):
                 "DIRECT" if record.evidence_id in direct else "CONTEXT",
                 record.category,
                 record.action,
-                record.host_name or "—",
-                record.user_name or "—",
+                record.host_name or "None",
+                record.user_name or "None",
                 record.source_name,
                 f"{record.declared_position_kind} {record.declared_position_value}",
             )

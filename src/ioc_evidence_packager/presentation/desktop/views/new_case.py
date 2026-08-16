@@ -236,7 +236,7 @@ class NewCaseDialog(QDialog):
         self._review_lead = QLabel()
         self._review_lead.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self._review_sources = QLabel()
-        self._review_policy = QLabel("Offline — no values leave this workstation")
+        self._review_policy = QLabel("Offline · No values leave this workstation")
         review_layout.addRow("Case", self._review_title)
         review_layout.addRow("Lead", self._review_lead)
         review_layout.addRow("Evidence sources", self._review_sources)
@@ -278,7 +278,9 @@ class NewCaseDialog(QDialog):
             source_item.setData(Qt.ItemDataRole.UserRole, path_key)
             source_item.setToolTip(path_key)
             self._source_table.setItem(row, 0, source_item)
-            for column, value in enumerate(["—", "Detecting…", "—", "Hashing…", "—"], 1):
+            for column, value in enumerate(
+                ["Pending", "Detecting…", "Pending", "Hashing…", "Pending"], 1
+            ):
                 self._source_table.setItem(row, column, QTableWidgetItem(value))
             self._source_table.setRowHeight(row, 42)
 

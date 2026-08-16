@@ -151,7 +151,11 @@ class IntelligenceView(QWidget):
         self._table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self._table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self._table.verticalHeader().setVisible(False)
-        self._table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        header = self._table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        header.setMinimumSectionSize(60)
+        for column, width in enumerate((130, 115, 130, 80, 135, 145, 70, 80, 80)):
+            self._table.setColumnWidth(column, width)
         self._table.cellClicked.connect(self._open_detail)
         root.addWidget(self._table, 1)
 
@@ -226,7 +230,7 @@ class IntelligenceView(QWidget):
         self._table.setRowCount(0)
         for row, item in enumerate(self._visible):
             self._table.insertRow(row)
-            conflict = "CONFLICT" if item.assertion_id in self._conflicts else "—"
+            conflict = "CONFLICT" if item.assertion_id in self._conflicts else "None"
             values = (
                 item.provider,
                 item.observable_type.upper(),
@@ -242,7 +246,7 @@ class IntelligenceView(QWidget):
                 cell = QTableWidgetItem(value)
                 if column == 3:
                     cell.setForeground(QBrush(QColor(CLAIM_COLORS[value])))
-                elif column == 8 and conflict != "—":
+                elif column == 8 and conflict != "None":
                     cell.setForeground(QBrush(QColor("#FF7F9F")))
                 elif column in {0, 2}:
                     cell.setForeground(QBrush(QColor("#70D6E8" if column == 0 else "#C9B8FF")))
@@ -260,7 +264,7 @@ class IntelligenceView(QWidget):
         text = (
             f"Assertion ID: {item.assertion_id}\nProvider: {item.provider}\nProvider version: {item.provider_version}\n"
             f"Origin: {item.origin.upper()}\nObservable type: {item.observable_type.upper()}\nObservable value: {item.observable_value}\n"
-            f"Claim: {item.claim.value}\nProvider confidence: {item.confidence_label}\nConflict state: {'CONFLICT — inspect other assertions for this observable' if conflict else 'No active contradictory claim'}\n"
+            f"Claim: {item.claim.value}\nProvider confidence: {item.confidence_label}\nConflict state: {'CONFLICT: inspect other assertions for this observable' if conflict else 'No active contradictory claim'}\n"
             f"Summary: {item.summary}\nRetrieved at ({self._display_timezone}): "
             f"{format_case_datetime(item.retrieved_at, self._display_timezone)}\n"
             f"Provider data timestamp ({self._display_timezone}): "
@@ -275,7 +279,7 @@ class IntelligenceView(QWidget):
             self._detail_dialog = DetailDialog(self)
         self._detail_dialog.present(
             window_title="Intelligence assertion details",
-            eyebrow="ATTRIBUTED — NOT SOURCE EVIDENCE",
+            eyebrow="ATTRIBUTED · NOT SOURCE EVIDENCE",
             title=f"{item.provider} · {item.observable_value}",
             text=text,
         )

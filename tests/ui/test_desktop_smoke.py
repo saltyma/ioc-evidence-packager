@@ -2,13 +2,15 @@
 
 import os
 import time
+from collections.abc import Iterator
 from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import QSettings  # noqa: E402
+import pytest  # noqa: E402
+from PySide6.QtCore import QCoreApplication, QEvent, QPoint, QSettings  # noqa: E402
 from PySide6.QtGui import QImage  # noqa: E402
-from PySide6.QtWidgets import QApplication, QPlainTextEdit  # noqa: E402
+from PySide6.QtWidgets import QApplication, QFrame, QLabel, QPlainTextEdit  # noqa: E402
 
 from ioc_evidence_packager.application.services import (  # noqa: E402
     NewCaseRequest,
@@ -28,6 +30,18 @@ from ioc_evidence_packager.presentation.desktop.settings_store import (  # noqa:
 from ioc_evidence_packager.presentation.desktop.views.new_case import (  # noqa: E402
     NewCaseDialog,
 )
+
+_QT_APP = create_qapplication(["ioc-evidence-packager-test"])
+
+
+@pytest.fixture(autouse=True)
+def _close_qt_windows_after_test() -> Iterator[None]:
+    yield
+    for widget in QApplication.topLevelWidgets():
+        widget.close()
+        widget.deleteLater()
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    _QT_APP.processEvents()
 
 
 def test_desktop_shell_opens_a_persisted_case(tmp_path: Path) -> None:
@@ -110,6 +124,60 @@ def test_corrupt_device_preferences_fall_back_to_safe_values(tmp_path: Path) -> 
     assert preferences.default_privacy_mode == "offline"
 
 
+def test_settings_and_collapsible_icon_sidebar_work_without_a_case(tmp_path: Path) -> None:
+    app = create_qapplication(["ioc-evidence-packager-shell-test"])
+    context = build_desktop(tmp_path / "shell.sqlite3")
+    window = context.window
+    window.show()
+    app.processEvents()
+
+    assert window._pages.contentsMargins().top() == 0  # noqa: SLF001
+    assert window._nav_buttons["Settings"].isEnabled()  # noqa: SLF001
+    assert not window._nav_buttons["Dashboard"].isEnabled()  # noqa: SLF001
+    assert all(not button.icon().isNull() for button in window._nav_buttons.values())  # noqa: SLF001
+    window.show_page("Settings")
+    assert window._pages.currentWidget() is window.settings_view  # noqa: SLF001
+    assert not window.settings_view._tabs.isTabEnabled(0)  # noqa: SLF001
+    expanded_right = (
+        window._floating_actions.mapTo(window, QPoint(0, 0)).x()  # noqa: SLF001
+        + window._floating_actions.width()  # noqa: SLF001
+    )
+
+    window._sidebar_toggle.click()  # noqa: SLF001
+    app.processEvents()
+    assert window._sidebar.width() == 72  # noqa: SLF001
+    assert window._sidebar_collapsed  # noqa: SLF001
+    assert not window._sidebar_logo.isVisible()  # noqa: SLF001
+    assert window._sidebar_toggle.iconSize().width() == 28  # noqa: SLF001
+    assert all(button.text() == "" for button in window._nav_buttons.values())  # noqa: SLF001
+    for button in window._nav_buttons.values():  # noqa: SLF001
+        button_left = button.mapTo(window._sidebar, QPoint(0, 0)).x()  # noqa: SLF001
+        assert abs(button_left + button.width() / 2 - window._sidebar.width() / 2) <= 1  # noqa: SLF001
+    toggle_top = window._sidebar_toggle.mapTo(window._sidebar, QPoint(0, 0)).y()  # noqa: SLF001
+    cases_top = (
+        window._nav_buttons["Cases"]
+        .mapTo(  # noqa: SLF001
+            window._sidebar,
+            QPoint(0, 0),  # noqa: SLF001
+        )
+        .y()
+    )
+    assert cases_top - (toggle_top + window._sidebar_toggle.height()) >= 16  # noqa: SLF001
+    collapsed_right = (
+        window._floating_actions.mapTo(window, QPoint(0, 0)).x()  # noqa: SLF001
+        + window._floating_actions.width()  # noqa: SLF001
+    )
+    assert abs(collapsed_right - expanded_right) <= 1
+
+    window._sidebar_toggle.click()  # noqa: SLF001
+    app.processEvents()
+    assert window._sidebar.width() == 226  # noqa: SLF001
+    assert window._nav_buttons["Settings"].text() == "Settings"  # noqa: SLF001
+
+    window.close()
+    app.processEvents()
+
+
 def test_background_import_populates_evidence_and_rejections(tmp_path: Path) -> None:
     app = create_qapplication(["ioc-evidence-packager-import-test"])
     context = build_desktop(tmp_path / "import.sqlite3")
@@ -137,7 +205,7 @@ def test_background_import_populates_evidence_and_rejections(tmp_path: Path) -> 
         app.processEvents()
 
     assert context.window._import_worker is None  # noqa: SLF001
-    assert context.window._jobs_button.text() == "Jobs  0"  # noqa: SLF001
+    assert context.window._jobs_button.text() == "Idle"  # noqa: SLF001
     assert context.window.evidence_view.evidence_row_count == 1
     assert context.window.evidence_view.rejection_row_count == 1
     assert context.window.timeline_view.row_count == 1
@@ -146,6 +214,9 @@ def test_background_import_populates_evidence_and_rejections(tmp_path: Path) -> 
     assert context.window.relationships_view.row_count > 0
     assert context.window.relationships_view.graph_node_count > 0
     assert context.window.relationships_view.graph_edge_count > 0
+    assert context.window.relationships_view.findChild(QFrame, "GraphLegendPanel") is not None
+    assert context.window.relationships_view.findChild(QLabel, "GraphSelectionStatus") is None
+    assert context.window._case_badge.text().endswith("Background import")  # noqa: SLF001
     assert context.window.recommendations_view.row_count > 0
     recommendations = context.window.recommendations_view
     recommendations._open_detail(0, 0)  # noqa: SLF001
@@ -207,7 +278,7 @@ def test_background_import_populates_evidence_and_rejections(tmp_path: Path) -> 
     assert "Mapped/searchable fields:" in source_dialog.detail_text
 
     relationships = context.window.relationships_view
-    relationships.open_graph_window()
+    relationships._graph_canvas.background_double_clicked.emit()  # noqa: SLF001
     app.processEvents()
     graph_window = relationships.graph_window
     assert graph_window is not None and graph_window.isVisible()
@@ -251,7 +322,7 @@ def test_background_capsule_export_updates_verified_history(tmp_path: Path) -> N
         app.processEvents()
 
     assert context.window._export_worker is None  # noqa: SLF001
-    assert context.window._jobs_button.text() == "Jobs  0"  # noqa: SLF001
+    assert context.window._jobs_button.text() == "Idle"  # noqa: SLF001
     assert (destination / "manifest.json").is_file()
     assert context.report_service.verify(destination).valid
     assert context.window.exports_view.history_row_count == 1
