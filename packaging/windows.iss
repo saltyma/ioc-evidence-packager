@@ -1,13 +1,13 @@
 [Setup]
 AppId={{EBC39804-3103-4CDE-986E-256316B571E2}
 AppName=IOC Evidence Packager
-AppVersion=0.8.0
+AppVersion=0.8.1
 AppPublisher=saltyma
 DefaultDirName={localappdata}\Programs\IOC Evidence Packager
 DefaultGroupName=IOC Evidence Packager
 PrivilegesRequired=lowest
 OutputDir=..\dist\installer
-OutputBaseFilename=ioc-evidence-packager-0.8.0-setup
+OutputBaseFilename=ioc-evidence-packager-0.8.1-setup
 Compression=lzma2
 SolidCompression=yes
 UninstallDisplayIcon={app}\IOCEvidencePackager.exe

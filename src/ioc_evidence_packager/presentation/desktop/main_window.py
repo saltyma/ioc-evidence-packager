@@ -266,7 +266,7 @@ class MainWindow(QMainWindow):
             layout.addWidget(button)
 
         layout.addStretch(1)
-        self._sidebar_version = QLabel("v0.8.0  ·  Analyst reasoning")
+        self._sidebar_version = QLabel("v0.8.1  ·  Analyst reasoning")
         self._sidebar_version.setObjectName("Muted")
         self._sidebar_version.setContentsMargins(10, 0, 0, 2)
         layout.addWidget(self._sidebar_version)

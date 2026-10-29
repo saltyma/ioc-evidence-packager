@@ -1,0 +1,12 @@
+# Source and documentation use consistent text checkout.
+* text=auto
+*.py text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf
+
+# Fixture hashes describe exact committed bytes on every operating system.
+samples/input/** -text
+samples/expected/** -text
+*.png binary
+*.ico binary

@@ -1,5 +1,7 @@
 """Explicit sidecar-profile CSV adapter for safe analyst-controlled mappings."""
 
+from __future__ import annotations
+
 import csv
 import hashlib
 import json

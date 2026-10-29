@@ -155,7 +155,7 @@ class SettingsView(QWidget):
         database.setReadOnly(True)
         schema = QLabel("6 · analyst reasoning workspace")
         schema.setObjectName("SemanticInfo")
-        app = QLabel("v0.8.0 · relationships, recommendations, intelligence, settings")
+        app = QLabel("v0.8.1 · relationships, recommendations, intelligence, settings")
         app.setObjectName("SemanticGood")
         form.addRow("Case database", database)
         form.addRow("SQLite schema", schema)

@@ -130,7 +130,7 @@ def create_qapplication(arguments: list[str] | None = None) -> QApplication:
 
     QCoreApplication.setOrganizationName(ORGANIZATION_NAME)
     QCoreApplication.setApplicationName(APPLICATION_NAME)
-    QCoreApplication.setApplicationVersion("0.8.0")
+    QCoreApplication.setApplicationVersion("0.8.1")
     existing = QApplication.instance()
     if existing is not None and not isinstance(existing, QApplication):
         raise RuntimeError("A non-GUI Qt application already exists in this process.")

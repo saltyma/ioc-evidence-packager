@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.1 - 2026-10-30
+
+- Preserve the exact committed fixture bytes on Windows checkout so SHA-256 verification remains meaningful.
+- Defer CSV type annotations for Python 3.11 runtime compatibility.
+- Run distribution verification on main as well as tagged releases.
+
 ## 0.8.0 - 2026-10-29
 
 - IPv6 canonicalization, exact recipes, IP adapter fields, graphs, and intelligence.

@@ -4,7 +4,7 @@
 
 Investigate a suspicious IP address, domain, or file fingerprint using exported security logs, then hand the findings to another analyst with their sources intact.
 
-**Version 0.8.0. Python 3.11+. MIT license.** The desktop works offline and stores cases locally in SQLite.
+**Version 0.8.1. Python 3.11+. MIT license.** The desktop works offline and stores cases locally in SQLite.
 
 An **IOC** (indicator of compromise) is a clue worth searching. You supply that clue and files from tools such as a firewall, endpoint monitor, DNS server, Wazuh, Suricata, or Hayabusa. The app shows where the exact value occurred, nearby activity, data that could not be searched, and records supporting each finding.
 
