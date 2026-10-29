@@ -1,5 +1,8 @@
 # Core and Smart Features
 
+> Release status: v0.8.0 implements the workflow in [README](../README.md) and the [release contract](RELEASE.md). This document also retains the broader product conception. Proposals such as STIX/platform handoffs, URL leads, PSL grouping, signatures, and additional adapters are future extensions, not shipped features. IPv6, case lifecycle, time bounds, evidence review, export selection/preview, and PDF/ZIP projections are now implemented.
+
+
 This document defines what the product should do, why each capability matters, and the guardrails that keep "smart" behavior explainable.
 
 ## Feature tiers

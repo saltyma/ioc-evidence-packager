@@ -1,6 +1,6 @@
 # Contributing
 
-The project is in its design/scaffold stage. Contributions should protect the narrow product contract in [docs/SCOPE.md](docs/SCOPE.md).
+The project ships a working v0.8.0 desktop investigation workspace. Contributions should protect the narrow product contract in [docs/SCOPE.md](docs/SCOPE.md).
 
 ## Development principles
 
@@ -14,9 +14,9 @@ The project is in its design/scaffold stage. Contributions should protect the na
 - Keep Offline mode complete and evidence content deterministic.
 - Make coverage, network disclosure, and partial-success behavior explicit.
 
-## Planned local setup
+## Local setup
 
-The first desktop slice is implemented. Create a local environment and run the quality gates with:
+Create a local environment and run the same checks as CI:
 
 ```powershell
 python -m venv .venv
@@ -72,4 +72,4 @@ Use clear imperative commit subjects. Pull requests should include purpose, scop
 
 ## Licensing
 
-No project license has been selected. Do not add third-party code, templates, images, or datasets until their licenses are compatible with the project's eventual license and properly attributed.
+The project uses the MIT license. Check third-party license compatibility and preserve attribution before adding code, assets, templates, or data.

@@ -18,15 +18,15 @@ from ioc_evidence_packager.storage.sqlite.connection import SQLiteDatabase
 INSERT_CASE = """
     INSERT INTO case_record (
         case_id, title, external_reference, summary, status, privacy_mode,
-        display_timezone, created_at, updated_at, last_opened_at
+        display_timezone, created_at, updated_at, last_opened_at, requested_start, requested_end
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 
 SELECT_CASE = """
     SELECT
         case_id, title, external_reference, summary, status, privacy_mode,
-        display_timezone, created_at, updated_at, last_opened_at
+        display_timezone, created_at, updated_at, last_opened_at, requested_start, requested_end
     FROM case_record
     WHERE case_id = ?
 """
@@ -34,7 +34,7 @@ SELECT_CASE = """
 LIST_RECENT_CASES = """
     SELECT
         case_id, title, external_reference, summary, status, privacy_mode,
-        display_timezone, created_at, updated_at, last_opened_at
+        display_timezone, created_at, updated_at, last_opened_at, requested_start, requested_end
     FROM case_record
     WHERE status != ?
     ORDER BY last_opened_at DESC, case_id ASC
@@ -207,6 +207,8 @@ def _case_parameters(case: Case) -> tuple[str | None, ...]:
         case.created_at.isoformat(),
         case.updated_at.isoformat(),
         case.last_opened_at.isoformat(),
+        case.requested_start.isoformat() if case.requested_start else None,
+        case.requested_end.isoformat() if case.requested_end else None,
     )
 
 
@@ -240,6 +242,12 @@ def _case_from_row(row: sqlite3.Row) -> Case:
     return Case(
         case_id=CaseId(values["case_id"]),
         title=values["title"],
+        requested_start=datetime.fromisoformat(values["requested_start"])
+        if values["requested_start"]
+        else None,
+        requested_end=datetime.fromisoformat(values["requested_end"])
+        if values["requested_end"]
+        else None,
         external_reference=values["external_reference"],
         summary=values["summary"],
         status=CaseStatus(values["status"]),

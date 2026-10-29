@@ -1,0 +1,38 @@
+name: Windows distribution
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e ".[dev,build]"
+      - run: python -m pytest -q
+      - run: python tools/verify_demo.py
+      - run: python -m build
+      - run: python tools/build_windows.py
+      - name: Launch frozen app with an isolated database
+        shell: pwsh
+        run: |
+          $process = Start-Process -FilePath dist/IOCEvidencePackager/IOCEvidencePackager.exe -ArgumentList '--smoke-test' -Wait -PassThru -WindowStyle Hidden
+          if ($process.ExitCode -ne 0) { throw "Frozen smoke test failed" }
+      - name: Compile per-user installer
+        shell: pwsh
+        run: |
+          & 'C:/Program Files (x86)/Inno Setup 6/ISCC.exe' packaging/windows.iss
+          if ($LASTEXITCODE -ne 0) { throw "Installer compilation failed" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ioc-evidence-packager-windows
+          path: |
+            dist/IOCEvidencePackager/
+            dist/*.whl
+            dist/*.tar.gz
+            dist/installer/*.exe

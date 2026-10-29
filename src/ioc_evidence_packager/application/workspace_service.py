@@ -206,9 +206,12 @@ class WorkspaceService:
         api_key = os.environ.get("IOC_PACKAGER_VT_API_KEY", "").strip()
         if not api_key:
             raise ValidationError("Set IOC_PACKAGER_VT_API_KEY in the launch environment first.")
-        collection = {"ipv4": "ip_addresses", "domain": "domains", "sha256": "files"}.get(
-            observable_type
-        )
+        collection = {
+            "ipv4": "ip_addresses",
+            "ipv6": "ip_addresses",
+            "domain": "domains",
+            "sha256": "files",
+        }.get(observable_type)
         if collection is None:
             raise ValidationError("VirusTotal lookup supports IPv4, domain, and SHA-256 values.")
         encoded = urllib.parse.quote(value, safe="")

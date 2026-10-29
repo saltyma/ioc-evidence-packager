@@ -1,5 +1,8 @@
 # Project Primer: What Is IOC Evidence Packager?
 
+> Release status: v0.8.0 implements the workflow in [README](../README.md) and the [release contract](RELEASE.md). This document also retains the broader product conception. Proposals such as STIX/platform handoffs, URL leads, PSL grouping, signatures, and additional adapters are future extensions, not shipped features. IPv6, case lifecycle, time bounds, evidence review, export selection/preview, and PDF/ZIP projections are now implemented.
+
+
 ## The short version
 
 IOC Evidence Packager answers a focused investigation question:

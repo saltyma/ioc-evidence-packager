@@ -49,6 +49,7 @@ TYPE_COLORS = {
     "host": "#67D7A4",
     "user": "#F2B84B",
     "ipv4": "#FF9F7A",
+    "ipv6": "#FFA960",
     "domain": "#A78BFA",
     "sha256": "#FF7F9F",
     "observable": "#D9D2E3",

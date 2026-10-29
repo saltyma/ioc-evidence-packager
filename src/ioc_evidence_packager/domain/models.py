@@ -44,8 +44,19 @@ class Case:
     last_opened_at: datetime
     external_reference: str | None = None
     summary: str | None = None
+    requested_start: datetime | None = None
+    requested_end: datetime | None = None
 
     def __post_init__(self) -> None:
+        for bound in (self.requested_start, self.requested_end):
+            if bound is not None and bound.tzinfo is None:
+                raise ValidationError("Investigation bounds must include a timezone.")
+        if (
+            self.requested_start
+            and self.requested_end
+            and self.requested_start > self.requested_end
+        ):
+            raise ValidationError("Investigation start must not follow its end.")
         if not self.case_id:
             raise ValidationError("Case ID cannot be empty.")
         if not self.title.strip():

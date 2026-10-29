@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QButtonGroup,
     QFrame,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
     QMainWindow,
     QMessageBox,
@@ -22,6 +23,7 @@ from PySide6.QtWidgets import (
 from ioc_evidence_packager.application.analysis_service import AnalysisService
 from ioc_evidence_packager.application.evidence_service import EvidenceService
 from ioc_evidence_packager.application.report_service import ReportService
+from ioc_evidence_packager.application.review_service import ReviewService
 from ioc_evidence_packager.application.services import CaseService, InvestigationSetup
 from ioc_evidence_packager.application.workspace_service import WorkspaceService
 from ioc_evidence_packager.domain.analysis import AnalysisSnapshot
@@ -33,6 +35,7 @@ from ioc_evidence_packager.domain.evidence import (
     ImportSummary,
 )
 from ioc_evidence_packager.domain.models import Case, CaseId, PrivacyMode
+from ioc_evidence_packager.domain.review import EvidenceReview
 from ioc_evidence_packager.domain.sources import SourcePreview
 from ioc_evidence_packager.domain.workspace import (
     AssertionId,
@@ -48,6 +51,7 @@ from ioc_evidence_packager.presentation.desktop.jobs import (
     CapsuleExportWorker,
     EvidenceImportWorker,
     IntelligenceLookupWorker,
+    ProjectionWorker,
 )
 from ioc_evidence_packager.presentation.desktop.settings_store import (
     DesktopPreferences,
@@ -71,6 +75,7 @@ from ioc_evidence_packager.reporting.models import (
     CapsuleResult,
     ExportProfile,
 )
+from ioc_evidence_packager.storage.sqlite.connection import SQLiteDatabase
 
 NAVIGATION = (
     ("Dashboard", "dashboard", "Case summary, findings, limitations, and next actions."),
@@ -261,7 +266,7 @@ class MainWindow(QMainWindow):
             layout.addWidget(button)
 
         layout.addStretch(1)
-        self._sidebar_version = QLabel("v0.7.0  ·  Analyst reasoning")
+        self._sidebar_version = QLabel("v0.8.0  ·  Analyst reasoning")
         self._sidebar_version.setObjectName("Muted")
         self._sidebar_version.setContentsMargins(10, 0, 0, 2)
         layout.addWidget(self._sidebar_version)
@@ -282,11 +287,16 @@ class MainWindow(QMainWindow):
         self.home_view = HomeView()
         self.home_view.create_requested.connect(self._create_case)
         self.home_view.open_requested.connect(self.open_case_by_id)
+        self._review_service = ReviewService(SQLiteDatabase(self._database_path))
+        self.home_view.rename_requested.connect(self._rename_case)
+        self.home_view.archive_requested.connect(self._archive_case)
+        self.home_view.restore_requested.connect(self._restore_case)
         self._page_indices["Cases"] = self._pages.addWidget(self.home_view)
 
         self.dashboard_view = DashboardView()
         self._page_indices["Dashboard"] = self._pages.addWidget(self.dashboard_view)
         self.evidence_view = EvidenceView()
+        self.evidence_view.review_requested.connect(self._review_evidence)
         self.evidence_view.import_requested.connect(self._start_import)
         self.evidence_view.cancel_requested.connect(self._cancel_import)
         self._page_indices["Evidence"] = self._pages.addWidget(self.evidence_view)
@@ -313,6 +323,9 @@ class MainWindow(QMainWindow):
         self.exports_view = ExportsView()
         self.exports_view.export_requested.connect(self._start_export)
         self.exports_view.verify_requested.connect(self._verify_capsule)
+        self.exports_view.projection_requested.connect(self._project_capsule)
+        self.exports_view.preview_requested.connect(self._preview_export)
+        self._projection_workers: list[ProjectionWorker] = []
         self._page_indices["Exports"] = self._pages.addWidget(self.exports_view)
         self.settings_view = SettingsView(self._database_path)
         self.settings_view.save_requested.connect(self._save_settings)
@@ -329,7 +342,7 @@ class MainWindow(QMainWindow):
         self._status_text.setObjectName("Muted")
         layout.addWidget(self._status_text)
         layout.addStretch(1)
-        schema = QLabel("Schema 6")
+        schema = QLabel("Schema 7")
         schema.setObjectName("Muted")
         layout.addWidget(schema)
         return bar
@@ -444,6 +457,55 @@ class MainWindow(QMainWindow):
         )
         self.show_page("Dashboard")
 
+    def _rename_case(self, case_id: str) -> None:
+        if self._background_job_count():
+            return
+        title, accepted = QInputDialog.getText(self, "Rename case", "New case title")
+        if accepted:
+            try:
+                self._review_service.rename(CaseId(case_id), title)
+                self.refresh_cases()
+                if self._current_case and str(self._current_case.case_id) == case_id:
+                    self.open_case_by_id(case_id)
+            except IOCEvidencePackagerError as error:
+                self._show_error("Could not rename case", str(error))
+
+    def _archive_case(self, case_id: str) -> None:
+        if self._background_job_count():
+            return
+        self._review_service.archive(CaseId(case_id), True)
+        if self._current_case and str(self._current_case.case_id) == case_id:
+            self._current_case = None
+            self._current_setup = None
+            for name, button in self._nav_buttons.items():
+                button.setEnabled(name in {"Cases", "Settings"})
+            self._case_badge.setText("No open case")
+        self.refresh_cases()
+        self.show_page("Cases")
+
+    def _restore_case(self) -> None:
+        cases = self._review_service.archived_cases()
+        if not cases:
+            self._status_text.setText("No archived cases to restore")
+            return
+        labels = [f"{title} ({case_id})" for case_id, title in cases]
+        selected, accepted = QInputDialog.getItem(
+            self, "Restore case", "Archived case", labels, 0, False
+        )
+        if accepted:
+            self._review_service.archive(CaseId(cases[labels.index(selected)][0]), False)
+            self.refresh_cases()
+
+    def _review_evidence(self, evidence_id: str, value: object) -> None:
+        if self._current_case and isinstance(value, EvidenceReview):
+            try:
+                self._review_service.save(self._current_case.case_id, evidence_id, value)
+                self.evidence_view.set_reviews(
+                    self._review_service.reviews(self._current_case.case_id)
+                )
+            except IOCEvidencePackagerError as error:
+                self._show_error("Could not save evidence review", str(error))
+
     def _create_case(self) -> None:
         if self._background_job_count():
             self._show_error(
@@ -475,6 +537,20 @@ class MainWindow(QMainWindow):
         if active is None:
             return
         records = tuple(self._evidence_service.list_evidence(active.case.case_id))
+        if active.case.requested_start or active.case.requested_end:
+            records = tuple(
+                record
+                for record in records
+                if record.occurred_at is not None
+                and (
+                    active.case.requested_start is None
+                    or record.occurred_at >= active.case.requested_start
+                )
+                and (
+                    active.case.requested_end is None
+                    or record.occurred_at <= active.case.requested_end
+                )
+            )
         rejections = tuple(self._evidence_service.list_rejections(active.case.case_id))
         analysis: AnalysisSnapshot | None = None
         if active.lead is not None and (records or rejections):
@@ -484,12 +560,15 @@ class MainWindow(QMainWindow):
                 active.source_previews,
                 records,
                 rejections,
+                requested_start=active.case.requested_start,
+                requested_end=active.case.requested_end,
             )
         self._records = records
         self._rejections = rejections
         self._analysis = analysis
         self._relationships = self._workspace_service.relationships(records)
         self.evidence_view.set_investigation(active, list(records), list(rejections))
+        self.evidence_view.set_reviews(self._review_service.reviews(active.case.case_id))
         self.evidence_view.set_analysis(analysis)
         self.coverage_view.set_analysis(analysis)
         self.timeline_view.set_records(records, analysis, active.case.display_timezone)
@@ -592,6 +671,8 @@ class MainWindow(QMainWindow):
                 self._records,
                 self._rejections,
                 force=True,
+                requested_start=setup.case.requested_start,
+                requested_end=setup.case.requested_end,
             )
         except Exception as error:  # noqa: BLE001 - keep analysis failure inside the GUI
             self._show_error("IOC analysis failed", str(error))
@@ -650,7 +731,7 @@ class MainWindow(QMainWindow):
             (item.kind, item.canonical)
             for record in self._records
             for item in record.observables
-            if item.kind in {"ipv4", "domain", "sha256"}
+            if item.kind in {"ipv4", "ipv6", "domain", "sha256"}
         }
         if self._current_setup is not None and self._current_setup.lead is not None:
             lead = self._current_setup.lead
@@ -830,6 +911,57 @@ class MainWindow(QMainWindow):
                     high_contrast=self._preferences.high_contrast,
                 )
             )
+
+    def _project_capsule(self, source: str, destination: str, kind: str) -> None:
+        worker = ProjectionWorker(Path(source), Path(destination), kind)
+        self._projection_workers.append(worker)
+        worker.signals.completed.connect(
+            lambda path: self._status_text.setText("Projection created: " + path)
+        )
+        worker.signals.failed.connect(
+            lambda message: self._show_error("Projection failed", message)
+        )
+        self._thread_pool.start(worker)
+
+    def _preview_export(self, profile_value: str) -> None:
+        import json
+        from datetime import UTC, datetime
+
+        from ioc_evidence_packager.reporting.capsule import _build_projection
+        from ioc_evidence_packager.reporting.models import CaseReport, ExportId
+
+        setup = self._current_setup
+        if setup is None or self._analysis is None:
+            return
+        report = CaseReport(
+            setup.case,
+            setup.lead,
+            setup.source_previews,
+            self._records,
+            self._rejections,
+            self._analysis,
+            self._relationships,
+            self._workspace_service.recommendations(
+                setup.case.case_id, self._analysis, self._relationships
+            ),
+            self._workspace_service.assertions(setup.case.case_id),
+            self._review_service.reviews(setup.case.case_id),
+        )
+        projection = _build_projection(report, ExportProfile(profile_value), ExportId("preview"))
+        projection.pop("report")
+        text = "Preview generated at " + datetime.now(UTC).isoformat() + "\n"
+        text += (
+            "Pseudonyms will differ in the finalized capsule. Coverage describes searched scope.\n"
+        )
+        text += json.dumps(projection, ensure_ascii=False, indent=2)
+        dialog = DetailDialog(self)
+        dialog.present(
+            window_title="Export preview",
+            eyebrow="PROJECTED HANDOFF",
+            title=profile_value,
+            text=text,
+        )
+        self._export_preview = dialog
 
     def _start_export(self, profile_value: str, destination_value: str) -> None:
         if self._background_job_count():

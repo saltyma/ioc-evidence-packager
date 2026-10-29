@@ -4,15 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ioc-evidence-packager"
-version = "0.7.0"
+version = "0.8.0"
 description = "Build coverage-aware IOC investigations and portable, verifiable evidence handoffs."
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "saltyma" }]
+license = "MIT"
 dependencies = [
   "Jinja2>=3.1,<4",
+  "reportlab>=4.4,<6",
   "PySide6>=6.8,<7",
 ]
+
+[project.scripts]
+ioc-capsule = "ioc_evidence_packager.capsule_cli:main"
 
 [project.gui-scripts]
 ioc-evidence-packager = "ioc_evidence_packager.presentation.desktop.app:main"
@@ -21,6 +26,7 @@ ioc-evidence-packager = "ioc_evidence_packager.presentation.desktop.app:main"
 include-package-data = false
 
 [project.optional-dependencies]
+build = ["pyinstaller>=6.10,<7", "build>=1.2,<2"]
 dev = [
   "mypy>=1.15,<2",
   "pytest>=8.3,<9",
@@ -37,9 +43,6 @@ where = ["src"]
   "assets/*.ico",
   "assets/*.svg",
 ]
-
-[tool.setuptools.exclude-package-data]
-"ioc_evidence_packager.presentation.desktop" = ["assets/*.svg"]
 
 [tool.pytest.ini_options]
 addopts = "-ra --strict-config --strict-markers"
@@ -61,3 +64,7 @@ python_version = "3.11"
 strict = true
 packages = ["ioc_evidence_packager"]
 mypy_path = "src"
+
+[[tool.mypy.overrides]]
+module = ["reportlab.*"]
+ignore_missing_imports = true

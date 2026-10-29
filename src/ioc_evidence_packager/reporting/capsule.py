@@ -174,12 +174,34 @@ def _build_projection(
     evidence = [
         _evidence_projection(record, sightings_by_evidence[str(record.evidence_id)], profile, salt)
         for record in report.evidence
+        if str(record.evidence_id) not in report.reviews
+        or report.reviews[str(record.evidence_id)].included
     ]
     coverage = [_coverage_projection(cell) for cell in report.analysis.coverage]
     sources = [_source_projection(preview, report, profile) for preview in report.source_previews]
     relationships = _relationship_projection(report, profile, salt)
     recommendations = [_recommendation_projection(item, profile) for item in report.recommendations]
     intelligence = [_intelligence_projection(item, profile) for item in report.intelligence]
+    selected_ids = {item["evidence_id"] for item in evidence}
+    omitted = len(report.evidence) - len(evidence)
+    for item in evidence:
+        review = report.reviews.get(item["evidence_id"])
+        if review and profile is ExportProfile.FULL_INTERNAL:
+            item["analyst_review"] = {"bookmarked": review.bookmarked, "note": review.note}
+    for cell in coverage:
+        cell["evidence_ids"] = [value for value in cell["evidence_ids"] if value in selected_ids]
+    for key in ("nodes", "edges"):
+        for item in relationships[key]:
+            item["evidence_ids"] = [
+                value for value in item["evidence_ids"] if value in selected_ids
+            ]
+        relationships[key] = [item for item in relationships[key] if item["evidence_ids"]]
+    edge_ids = {item["relationship_id"] for item in relationships["edges"]}
+    for item in recommendations:
+        item["evidence_ids"] = [value for value in item["evidence_ids"] if value in selected_ids]
+        item["relationship_ids"] = [
+            value for value in item["relationship_ids"] if value in edge_ids
+        ]
     limitations = [
         cell["reason"]["message"]
         for cell in coverage
@@ -191,6 +213,14 @@ def _build_projection(
             CoverageState.FORMAT_UNSUPPORTED.value,
         }
     ]
+    if omitted:
+        limitations.append(
+            f"Analyst-selected export: {omitted} evidence record(s) omitted. Coverage states summarize the searched case; citations below are limited to exported records."
+        )
+    if report.case.requested_start or report.case.requested_end:
+        limitations.append(
+            f"Requested inclusive UTC window: {report.case.requested_start} to {report.case.requested_end}. Undated and out-of-window records were retained locally but excluded from this view."
+        )
     return {
         "report": report,
         "profile": profile.value,
@@ -497,6 +527,15 @@ def _manifest(
             else str(report.case.case_id)
         ),
         "export_profile": profile.value,
+        "selection": {
+            "omitted_records": sum(not item.included for item in report.reviews.values())
+        },
+        "requested_window": {
+            "start": report.case.requested_start.isoformat()
+            if report.case.requested_start
+            else None,
+            "end": report.case.requested_end.isoformat() if report.case.requested_end else None,
+        },
         "created_at": created_at.isoformat(),
         "tool": {"name": "ioc-evidence-packager", "version": __version__},
         "run_ids": [str(report.analysis.run_id)],

@@ -26,6 +26,8 @@ class NewCaseRequest:
     summary: str | None = None
     display_timezone: str = "UTC"
     privacy_mode: PrivacyMode = PrivacyMode.OFFLINE
+    requested_start: datetime | None = None
+    requested_end: datetime | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -120,6 +122,8 @@ class CaseService:
         case = Case(
             case_id=self._id_generator.new_case_id(),
             title=title,
+            requested_start=request.requested_start,
+            requested_end=request.requested_end,
             external_reference=external_reference,
             summary=summary,
             status=CaseStatus.DRAFT,

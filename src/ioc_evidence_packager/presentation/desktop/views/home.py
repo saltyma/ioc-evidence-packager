@@ -24,6 +24,9 @@ from ioc_evidence_packager.domain.timezones import format_case_datetime
 class HomeView(QWidget):
     """Landing page with a guided start and recent investigations."""
 
+    rename_requested = Signal(str)
+    archive_requested = Signal(str)
+    restore_requested = Signal()
     create_requested = Signal()
     open_requested = Signal(str)
 
@@ -86,6 +89,20 @@ class HomeView(QWidget):
         self._open_button.setEnabled(False)
         self._open_button.clicked.connect(self._emit_selected_case)
         recent_header.addWidget(self._open_button)
+        for label, signal in (
+            ("Rename", self.rename_requested),
+            ("Archive", self.archive_requested),
+        ):
+            button = QPushButton(label)
+            button.clicked.connect(
+                lambda _checked=False, target=signal: (
+                    target.emit(self._selected_case_id()) if self._selected_case_id() else None
+                )
+            )
+            recent_header.addWidget(button)
+        restore = QPushButton("Restore archived")
+        restore.clicked.connect(self.restore_requested.emit)
+        recent_header.addWidget(restore)
         root.addLayout(recent_header)
 
         self._table = QTableWidget(0, 4)

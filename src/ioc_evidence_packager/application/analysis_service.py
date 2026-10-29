@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+from dataclasses import replace
 from datetime import UTC, datetime
 from uuid import uuid4
 
@@ -30,7 +31,25 @@ class AnalysisService:
         rejections: tuple[ImportRejection, ...],
         *,
         force: bool = False,
+        requested_start: datetime | None = None,
+        requested_end: datetime | None = None,
     ) -> AnalysisSnapshot:
+        if requested_start or requested_end:
+            evidence = tuple(
+                record
+                for record in evidence
+                if record.occurred_at is not None
+                and (requested_start is None or record.occurred_at >= requested_start)
+                and (requested_end is None or record.occurred_at <= requested_end)
+            )
+            scope_warning = (
+                f"Requested inclusive window: {requested_start} to {requested_end}. "
+                "Undated records are excluded; source continuity is not established."
+            )
+            previews = tuple(
+                replace(preview, warnings=preview.warnings + (scope_warning,))
+                for preview in previews
+            )
         recipe = recipe_for(lead.observable_type)
         fingerprint = _input_fingerprint(lead, previews, evidence, rejections)
         existing = self._repository.latest_analysis(case_id)

@@ -1,5 +1,8 @@
 # Scope and First-Release Product Contract
 
+> Release status: v0.8.0 implements the workflow in [README](../README.md) and the [release contract](RELEASE.md). This document also retains the broader product conception. Proposals such as STIX/platform handoffs, URL leads, PSL grouping, signatures, and additional adapters are future extensions, not shipped features. IPv6, case lifecycle, time bounds, evidence review, export selection/preview, and PDF/ZIP projections are now implemented.
+
+
 ## Goal
 
 Build a local-first desktop application that investigates validated observables across approved evidence exports and produces a coverage-aware, source-linked case that another analyst can review or export without access to the original consoles.

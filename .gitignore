@@ -15,6 +15,7 @@ venv/
 # Build output
 build/
 dist/
+*.spec
 
 # IDE and OS
 .idea/

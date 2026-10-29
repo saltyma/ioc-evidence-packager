@@ -3,7 +3,10 @@
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QAbstractItemView,
+    QCheckBox,
     QComboBox,
+    QDialog,
+    QDialogButtonBox,
     QFrame,
     QHBoxLayout,
     QHeaderView,
@@ -14,6 +17,7 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -27,6 +31,7 @@ from ioc_evidence_packager.domain.evidence import (
     ImportSummary,
 )
 from ioc_evidence_packager.domain.models import CaseId
+from ioc_evidence_packager.domain.review import EvidenceReview
 from ioc_evidence_packager.domain.sources import PreviewStatus, SourcePreview
 from ioc_evidence_packager.domain.timezones import UTC_DISPLAY, format_case_datetime
 from ioc_evidence_packager.presentation.desktop.views.detail_dialog import DetailDialog
@@ -35,6 +40,7 @@ from ioc_evidence_packager.presentation.desktop.views.detail_dialog import Detai
 class EvidenceView(QWidget):
     """Imports previewed sources and exposes every accepted/rejected source line."""
 
+    review_requested = Signal(str, object)
     import_requested = Signal(object, object)
     cancel_requested = Signal()
 
@@ -42,6 +48,7 @@ class EvidenceView(QWidget):
         super().__init__(parent)
         self._case_id: CaseId | None = None
         self._previews: tuple[SourcePreview, ...] = ()
+        self._reviews: dict[str, EvidenceReview] = {}
         self._records: list[EvidenceRecord] = []
         self._visible_records: list[EvidenceRecord] = []
         self._rejections: list[ImportRejection] = []
@@ -107,7 +114,14 @@ class EvidenceView(QWidget):
         filters = QHBoxLayout()
         self._classification_filter = QComboBox()
         self._classification_filter.addItems(
-            ("All evidence", "Direct matches", "Context", "Undated")
+            (
+                "All evidence",
+                "Direct matches",
+                "Context",
+                "Undated",
+                "Bookmarked",
+                "Excluded from export",
+            )
         )
         self._classification_filter.currentIndexChanged.connect(self._apply_evidence_filters)
         self._search = QLineEdit()
@@ -117,6 +131,9 @@ class EvidenceView(QWidget):
         self._search.textChanged.connect(self._apply_evidence_filters)
         filters.addWidget(self._classification_filter)
         filters.addWidget(self._search, 1)
+        review_button = QPushButton("Bookmark / note / export selection")
+        review_button.clicked.connect(self._edit_selected_review)
+        filters.addWidget(review_button)
         root.addLayout(filters)
 
         self._tabs = QTabWidget()
@@ -211,6 +228,44 @@ class EvidenceView(QWidget):
         self._tabs.setTabText(0, f"Evidence · {len(records)}")
         self._tabs.setTabText(1, f"Rejections · {len(rejections)}")
 
+    def set_reviews(self, values: dict[str, EvidenceReview]) -> None:
+        self._reviews = values
+        self._apply_evidence_filters()
+
+    def _edit_selected_review(self) -> None:
+        row = self._evidence_table.currentRow()
+        if not 0 <= row < len(self._visible_records):
+            return
+        record = self._visible_records[row]
+        review = self._reviews.get(str(record.evidence_id), EvidenceReview())
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Analyst review: " + record.event_id)
+        dialog.resize(640, 400)
+        layout = QVBoxLayout(dialog)
+        bookmark = QCheckBox("Bookmark this record")
+        bookmark.setChecked(review.bookmarked)
+        include = QCheckBox("Include in exported handoff")
+        include.setChecked(review.included)
+        note = QTextEdit()
+        note.setAcceptRichText(False)
+        note.setPlainText(review.note)
+        note.setPlaceholderText(
+            "Analyst note (up to 8000 characters); source bytes stay unchanged."
+        )
+        for widget in (bookmark, include, note):
+            layout.addWidget(widget)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.review_requested.emit(
+                str(record.evidence_id),
+                EvidenceReview(bookmark.isChecked(), note.toPlainText(), include.isChecked()),
+            )
+
     def set_analysis(self, analysis: AnalysisSnapshot | None) -> None:
         self._analysis = analysis
         self._apply_evidence_filters()
@@ -259,6 +314,11 @@ class EvidenceView(QWidget):
         query = self._search.text().strip().casefold()
         visible: list[EvidenceRecord] = []
         for record in self._records:
+            review = self._reviews.get(str(record.evidence_id), EvidenceReview())
+            if mode == "Bookmarked" and not review.bookmarked:
+                continue
+            if mode == "Excluded from export" and review.included:
+                continue
             is_direct = record.evidence_id in direct
             if mode == "Direct matches" and not is_direct:
                 continue

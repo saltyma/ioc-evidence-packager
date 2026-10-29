@@ -41,8 +41,8 @@ def test_initial_migration_is_idempotent(tmp_path: Path) -> None:
         table = connection.execute(
             "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'case_record'"
         ).fetchone()
-    assert version == 6
-    assert migration_count == 6
+    assert version == 7
+    assert migration_count == 7
     assert table is not None
 
 

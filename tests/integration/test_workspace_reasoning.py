@@ -260,14 +260,17 @@ def test_schema_five_database_upgrades_to_reasoning_tables(tmp_path: Path) -> No
     with context.database.connection() as connection:
         connection.execute("DROP TABLE intelligence_assertion")
         connection.execute("DROP TABLE recommendation_state")
-        connection.execute("DELETE FROM schema_migration WHERE version = 6")
+        connection.execute("DROP TABLE evidence_review")
+        connection.execute("ALTER TABLE case_record DROP COLUMN requested_start")
+        connection.execute("ALTER TABLE case_record DROP COLUMN requested_end")
+        connection.execute("DELETE FROM schema_migration WHERE version >= 6")
         connection.execute("PRAGMA user_version = 5")
         connection.commit()
 
     context.database.initialize()
 
     with context.database.connection() as connection:
-        assert connection.execute("PRAGMA user_version").fetchone()[0] == 6
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 7
         tables = {
             row[0]
             for row in connection.execute(

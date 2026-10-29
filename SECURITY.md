@@ -2,7 +2,7 @@
 
 ## Current maturity
 
-The repository is a scaffold and must not yet be used as a forensic production tool. There is no stable release, security support window, or validated evidence-processing implementation.
+Version 0.8.0 is a tested portfolio desktop application. Automated tests cover evidence processing and hostile inputs; production forensic deployment, independent security review, operational validation, and a support SLA have not been claimed.
 
 ## Reporting a vulnerability
 
@@ -17,7 +17,7 @@ Do not publish sensitive exploit details, real evidence, credentials, or persona
 - Remember that HTML/PDF/JSON reports may reproduce sensitive source fields.
 - A SHA-256 manifest detects changes but does not establish acquisition history or legal admissibility.
 
-## Planned defensive controls
+## Implemented defensive controls
 
 - Complete Offline mode: no provider calls, DNS resolution, update checks, remote UI assets, or telemetry.
 - A policy gate and disclosure preview before every optional network connector receives data.
@@ -28,12 +28,12 @@ Do not publish sensitive exploit details, real evidence, credentials, or persona
 - Separation of raw evidence, normalized values, correlations, and analyst conclusions.
 - Explicit counts for skipped files and rejected records.
 - Transactional background jobs with accurate failed/cancelled/partial states.
-- Operating-system credential storage or secret references; no keys in case databases or exports.
+- Environment-only provider key references; no keys in case databases or exports.
 - Security tests using malicious HTML, CSV formulas, traversal strings, malformed Unicode/JSON, oversized fields, and secret-leak assertions.
 
 ## External enrichment
 
-Any future enrichment must be opt-in. The GUI must show the provider, exact observable/category leaving the workstation, purpose, cache behavior, and authentication state before execution. Safe Enrichment sends observable values only; files, raw events, usernames, hostnames, paths, notes, and case titles remain denied by default. Provider assertions retain attribution and never replace local facts.
+The optional VirusTotal object-report connector is opt-in. The GUI must show the provider, exact observable/category leaving the workstation, purpose, cache behavior, and authentication state before execution. Safe Enrichment sends observable values only; files, raw events, usernames, hostnames, paths, notes, and case titles remain denied by default. Provider assertions retain attribution and never replace local facts.
 
 The CLI, when added, must apply the same policy service and require an explicit non-offline policy/configuration rather than bypassing GUI safeguards.
 
@@ -48,4 +48,4 @@ The CLI, when added, must apply the same policy service and require an explicit 
 
 ## Supported versions
 
-No versions are currently supported. This section will be updated when the first release is published.
+Report reproducible issues against the latest 0.8.x release. This is a community portfolio project without a guaranteed response time or enterprise support window.

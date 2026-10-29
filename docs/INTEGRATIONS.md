@@ -1,5 +1,8 @@
 # Integrations and Enrichment
 
+> Release status: v0.8.0 implements the workflow in [README](../README.md) and the [release contract](RELEASE.md). This document also retains the broader product conception. Proposals such as STIX/platform handoffs, URL leads, PSL grouping, signatures, and additional adapters are future extensions, not shipped features. IPv6, case lifecycle, time bounds, evidence review, export selection/preview, and PDF/ZIP projections are now implemented.
+
+
 ## Strategy
 
 Integrations should make the local evidence story richer or easier to hand off without turning the core into a SIEM, collector, or intelligence platform.

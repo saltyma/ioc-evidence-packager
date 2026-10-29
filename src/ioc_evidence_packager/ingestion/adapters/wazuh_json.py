@@ -45,12 +45,12 @@ class WazuhJsonAdapter(JsonlRecordAdapter):
             observable(
                 nested_value(record, "data.srcip", "data.src_ip"),
                 source_path,
-                ObservableType.IPV4,
+                "ip",
             ),
             observable(
                 nested_value(record, "data.dstip", "data.dest_ip", "data.dst_ip"),
                 "network.destination_ip",
-                ObservableType.IPV4,
+                "ip",
             ),
             observable(
                 nested_value(record, "data.query", "data.dns.question"),

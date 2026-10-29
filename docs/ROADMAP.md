@@ -1,5 +1,12 @@
 # Roadmap
 
+## v0.8.0 closeout
+
+Implemented after the original workspace: IPv6 throughout matching/adapters/graph/TI; rename/archive/restore; inclusive investigation bounds; evidence bookmarks, notes, and export selection; projection preview; independent verifier; optional PDF and ZIP projections; MIT licensing; quality CI; Windows build and installer automation. See [RELEASE.md](RELEASE.md) for acceptance and explicit future extensions.
+
+The phase list below records the earlier conception. A platform handoff, code signing, PSL/ATT&CK grouping, and ecosystem expansion remain optional future work. A configured packaging workflow must pass on its published commit before distribution validation is claimed.
+
+
 The roadmap is GUI-first and vertical. Every phase ends in a demonstrable analyst outcome while the evidence core stays headless and testable. Dates remain absent until the first two slices establish real velocity.
 
 ## Phase 0 - Product conception (complete)
@@ -39,12 +46,12 @@ The roadmap is GUI-first and vertical. Every phase ends in a demonstrable analys
 - [x] Implement versioned IOC search recipes and structured direct-match explanations.
 - [x] Build the source-linked Evidence ledger and raw/provenance detail view.
 - [x] Add Evidence text/classification filters.
-- [ ] Add bookmarks and analyst annotations as reviewed workflow refinements.
+- [x] Add bookmarks, analyst notes, and export inclusion in v0.8.0.
 - [x] Implement the six Evidence Coverage Matrix states and calculation reasons.
 - [x] Add coverage-aware Dashboard summaries.
 - [x] Add a basic deterministic Timeline with an Undated lane.
 - [x] Test planted matches, lookalikes, missing sources, partial processing, and failed sources.
-- [ ] Expand mixed-time-zone and ambiguous-timestamp fixtures with practical adapters.
+- [x] Cover offset and ambiguous timestamps through practical adapter fixtures.
 - [x] Test import duplicates, malformed records, changed source bytes, and cancellation boundaries.
 
 **Exit demo:** find all planted sightings, explain every inclusion, and show why missing or partial telemetry limits the conclusion.
@@ -92,12 +99,12 @@ The roadmap is GUI-first and vertical. Every phase ends in a demonstrable analys
 
 ## Phase 8 - Packaging quality and handoffs
 
-- Add redaction profiles and cross-artifact preview.
+- [x] Full/redacted profiles and export projection preview.
 - [x] Add timeline CSV and relationship graph JSON to the verified capsule.
-- Add optional PDF and ZIP capsule projections.
-- Add verification utility and evaluate detached signatures.
+- [x] Optional separate PDF and ZIP projections of verified capsules.
+- [x] Independent verification CLI. Detached signatures remain an optional extension.
 - Add one reviewed platform handoff such as TheHive, MISP, OpenCTI, or Timesketch.
-- Package a Windows installer; test upgrades, migrations, and clean-machine launch.
+- [x] Windows frozen build, installer script, and runner launch workflow; migrations covered by tests. Operational installed-upgrade validation is separate.
 
 **Exit:** internal, redacted, executive, and machine handoffs are reliable, verifiable, and clearly scoped.
 

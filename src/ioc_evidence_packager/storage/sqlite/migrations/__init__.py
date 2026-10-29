@@ -328,6 +328,42 @@ MIGRATIONS = (
             """,
         ),
     ),
+    Migration(
+        version=7,
+        name="add_case_scope_and_evidence_review",
+        statements=(
+            "ALTER TABLE case_record ADD COLUMN requested_start TEXT",
+            "ALTER TABLE case_record ADD COLUMN requested_end TEXT",
+            "CREATE TEMP TABLE preserved_sightings AS SELECT * FROM sighting",
+            """CREATE TABLE case_observable_v7 (
+                observable_id TEXT PRIMARY KEY,
+                case_id TEXT NOT NULL REFERENCES case_record(case_id) ON DELETE CASCADE,
+                role TEXT NOT NULL CHECK(role IN ('lead', 'pivot')),
+                observable_type TEXT NOT NULL
+                    CHECK(observable_type IN ('ipv4','ipv6','domain','sha256')),
+                original_value TEXT NOT NULL, canonical_value TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )""",
+            "INSERT INTO case_observable_v7 SELECT * FROM case_observable",
+            "DROP TABLE case_observable",
+            "ALTER TABLE case_observable_v7 RENAME TO case_observable",
+            "INSERT INTO sighting SELECT * FROM preserved_sightings",
+            "DROP TABLE preserved_sightings",
+            "CREATE UNIQUE INDEX idx_case_observable_one_lead "
+            "ON case_observable(case_id) WHERE role = 'lead'",
+            "CREATE INDEX idx_case_observable_lookup "
+            "ON case_observable(observable_type,canonical_value)",
+            """CREATE TABLE evidence_review (
+                case_id TEXT NOT NULL REFERENCES case_record(case_id),
+                evidence_id TEXT NOT NULL REFERENCES evidence_record(evidence_id),
+                bookmarked INTEGER NOT NULL DEFAULT 0 CHECK(bookmarked IN (0,1)),
+                note TEXT NOT NULL DEFAULT '',
+                included INTEGER NOT NULL DEFAULT 1 CHECK(included IN (0,1)),
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY(case_id,evidence_id)
+            )""",
+        ),
+    ),
 )
 
 LATEST_SCHEMA_VERSION = MIGRATIONS[-1].version

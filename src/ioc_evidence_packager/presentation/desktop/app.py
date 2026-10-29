@@ -13,6 +13,7 @@ from PySide6.QtWidgets import QApplication
 from ioc_evidence_packager.application.analysis_service import AnalysisService
 from ioc_evidence_packager.application.evidence_service import EvidenceService
 from ioc_evidence_packager.application.report_service import ReportService
+from ioc_evidence_packager.application.review_service import ReviewService
 from ioc_evidence_packager.application.services import (
     CaseService,
     NewCaseRequest,
@@ -89,7 +90,7 @@ def build_desktop(database_path: Path) -> DesktopContext:
     adapter_registry = AdapterRegistry()
     evidence_service = EvidenceService(SQLiteEvidenceRepository(database), adapter_registry)
     analysis_service = AnalysisService(SQLiteAnalysisRepository(database))
-    report_service = ReportService(SQLiteExportRepository(database))
+    report_service = ReportService(SQLiteExportRepository(database), ReviewService(database))
     workspace_service = WorkspaceService(SQLiteWorkspaceRepository(database))
     settings_store = DesktopSettingsStore()
     source_inspection_service = SourceInspectionService(adapter_registry)
@@ -129,7 +130,7 @@ def create_qapplication(arguments: list[str] | None = None) -> QApplication:
 
     QCoreApplication.setOrganizationName(ORGANIZATION_NAME)
     QCoreApplication.setApplicationName(APPLICATION_NAME)
-    QCoreApplication.setApplicationVersion("0.7.0")
+    QCoreApplication.setApplicationVersion("0.8.0")
     existing = QApplication.instance()
     if existing is not None and not isinstance(existing, QApplication):
         raise RuntimeError("A non-GUI Qt application already exists in this process.")

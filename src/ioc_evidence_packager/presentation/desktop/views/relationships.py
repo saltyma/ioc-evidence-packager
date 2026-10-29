@@ -340,7 +340,7 @@ def _graph_legend() -> QFrame:
     title = QLabel("ENTITY\nCOLORS")
     title.setObjectName("SectionEyebrow")
     layout.addWidget(title)
-    for entity_type in ("source", "event", "host", "user", "ipv4", "domain", "sha256"):
+    for entity_type in ("source", "event", "host", "user", "ipv4", "ipv6", "domain", "sha256"):
         layout.addWidget(_legend_chip(entity_type))
     layout.addStretch(1)
     return legend

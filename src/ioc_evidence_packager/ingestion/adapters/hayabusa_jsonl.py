@@ -31,8 +31,8 @@ class HayabusaJsonlAdapter(JsonlRecordAdapter):
     ) -> dict[str, Any]:
         observations: list[dict[str, str]] = []
         candidates = (
-            observable(record.get("SrcIP"), "network.source_ip", ObservableType.IPV4),
-            observable(record.get("DstIP"), "network.destination_ip", ObservableType.IPV4),
+            observable(record.get("SrcIP"), "network.source_ip", "ip"),
+            observable(record.get("DstIP"), "network.destination_ip", "ip"),
             observable(record.get("QueryName"), "dns.question", ObservableType.DOMAIN),
             observable(
                 _sha256_value(record.get("SHA256") or record.get("Hashes")),

@@ -1,5 +1,6 @@
 """Three-step New Investigation wizard for lead and source preview."""
 
+from datetime import datetime
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QThreadPool
@@ -141,6 +142,12 @@ class NewCaseDialog(QDialog):
         form.addRow("Lead observable *", self._lead)
         form.addRow("Display time zone", self._timezone)
         form.addRow("Summary", self._summary)
+        self._start_time = QLineEdit()
+        self._end_time = QLineEdit()
+        for field in (self._start_time, self._end_time):
+            field.setPlaceholderText("Optional ISO timestamp, e.g. 2026-08-06T09:00:00Z")
+        form.addRow("Start (inclusive UTC)", self._start_time)
+        form.addRow("End (inclusive UTC)", self._end_time)
         layout.addWidget(form_card)
 
         validation_card = QFrame()
@@ -160,6 +167,8 @@ class NewCaseDialog(QDialog):
         layout.addStretch(1)
 
         self._title.textChanged.connect(self._update_controls)
+        self._start_time.textChanged.connect(self._update_controls)
+        self._end_time.textChanged.connect(self._update_controls)
         self._lead.textChanged.connect(self._validate_lead)
         return page
 
@@ -185,6 +194,9 @@ class NewCaseDialog(QDialog):
         self._remove_button.setEnabled(False)
         self._remove_button.clicked.connect(self._remove_selected_source)
         actions.addWidget(add_button)
+        folder = QPushButton("Add folder")
+        folder.clicked.connect(self._choose_folder)
+        actions.addWidget(folder)
         actions.addWidget(self._remove_button)
         actions.addStretch(1)
         self._source_summary = QLabel("No sources selected")
@@ -265,6 +277,21 @@ class NewCaseDialog(QDialog):
     def add_source_paths(self, paths: list[Path]) -> None:
         """Queue unique paths for background inspection; also used by UI tests."""
 
+        expanded = []
+        for path in paths:
+            if path.is_dir():
+                expanded.extend(
+                    sorted(
+                        item
+                        for item in path.iterdir()
+                        if item.is_file()
+                        and item.suffix.lower() in {".json", ".jsonl", ".csv"}
+                        and not item.name.endswith(".ioc-map.json")
+                    )
+                )
+            else:
+                expanded.append(path)
+        paths = expanded
         existing = set(self._previews) | self._pending_paths
         for path in paths:
             path_key = str(path.expanduser().resolve(strict=False))
@@ -295,12 +322,17 @@ class NewCaseDialog(QDialog):
         if self._parsed_observable is None:
             raise ValidationError("The lead observable has not been validated.")
         timezone = "UTC" if self._timezone.currentIndex() == 0 else "Local system time"
+        start, end = _parse_bound(self._start_time.text()), _parse_bound(self._end_time.text())
+        if start and end and start > end:
+            raise ValidationError("Start must not follow end.")
         return NewInvestigationRequest(
             case=NewCaseRequest(
                 title=self._title.text(),
                 external_reference=self._reference.text(),
                 display_timezone=timezone,
                 summary=self._summary.toPlainText(),
+                requested_start=_parse_bound(self._start_time.text()),
+                requested_end=_parse_bound(self._end_time.text()),
             ),
             lead_value=self._parsed_observable.original_value,
             source_previews=tuple(self._previews.values()),
@@ -323,6 +355,11 @@ class NewCaseDialog(QDialog):
         self._lead_state.style().unpolish(self._lead_state)
         self._lead_state.style().polish(self._lead_state)
         self._update_controls()
+
+    def _choose_folder(self) -> None:
+        value = QFileDialog.getExistingDirectory(self, "Choose exported-evidence folder")
+        if value:
+            self.add_source_paths([Path(value)])
 
     def _choose_sources(self) -> None:
         names, _selected_filter = QFileDialog.getOpenFileNames(
@@ -478,6 +515,11 @@ class NewCaseDialog(QDialog):
     def _update_controls(self) -> None:
         page = self._pages.currentIndex()
         lead_ready = bool(self._title.text().strip()) and self._parsed_observable is not None
+        try:
+            start, end = _parse_bound(self._start_time.text()), _parse_bound(self._end_time.text())
+            lead_ready = lead_ready and not (start and end and start > end)
+        except ValidationError:
+            lead_ready = False
         source_ready = (
             not self._pending_paths
             and bool(self._previews)
@@ -517,3 +559,17 @@ def _preview_time_range(preview: SourcePreview) -> str:
     start = preview.earliest_time.astimezone().strftime("%Y-%m-%d %H:%M:%S")
     end = preview.latest_time.astimezone().strftime("%Y-%m-%d %H:%M:%S")
     return f"Sampled time range {start} to {end}"
+
+
+def _parse_bound(value: str) -> datetime | None:
+    if not value.strip():
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+    except ValueError as error:
+        raise ValidationError(
+            "Use an ISO timestamp with UTC offset, or leave the bound blank."
+        ) from error
+    if parsed.tzinfo is None:
+        raise ValidationError("Investigation bounds need a timezone, such as Z or +00:00.")
+    return parsed

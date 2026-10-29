@@ -1,5 +1,10 @@
 # Case Capsule Contract
 
+## v0.8.0 export selection and projections
+
+The eight payload files remain the normative capsule. Analyst notes/bookmarks enter Full Internal evidence records and are omitted by Redacted Shareable. Excluded evidence is omitted alongside associated graph/coverage/recommendation citations. Coverage states describe the searched case, and subset selection is disclosed in the report and manifest. Inclusive requested bounds are recorded in the manifest. PDF/ZIP projections are separate files generated only after successful capsule verification; they do not mutate its manifest. See [RELEASE.md](RELEASE.md).
+
+
 ## Purpose
 
 A Case Capsule is a portable projection of a local investigation. It lets another analyst review the evidence story, verify artifact integrity, understand coverage and limitations, and import machine-readable facts without needing the desktop application or original security consoles.

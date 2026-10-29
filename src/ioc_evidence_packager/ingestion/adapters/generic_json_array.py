@@ -154,12 +154,12 @@ def _map_record(
             observable(
                 _first(record, "source_ip", "src_ip"),
                 "network.source_ip",
-                ObservableType.IPV4,
+                "ip",
             ),
             observable(
                 _first(record, "destination_ip", "dest_ip", "dst_ip"),
                 "network.destination_ip",
-                ObservableType.IPV4,
+                "ip",
             ),
             observable(
                 _first(record, "domain", "query_name", "dns_query"),

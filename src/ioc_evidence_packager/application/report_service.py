@@ -5,6 +5,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from ioc_evidence_packager.application.ports import ExportRepository
+from ioc_evidence_packager.application.review_service import ReviewService
 from ioc_evidence_packager.application.services import InvestigationSetup
 from ioc_evidence_packager.domain.analysis import AnalysisSnapshot
 from ioc_evidence_packager.domain.errors import ValidationError
@@ -29,8 +30,11 @@ from ioc_evidence_packager.reporting.models import (
 class ReportService:
     """Builds immutable report projections and records successful exports."""
 
-    def __init__(self, repository: ExportRepository) -> None:
+    def __init__(
+        self, repository: ExportRepository, review_service: ReviewService | None = None
+    ) -> None:
         self._repository = repository
+        self._review_service = review_service
 
     def export_case(
         self,
@@ -56,6 +60,7 @@ class ReportService:
             relationships or RelationshipSnapshot((), ()),
             recommendations,
             intelligence,
+            self._review_service.reviews(setup.case.case_id) if self._review_service else {},
         )
         created_at = datetime.now(UTC)
         export_id = ExportId(f"export-{uuid4()}")

@@ -20,6 +20,7 @@ from ioc_evidence_packager.domain.workspace import (
 )
 from ioc_evidence_packager.ingestion import SourceInspectionService
 from ioc_evidence_packager.reporting.models import ExportProfile
+from ioc_evidence_packager.reporting.projections import project_capsule
 
 
 class SourcePreviewSignals(QObject):
@@ -183,3 +184,23 @@ class IntelligenceLookupWorker(QRunnable):
             self.signals.failed.emit(str(error))
             return
         self.signals.completed.emit(assertion)
+
+
+class ProjectionSignals(QObject):
+    completed = Signal(str)
+    failed = Signal(str)
+
+
+class ProjectionWorker(QRunnable):
+    def __init__(self, source: Path, destination: Path, kind: str) -> None:
+        super().__init__()
+        self.source, self.destination, self.kind = source, destination, kind
+        self.signals = ProjectionSignals()
+
+    @Slot()
+    def run(self) -> None:
+        try:
+            path = project_capsule(self.source, self.destination, self.kind)
+            self.signals.completed.emit(str(path))
+        except Exception as error:  # noqa: BLE001 - contain worker failures
+            self.signals.failed.emit(str(error))

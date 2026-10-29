@@ -18,6 +18,7 @@ class ObservableType(StrEnum):
     """Observable types supported by the Slice 2 lead validator."""
 
     IPV4 = "ipv4"
+    IPV6 = "ipv6"
     DOMAIN = "domain"
     SHA256 = "sha256"
 
@@ -63,7 +64,9 @@ def parse_observable(value: str) -> ParsedObservable:
 
     try:
         address = ipaddress.ip_address(original)
-    except ValueError:
+    except ValueError as error:
+        if ":" in original:
+            raise ValidationError("Invalid IPv6 address.") from error
         return _parse_domain(original)
     if isinstance(address, ipaddress.IPv4Address):
         return ParsedObservable(
@@ -71,7 +74,9 @@ def parse_observable(value: str) -> ParsedObservable:
             original_value=original,
             canonical_value=str(address),
         )
-    raise ValidationError("IPv6 lead validation is scheduled after the first three recipes.")
+    if "%" in original:
+        raise ValidationError("Scoped IPv6 addresses are not portable observables.")
+    return ParsedObservable(ObservableType.IPV6, original, address.compressed.lower())
 
 
 def _parse_domain(original: str) -> ParsedObservable:

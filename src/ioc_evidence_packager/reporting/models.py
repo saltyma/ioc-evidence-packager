@@ -1,6 +1,6 @@
 """Immutable report, export-history, and verification values."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
@@ -10,6 +10,7 @@ from ioc_evidence_packager.domain.analysis import AnalysisSnapshot
 from ioc_evidence_packager.domain.evidence import EvidenceRecord, ImportRejection
 from ioc_evidence_packager.domain.models import Case, CaseId
 from ioc_evidence_packager.domain.observables import Observable
+from ioc_evidence_packager.domain.review import EvidenceReview
 from ioc_evidence_packager.domain.sources import SourcePreview
 from ioc_evidence_packager.domain.workspace import (
     IntelligenceAssertion,
@@ -40,6 +41,7 @@ class CaseReport:
     relationships: RelationshipSnapshot = RelationshipSnapshot((), ())
     recommendations: tuple[Recommendation, ...] = ()
     intelligence: tuple[IntelligenceAssertion, ...] = ()
+    reviews: dict[str, EvidenceReview] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)

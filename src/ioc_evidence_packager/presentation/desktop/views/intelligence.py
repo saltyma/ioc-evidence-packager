@@ -363,7 +363,7 @@ class ManualAssertionDialog(QDialog):
         self._provider = QLineEdit()
         self._provider.setPlaceholderText("Example: Internal Threat Intelligence")
         self._type = QComboBox()
-        self._type.addItems(("ipv4", "domain", "sha256"))
+        self._type.addItems(("ipv4", "ipv6", "domain", "sha256"))
         self._value = QLineEdit()
         self._claim = QComboBox()
         self._claim.addItems(tuple(value.value for value in IntelligenceClaim))

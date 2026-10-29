@@ -25,6 +25,7 @@ class EntityType(StrEnum):
     HOST = "host"
     USER = "user"
     IPV4 = "ipv4"
+    IPV6 = "ipv6"
     DOMAIN = "domain"
     SHA256 = "sha256"
     OBSERVABLE = "observable"
@@ -210,11 +211,13 @@ def build_relationships(records: tuple[EvidenceRecord, ...]) -> RelationshipSnap
             )
             if host_id is not None and kind in {
                 EntityType.IPV4,
+                EntityType.IPV6,
                 EntityType.DOMAIN,
                 EntityType.SHA256,
             }:
                 relation = {
                     EntityType.IPV4: "connected to",
+                    EntityType.IPV6: "connected to",
                     EntityType.DOMAIN: "queried",
                     EntityType.SHA256: "observed hash",
                 }[kind]
@@ -230,7 +233,7 @@ def build_relationships(records: tuple[EvidenceRecord, ...]) -> RelationshipSnap
         is_dns = "dns" in f"{record.category} {record.action}".casefold()
         if is_dns:
             for domain_id in typed.get(EntityType.DOMAIN, []):
-                for ip_id in typed.get(EntityType.IPV4, []):
+                for ip_id in typed.get(EntityType.IPV4, []) + typed.get(EntityType.IPV6, []):
                     edge(
                         domain_id,
                         ip_id,

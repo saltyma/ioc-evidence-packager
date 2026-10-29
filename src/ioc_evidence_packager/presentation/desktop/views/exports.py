@@ -36,6 +36,8 @@ from ioc_evidence_packager.reporting.models import (
 class ExportsView(QWidget):
     """Creates new capsule directories and verifies existing handoffs."""
 
+    projection_requested = Signal(str, str, str)
+    preview_requested = Signal(str)
     export_requested = Signal(str, str)
     verify_requested = Signal(str)
 
@@ -99,8 +101,19 @@ class ExportsView(QWidget):
         self._export_button.setEnabled(False)
         self._verify_button = QPushButton("Verify existing capsule…")
         self._verify_button.clicked.connect(self._browse_verify)
+        preview = QPushButton("Preview export")
+        preview.clicked.connect(
+            lambda: self.preview_requested.emit(str(self._profile.currentData()))
+        )
+        actions.addWidget(preview)
         actions.addWidget(self._export_button)
         actions.addWidget(self._verify_button)
+        for kind in ("pdf", "zip"):
+            button = QPushButton("Create " + kind.upper())
+            button.clicked.connect(
+                lambda _checked=False, format_name=kind: self._choose_projection(format_name)
+            )
+            actions.addWidget(button)
         actions.addStretch(1)
         form.addLayout(actions, 3, 1, 1, 2)
         root.addWidget(panel)
@@ -244,6 +257,21 @@ class ExportsView(QWidget):
                 "Includes source paths and preserved raw canonical JSON. Original source files "
                 "are not copied into the capsule."
             )
+
+    def _choose_projection(self, kind: str) -> None:
+        row = self._history.currentRow()
+        if not 0 <= row < len(self._history_records):
+            self._status.setText("Select a successful export in the history first.")
+            return
+        source = self._history_records[row].destination
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Create " + kind.upper(),
+            str(source) + "." + kind,
+            kind.upper() + " files (*." + kind + ")",
+        )
+        if path:
+            self.projection_requested.emit(str(source), path, kind)
 
     def _browse_destination(self) -> None:
         parent = QFileDialog.getExistingDirectory(self, "Choose capsule parent directory")

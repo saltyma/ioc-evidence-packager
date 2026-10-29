@@ -34,7 +34,7 @@ def test_supported_observables_preserve_input_and_canonicalize(
         ("", "Enter an IPv4"),
         ("example", "fully qualified"),
         ("bad_domain.example", "Domain labels"),
-        ("2001:db8::1", "IPv6"),
+        ("2001:db8::zz", "IPv6"),
         ("a" * 63, "exactly 64"),
         ("example.123", "final domain label"),
     ],

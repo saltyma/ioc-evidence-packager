@@ -84,7 +84,7 @@ def normalized_time(value: object) -> tuple[dict[str, Any], tuple[str, ...]]:
 def observable(
     value: object,
     field_path: str,
-    expected_kind: ObservableType | None = None,
+    expected_kind: ObservableType | str | None = None,
 ) -> dict[str, str] | None:
     """Validate one explicitly mapped IOC value without mining free-form text."""
 
@@ -95,7 +95,10 @@ def observable(
         parsed = parse_observable(original)
     except ValidationError:
         return None
-    if expected_kind is not None and parsed.observable_type is not expected_kind:
+    if expected_kind == "ip":
+        if parsed.observable_type not in {ObservableType.IPV4, ObservableType.IPV6}:
+            return None
+    elif expected_kind is not None and parsed.observable_type != expected_kind:
         return None
     return {
         "kind": parsed.observable_type.value,
@@ -172,7 +175,7 @@ def record_capabilities(record: dict[str, Any]) -> set[str]:
     if not isinstance(observables, list):
         return capabilities
     for item in observables:
-        if isinstance(item, dict) and item.get("kind") in {"ipv4", "domain", "sha256"}:
+        if isinstance(item, dict) and item.get("kind") in {"ipv4", "ipv6", "domain", "sha256"}:
             capabilities.add(f"observable.{item['kind']}")
     return capabilities
 

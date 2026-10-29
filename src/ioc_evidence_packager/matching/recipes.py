@@ -82,7 +82,17 @@ SHA256_RECIPE = SearchRecipe(
     ),
 )
 
-RECIPES = {recipe.observable_type: recipe for recipe in (IPV4_RECIPE, DOMAIN_RECIPE, SHA256_RECIPE)}
+IPV6_RECIPE = SearchRecipe(
+    recipe_id="ipv6",
+    version="1.0.0",
+    observable_type=ObservableType.IPV6,
+    rule_id="ipv6.direct.exact",
+    steps=IPV4_RECIPE.steps,
+)
+RECIPES = {
+    recipe.observable_type: recipe
+    for recipe in (IPV4_RECIPE, IPV6_RECIPE, DOMAIN_RECIPE, SHA256_RECIPE)
+}
 
 
 def recipe_for(observable_type: ObservableType) -> SearchRecipe:

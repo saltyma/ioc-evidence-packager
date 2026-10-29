@@ -32,8 +32,8 @@ class SuricataEveAdapter(JsonlRecordAdapter):
         event_type = str(record.get("event_type") or "event")
         observations: list[dict[str, str]] = []
         candidates = (
-            observable(record.get("src_ip"), "network.source_ip", ObservableType.IPV4),
-            observable(record.get("dest_ip"), "network.destination_ip", ObservableType.IPV4),
+            observable(record.get("src_ip"), "network.source_ip", "ip"),
+            observable(record.get("dest_ip"), "network.destination_ip", "ip"),
             observable(
                 nested_value(record, "dns.rrname"),
                 "dns.question",

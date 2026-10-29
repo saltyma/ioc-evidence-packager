@@ -1,5 +1,8 @@
 # Implementation Blueprint
 
+> Release status: v0.8.0 implements the workflow in [README](../README.md) and the [release contract](RELEASE.md). This document also retains the broader product conception. Proposals such as STIX/platform handoffs, URL leads, PSL grouping, signatures, and additional adapters are future extensions, not shipped features. IPv6, case lifecycle, time bounds, evidence review, export selection/preview, and PDF/ZIP projections are now implemented.
+
+
 ## Purpose
 
 This blueprint turns the product documents into an ordered engineering plan. It specifies boundaries and contracts strongly enough to begin implementation while leaving replaceable technology choices behind interfaces.

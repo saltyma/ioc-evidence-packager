@@ -1,12 +1,12 @@
 # Complete Manual Demo Guide
 
-This is the operator walkthrough for IOC Evidence Packager v0.7.0. It exercises the real application from case creation through a verified Case Capsule. It is deliberately separate from the future investigation-game/playbook.
+This is the operator walkthrough for IOC Evidence Packager v0.8.0. It exercises the real application from case creation through a verified Case Capsule. It is deliberately separate from the future investigation-game/playbook.
 
 The demo is entirely synthetic and works offline. Use the documentation-only IPv4 address `203.0.113.42`; do not substitute a personal, Kali, public, or production address.
 
 ## Verified outcome
 
-The repository fixtures were re-run end to end against v0.7.0. A correct run produces:
+The repository fixtures were re-run end to end against v0.8.0. A correct run produces:
 
 | Checkpoint | Expected result |
 |---|---:|
@@ -24,6 +24,10 @@ The repository fixtures were re-run end to end against v0.7.0. A correct run pro
 | Capsule | 8 hashed artifacts plus `manifest.json`; verification passes |
 
 IDs and export hashes are case/export-specific. Compare the counts, states, rules, and verifier result—not IDs from a different run.
+
+## New controls in v0.8.0
+
+For the original baseline, leave start/end blank and include every evidence row. Cases now has Rename, Archive, and Restore archived. Evidence has a Bookmark / note / export selection button for the selected row plus Bookmarked/Excluded filters. These choices persist across restarts. Exclusion affects the derived handoff, not local evidence. Exports has Preview export plus PDF/ZIP actions for the selected successful history row. The original eight-artifact capsule remains unchanged when making a sidecar projection.
 
 ## 1. Prepare the application
 
@@ -350,7 +354,7 @@ To test presentation preferences safely:
 5. select **Save settings**;
 6. reopen any table row and confirm the popup uses the new bounded width.
 
-Open **Storage & versions** and confirm application v0.7.0 and SQLite schema 6.
+Open **Storage & versions** and confirm application v0.8.0 and SQLite schema 7.
 
 ## 6. Build and verify a Case Capsule
 
