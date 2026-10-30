@@ -5,6 +5,8 @@
 - Preserve the exact committed fixture bytes on Windows checkout so SHA-256 verification remains meaningful.
 - Defer CSV type annotations for Python 3.11 runtime compatibility.
 - Run distribution verification on main as well as tagged releases.
+- Dispose desktop widgets before interpreter shutdown and retain smoke-launch diagnostics.
+- Pin Qt for Python to the locally validated 6.11.1 build while investigating 6.12 runner shutdown failures.
 
 ## 0.8.0 - 2026-10-29
 

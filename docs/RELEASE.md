@@ -36,3 +36,5 @@ STIX/MISP/TheHive/OpenCTI/Timesketch handoffs, URL leads, Public Suffix List gro
 ## Release checks
 
 Run lint, formatting, types, tests, demo verification, and a full-demo desktop smoke launch. Confirm only synthetic demo material is tracked. Keep games, generated books, case stores, environments, and credentials ignored. Inspect checks for the published commit before describing its distribution as validated.
+
+Qt for Python is pinned to 6.11.1, the validated desktop build. A 6.12 runner failed during native interpreter cleanup after passing the Python tests. Do not widen this dependency without repeating the full matrix and frozen-app checks.

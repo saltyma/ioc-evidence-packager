@@ -16,6 +16,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       QT_QPA_PLATFORM: offscreen
+      PYTHONFAULTHANDLER: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -30,4 +31,5 @@ jobs:
       - run: python -m mypy src
       - run: python -m pytest -q
       - run: python tools/verify_demo.py
-      - run: python -m ioc_evidence_packager --smoke-test --smoke-demo
+      - name: Launch source desktop with the complete demo
+        run: python -X faulthandler -m ioc_evidence_packager --smoke-test --smoke-demo

@@ -5,7 +5,7 @@ on:
     branches: [main]
     tags: ['v*']
 permissions:
-  contents: read
+  contents: write
 jobs:
   package:
     runs-on: windows-latest
@@ -37,3 +37,11 @@ jobs:
             dist/*.whl
             dist/*.tar.gz
             dist/installer/*.exe
+      - name: Publish versioned release downloads
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create $env:GITHUB_REF_NAME dist/installer/*.exe dist/*.whl dist/*.tar.gz --verify-tag --title "IOC Evidence Packager $env:GITHUB_REF_NAME" --notes-file CHANGELOG.md
+          if ($LASTEXITCODE -ne 0) { throw "Release publication failed" }

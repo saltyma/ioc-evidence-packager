@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from PySide6.QtCore import QCoreApplication, QStandardPaths, Qt, QTimer
+from PySide6.QtCore import QCoreApplication, QEvent, QStandardPaths, Qt, QThreadPool, QTimer
 from PySide6.QtWidgets import QApplication
 
 from ioc_evidence_packager.application.analysis_service import AnalysisService
@@ -200,6 +200,7 @@ def main(argv: list[str] | None = None) -> int:
     if not args.smoke_test:
         install_crash_diagnostics(default_database_path().parent)
 
+    context: DesktopContext | None = None
     try:
         context = build_desktop(database_path)
         if args.smoke_test:
@@ -277,15 +278,24 @@ def main(argv: list[str] | None = None) -> int:
             def finish_smoke() -> None:
                 if args.screenshot is not None:
                     args.screenshot.parent.mkdir(parents=True, exist_ok=True)
-                    if not context.window.grab().save(str(args.screenshot)):
+                    if not window.grab().save(str(args.screenshot)):
                         screenshot_status[0] = 1
-                app.quit()
+                window.close()
 
+            window = context.window
             QTimer.singleShot(220, finish_smoke)
             event_status = app.exec()
             return screenshot_status[0] or event_status
         return app.exec()
     finally:
+        # Dispose Qt-owned widgets while Python callbacks and source files still exist.
+        # Interpreter-finalization order is not a safe window/scene teardown mechanism.
+        QThreadPool.globalInstance().waitForDone()
+        if context is not None:
+            context.window.close()
+            context.window.deleteLater()
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        app.processEvents()
         if temporary_directory is not None:
             temporary_directory.cleanup()
         if smoke_source_directory is not None:
